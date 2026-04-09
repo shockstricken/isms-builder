@@ -1,4 +1,7 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 // Public Incident Store – Vorfall-Meldungen ohne Login (Login-Seite)
 // Persistenz: data/public-incidents.json
 
@@ -118,4 +121,12 @@ function getDeleted() {
 // Keep remove as alias for permanentDelete for backward compatibility
 const remove = permanentDelete
 
-module.exports = { getAll, getById, create, update, delete: del, permanentDelete, restore, getDeleted, remove, INCIDENT_TYPES }
+const _jsonExports = { getAll, getById, create, update, delete: del, permanentDelete, restore, getDeleted, remove, INCIDENT_TYPES }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/publicIncidentStore')
+  _knex.init().catch(e => console.error('[publicIncidentStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

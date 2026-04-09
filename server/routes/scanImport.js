@@ -81,7 +81,7 @@ router.post('/admin/scan-import/upload',
     // Status-Datei aktualisieren
     saveState({ lastImport: new Date().toISOString(), ...result, scanRef, parseMethod, importedBy: req.user })
 
-    audit.append({
+    await audit.append({
       user:       req.user,
       action:     'scan_import',
       resource:   'risk',

@@ -38,7 +38,7 @@ router.get('/api/ai/search', requireAuth, async (req, res) => {
       ? await embeddingStore.search(q)
       : await lexicalSearch.search(q)
 
-    auditStore.append({
+    await auditStore.append({
       user:     req.user,
       action:   'ai_search',
       resource: 'ai',
@@ -55,7 +55,7 @@ router.post('/api/ai/reindex', requireAuth, authorize('admin'), async (req, res)
   if (!aiEnabled()) return res.status(503).json({ error: 'KI-Integration deaktiviert' })
   try {
     const stats = await embeddingStore.reindexAll()
-    auditStore.append({
+    await auditStore.append({
       user:     req.user,
       action:   'ai_reindex',
       resource: 'ai',

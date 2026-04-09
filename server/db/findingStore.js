@@ -3,6 +3,8 @@
 // Datenmodell gemäß internal_audit_report_rules.md (IST/SOLL/Risiko/Empfehlung)
 'use strict'
 
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -211,9 +213,17 @@ function autopurge(days = 30) {
   return before - cleaned.length
 }
 
-module.exports = {
+const _jsonExports = {
   getAll, getById, create, update, remove, permanentDelete, restore, getDeleted,
   addAction, updateAction, deleteAction,
   getSummary, autopurge,
   SEVERITIES, STATUSES, ACT_STATUS,
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/findingStore')
+  _knex.init().catch(e => console.error('[findingStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

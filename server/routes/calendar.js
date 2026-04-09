@@ -16,7 +16,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
 
   // Risiken + Behandlungspläne
   try {
-    const riskEvts = riskStore.getCalendarEvents()
+    const riskEvts = await riskStore.getCalendarEvents()
     events.push(...riskEvts)
   } catch {}
 
@@ -50,7 +50,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
   // Legal: ablaufende Verträge
   try {
     const legalStore = require('../db/legalStore')
-    const expiring = legalStore.contracts.getExpiring(60)
+    const expiring = await legalStore.contracts.getExpiring(60)
     for (const c of expiring) {
       events.push({
         date:       c.noticeDate,
@@ -65,7 +65,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
   // GDPR VVT: bald fällige Löschfristen
   try {
     const gdprStore = require('../db/gdprStore')
-    const upcoming = gdprStore.deletionLog.getUpcoming(90)
+    const upcoming = await gdprStore.deletionLog.getUpcoming(90)
     for (const v of upcoming) {
       events.push({
         date:    v.deletionDue,
@@ -75,7 +75,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
         title:   v.title
       })
     }
-    const overdue = gdprStore.deletionLog.getDue()
+    const overdue = await gdprStore.deletionLog.getDue()
     for (const v of overdue) {
       events.push({
         date:    v.deletionDue,
@@ -89,13 +89,13 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
 
   // Sicherheitsziele
   try {
-    const goalEvts = goalsStore.getCalendarEvents()
+    const goalEvts = await goalsStore.getCalendarEvents()
     events.push(...goalEvts)
   } catch {}
 
   // Assets EoL
   try {
-    const assets = assetStore.getAll({ status: 'active' })
+    const assets = await assetStore.getAll({ status: 'active' })
     for (const a of assets) {
       if (a.endOfLifeDate) events.push({
         date:     a.endOfLifeDate,
@@ -109,15 +109,15 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
 
   // Governance: Management Reviews, Maßnahmen, Sitzungen
   try {
-    for (const r of govStore.getReviews()) {
+    for (const r of await govStore.getReviews()) {
       if (r.date) events.push({ date: r.date, type: 'management_review', title: r.title || 'Management Review', ref: r.id, severity: 'normal' })
       if (r.nextReviewDate) events.push({ date: r.nextReviewDate, type: 'management_review', title: `Nächstes Review: ${r.title || 'Management Review'}`, ref: r.id, severity: 'normal' })
     }
-    for (const a of govStore.getActions()) {
+    for (const a of await govStore.getActions()) {
       if (a.dueDate && a.status !== 'completed' && a.status !== 'cancelled')
         events.push({ date: a.dueDate, type: 'governance_action', title: `Maßnahme: ${a.title}`, ref: a.id, severity: a.priority === 'critical' || a.priority === 'high' ? 'high' : 'normal' })
     }
-    for (const m of govStore.getMeetings()) {
+    for (const m of await govStore.getMeetings()) {
       if (m.date) events.push({ date: m.date, type: 'committee_meeting', title: m.title || 'Ausschusssitzung', ref: m.id, severity: 'normal' })
       if (m.nextMeetingDate) events.push({ date: m.nextMeetingDate, type: 'committee_meeting', title: `Nächste Sitzung: ${m.committee || ''}`, ref: m.id, severity: 'normal' })
     }
@@ -125,11 +125,11 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
 
   // BCM: Übungen und Plan-Tests
   try {
-    for (const ex of bcmStore.getExercises()) {
+    for (const ex of await bcmStore.getExercises()) {
       if (ex.result === 'planned' && ex.date)
         events.push({ date: ex.date, type: 'bcm_exercise', title: `BCM-Übung: ${ex.title}`, ref: ex.id, severity: 'normal' })
     }
-    for (const pl of bcmStore.getPlans()) {
+    for (const pl of await bcmStore.getPlans()) {
       if (pl.nextTest)
         events.push({ date: pl.nextTest, type: 'bcm_plan_test', title: `Plan-Test fällig: ${pl.title}`, ref: pl.id, severity: pl.nextTest < new Date().toISOString().slice(0,10) ? 'high' : 'normal' })
     }
@@ -138,7 +138,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
   // Lieferanten: anstehende Audits
   try {
     const supplierStore = require('../db/supplierStore')
-    const upcoming = supplierStore.getUpcomingAudits(60)
+    const upcoming = await supplierStore.getUpcomingAudits(60)
     for (const s of upcoming) {
       events.push({
         date:     s.nextAuditDate,
@@ -154,7 +154,7 @@ router.get('/calendar', requireAuth, authorize('reader'), async (req, res) => {
   try {
     const findingStore = require('../db/findingStore')
     const today = new Date().toISOString().slice(0, 10)
-    for (const f of findingStore.getAll()) {
+    for (const f of await findingStore.getAll()) {
       for (const a of (f.actions || [])) {
         if (!a.dueDate || a.status === 'done') continue
         events.push({

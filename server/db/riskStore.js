@@ -1,6 +1,8 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 'use strict'
 
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -245,4 +247,12 @@ function getSummary() {
   return { total: risks.length, byLevel, byCategory, byStatus, openTreatments, top5 }
 }
 
-module.exports = { getAll, getById, create, update, delete: del, permanentDelete, restore, getDeleted, getReviewPending, approve, addTreatment, updateTreatment, deleteTreatment, getCalendarEvents, getSummary, CATEGORIES, TREATMENT_OPTS, STATUSES }
+const _jsonExports = { getAll, getById, create, update, delete: del, permanentDelete, restore, getDeleted, getReviewPending, approve, addTreatment, updateTreatment, deleteTreatment, getCalendarEvents, getSummary, CATEGORIES, TREATMENT_OPTS, STATUSES }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/riskStore')
+  _knex.init().catch(e => console.error('[riskStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

@@ -1,4 +1,7 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 // Persistent store for editable dropdown lists used throughout the application.
 // Data saved to data/custom-lists.json; falls back to defaults if file missing.
 
@@ -89,4 +92,12 @@ function resetList(listId) {
   return DEFAULTS[listId]
 }
 
-module.exports = { getAll, getList, setList, resetList, ALLOWED_LIST_IDS, DEFAULTS }
+const _jsonExports = { getAll, getList, setList, resetList, ALLOWED_LIST_IDS, DEFAULTS }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/customListsStore')
+  _knex.init().catch(e => console.error('[customListsStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

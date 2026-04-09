@@ -3,6 +3,9 @@
 // Data saved to data/org-units.json
 
 'use strict'
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -136,4 +139,12 @@ function remove(id) {
   return true
 }
 
-module.exports = { getAll, getById, create, update, remove }
+const _jsonExports = { getAll, getById, create, update, remove }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/orgUnitStore')
+  _knex.init().catch(e => console.error('[orgUnitStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

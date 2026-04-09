@@ -23,35 +23,35 @@ const guidanceUpload = multer({
 const DEMO_LANG_FILE = path.join(__dirname, '../../data/.demo_lang_set')
 const SUPPORTED_LANGS = ['de', 'en', 'fr', 'nl']
 
-function _syncSeedLang(lang) {
+async function _syncSeedLang(lang) {
   try {
     let current = 'en'
     try { current = JSON.parse(fs.readFileSync(DEMO_LANG_FILE, 'utf8')).lang || 'en' } catch {}
     if (current === lang) return
     fs.writeFileSync(DEMO_LANG_FILE, JSON.stringify({ lang, setAt: new Date().toISOString() }))
-    try { guidanceStore.seedDemoDoc() }          catch {}
-    try { guidanceStore.seedRoleGuides() }       catch {}
-    try { guidanceStore.seedSoaGuide() }         catch {}
-    try { guidanceStore.seedPolicyGuide() }      catch {}
-    try { guidanceStore.seedIsoNotice() }        catch {}
-    try { guidanceStore.seedSystemhandbuch() }   catch {}
-    try { guidanceStore.seedArchitectureDocs() } catch {}
+    try { await guidanceStore.seedDemoDoc() }          catch {}
+    try { await guidanceStore.seedRoleGuides() }       catch {}
+    try { await guidanceStore.seedSoaGuide() }         catch {}
+    try { await guidanceStore.seedPolicyGuide() }      catch {}
+    try { await guidanceStore.seedIsoNotice() }        catch {}
+    try { await guidanceStore.seedSystemhandbuch() }   catch {}
+    try { await guidanceStore.seedArchitectureDocs() } catch {}
   } catch {}
 }
 
-router.get('/guidance', requireAuth, authorize('reader'), (req, res) => {
+router.get('/guidance', requireAuth, authorize('reader'), async (req, res) => {
   const { category, lang, search } = req.query
-  if (lang && SUPPORTED_LANGS.includes(lang)) _syncSeedLang(lang)
+  if (lang && SUPPORTED_LANGS.includes(lang)) await _syncSeedLang(lang)
   const rank = req.roleRank || 1
-  if (search) return res.json(guidanceStore.search(search, rank))
-  if (category) return res.json(guidanceStore.getByCategory(category, rank))
-  res.json(guidanceStore.getAll(rank))
+  if (search) return res.json(await guidanceStore.search(search, rank))
+  if (category) return res.json(await guidanceStore.getByCategory(category, rank))
+  res.json(await guidanceStore.getAll(rank))
 })
 
-router.get('/guidance/:id/file', requireAuth, authorize('reader'), (req, res) => {
-  const filePath = guidanceStore.getFilePath(req.params.id)
+router.get('/guidance/:id/file', requireAuth, authorize('reader'), async (req, res) => {
+  const filePath = await guidanceStore.getFilePath(req.params.id)
   if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' })
-  const doc = guidanceStore.getById(req.params.id)
+  const doc = await guidanceStore.getById(req.params.id)
   const ext = doc?.filename ? path.extname(doc.filename).toLowerCase() : '.bin'
   const mime = ext === '.pdf' ? 'application/pdf' : 'application/octet-stream'
   res.setHeader('Content-Type', mime)
@@ -59,8 +59,8 @@ router.get('/guidance/:id/file', requireAuth, authorize('reader'), (req, res) =>
   res.sendFile(path.resolve(filePath))
 })
 
-router.get('/guidance/:id', requireAuth, authorize('reader'), (req, res) => {
-  const doc = guidanceStore.getById(req.params.id)
+router.get('/guidance/:id', requireAuth, authorize('reader'), async (req, res) => {
+  const doc = await guidanceStore.getById(req.params.id)
   if (!doc) return res.status(404).json({ error: 'Not found' })
   const RRANK = { reader: 1, editor: 2, dept_head: 2, contentowner: 3, auditor: 3, admin: 4 }
   if (doc.minRole && (req.roleRank || 1) < (RRANK[doc.minRole] || 1)) {
@@ -70,12 +70,12 @@ router.get('/guidance/:id', requireAuth, authorize('reader'), (req, res) => {
   res.json(rest)
 })
 
-router.post('/guidance', requireAuth, authorize('contentowner'), (req, res) => {
+router.post('/guidance', requireAuth, authorize('contentowner'), async (req, res) => {
   const { category, title, type, content, linkedControls } = req.body
   if (!category || !title) return res.status(400).json({ error: 'category and title are required' })
   try {
-    const doc = guidanceStore.create({ category, title, type: type || 'markdown', content, linkedControls, createdBy: req.user })
-    embeddingStore.indexDoc(doc, 'Systemhandbuch', '#guidance').catch(() => {})
+    const doc = await guidanceStore.create({ category, title, type: type || 'markdown', content, linkedControls, createdBy: req.user })
+    await embeddingStore.indexDoc(doc, 'Systemhandbuch', '#guidance').catch(() => {})
     res.status(201).json(doc)
   } catch (e) {
     res.status(400).json({ error: e.message })
@@ -83,7 +83,7 @@ router.post('/guidance', requireAuth, authorize('contentowner'), (req, res) => {
 })
 
 router.post('/guidance/upload', requireAuth, authorize('contentowner'), (req, res) => {
-  guidanceUpload.single('file')(req, res, (err) => {
+  guidanceUpload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message })
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
     const { category, title } = req.body
@@ -94,7 +94,7 @@ router.post('/guidance/upload', requireAuth, authorize('contentowner'), (req, re
     const ext = path.extname(req.file.originalname).toLowerCase()
     const type = ext === '.pdf' ? 'pdf' : 'docx'
     try {
-      const doc = guidanceStore.create({
+      const doc = await guidanceStore.create({
         category,
         title,
         type,
@@ -111,33 +111,33 @@ router.post('/guidance/upload', requireAuth, authorize('contentowner'), (req, re
   })
 })
 
-router.put('/guidance/:id', requireAuth, authorize('contentowner'), (req, res) => {
+router.put('/guidance/:id', requireAuth, authorize('contentowner'), async (req, res) => {
   const { title, category, content, linkedControls } = req.body
-  const updated = guidanceStore.update(req.params.id, { title, category, content, linkedControls })
+  const updated = await guidanceStore.update(req.params.id, { title, category, content, linkedControls })
   if (!updated) return res.status(404).json({ error: 'Not found' })
-  embeddingStore.indexDoc(updated, 'Systemhandbuch', '#guidance').catch(() => {})
+  await embeddingStore.indexDoc(updated, 'Systemhandbuch', '#guidance').catch(() => {})
   res.json(updated)
 })
 
-router.delete('/guidance/:id', requireAuth, authorize('admin'), (req, res) => {
-  const ok = guidanceStore.delete(req.params.id, req.user)
+router.delete('/guidance/:id', requireAuth, authorize('admin'), async (req, res) => {
+  const ok = await guidanceStore.delete(req.params.id, req.user)
   if (!ok) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'guidance', resourceId: req.params.id })
+  await require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'guidance', resourceId: req.params.id })
   res.json({ deleted: true })
 })
 
-router.delete('/guidance/:id/permanent', requireAuth, authorize('admin'), (req, res) => {
-  const ok = guidanceStore.permanentDelete(req.params.id)
+router.delete('/guidance/:id/permanent', requireAuth, authorize('admin'), async (req, res) => {
+  const ok = await guidanceStore.permanentDelete(req.params.id)
   if (!ok) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'guidance', resourceId: req.params.id })
-  embeddingStore.removeDoc(req.params.id)
+  await require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'guidance', resourceId: req.params.id })
+  await embeddingStore.removeDoc(req.params.id)
   res.json({ deleted: true, permanent: true })
 })
 
-router.post('/guidance/:id/restore', requireAuth, authorize('admin'), (req, res) => {
-  const item = guidanceStore.restore(req.params.id)
+router.post('/guidance/:id/restore', requireAuth, authorize('admin'), async (req, res) => {
+  const item = await guidanceStore.restore(req.params.id)
   if (!item) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'guidance', resourceId: req.params.id })
+  await require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'guidance', resourceId: req.params.id })
   res.json(item)
 })
 

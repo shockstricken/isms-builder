@@ -1,5 +1,6 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 'use strict'
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
 
 const fs   = require('fs')
 const path = require('path')
@@ -352,10 +353,17 @@ function getSummary() {
   }
 }
 
-module.exports = {
+const _jsonExports = {
   contracts, ndas, privacyPolicies, getSummary,
   FILES_DIR,
   CONTRACT_TYPES, CONTRACT_STATUSES,
   NDA_TYPES, NDA_STATUSES,
   POLICY_TYPES, POLICY_STATUSES
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/legalStore')
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

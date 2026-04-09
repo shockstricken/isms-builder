@@ -6,74 +6,74 @@ const { requireAuth, authorize } = require('../auth')
 const publicIncidentStore = require('../db/publicIncidentStore')
 
 // Splash-Konfiguration öffentlich abrufbar (Login-Seite braucht sie vor Auth)
-router.get('/public/splash', (req, res) => {
+router.get('/public/splash', async (req, res) => {
   try {
     const orgSettingsStore = require('../db/orgSettingsStore')
-    const s = orgSettingsStore.get()
+    const s = await orgSettingsStore.get()
     const sp = s.splashScreen || {}
     res.json({ enabled: sp.enabled !== false, duration: Math.min(30, Math.max(1, Number(sp.duration) || 7)) })
   } catch { res.json({ enabled: true, duration: 7 }) }
 })
 
 // Öffentliche Gesellschaftsliste (kein Login nötig)
-router.get('/public/entities', (req, res) => {
+router.get('/public/entities', async (req, res) => {
   try {
     const entityStore = require('../db/entityStore')
-    res.json(entityStore.getAll().map(e => ({ id: e.id, name: e.name })))
+    res.json((await entityStore.getAll()).map(e => ({ id: e.id, name: e.name })))
   } catch { res.json([]) }
 })
 
 // Jeder kann einen Vorfall melden
-router.post('/public/incident', (req, res) => {
+router.post('/public/incident', async (req, res) => {
   const { email, entityName, incidentType, description, measuresTaken, localContact, cleanedUp } = req.body || {}
   if (!email || !incidentType || !description) {
     return res.status(400).json({ error: 'email, incidentType und description sind Pflichtfelder.' })
   }
-  const incident = publicIncidentStore.create({ email, entityName, incidentType, description, measuresTaken, localContact, cleanedUp })
+  const incident = await publicIncidentStore.create({ email, entityName, incidentType, description, measuresTaken, localContact, cleanedUp })
   res.status(201).json({ ok: true, refNumber: incident.refNumber, id: incident.id })
 })
 
 // CISO / contentowner: Liste aller gemeldeten Vorfälle
-router.get('/public/incidents', requireAuth, authorize('contentowner'), (req, res) => {
+router.get('/public/incidents', requireAuth, authorize('contentowner'), async (req, res) => {
   const { status } = req.query
-  res.json(publicIncidentStore.getAll(status ? { status } : {}))
+  res.json(await publicIncidentStore.getAll(status ? { status } : {}))
 })
 
 // CISO / contentowner: Einzelnen Vorfall abrufen
-router.get('/public/incident/:id', requireAuth, authorize('contentowner'), (req, res) => {
-  const item = publicIncidentStore.getById(req.params.id)
+router.get('/public/incident/:id', requireAuth, authorize('contentowner'), async (req, res) => {
+  const item = await publicIncidentStore.getById(req.params.id)
   if (!item) return res.status(404).json({ error: 'Not found' })
   res.json(item)
 })
 
 // CISO / contentowner: Vorfall zuweisen / aktualisieren
-router.put('/public/incident/:id', requireAuth, authorize('contentowner'), (req, res) => {
-  const updated = publicIncidentStore.update(req.params.id, req.body, req.user)
+router.put('/public/incident/:id', requireAuth, authorize('contentowner'), async (req, res) => {
+  const updated = await publicIncidentStore.update(req.params.id, req.body, req.user)
   if (!updated) return res.status(404).json({ error: 'Not found' })
   res.json(updated)
 })
 
 // Admin: Vorfall in Papierkorb verschieben (Soft-Delete)
-router.delete('/public/incident/:id', requireAuth, authorize('admin'), (req, res) => {
-  const ok = publicIncidentStore.delete(req.params.id, req.user)
+router.delete('/public/incident/:id', requireAuth, authorize('admin'), async (req, res) => {
+  const ok = await publicIncidentStore.delete(req.params.id, req.user)
   if (!ok) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'public-incident', resourceId: req.params.id })
+  await require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'public-incident', resourceId: req.params.id })
   res.json({ deleted: true })
 })
 
 // Admin: Vorfall endgültig löschen
-router.delete('/public/incident/:id/permanent', requireAuth, authorize('admin'), (req, res) => {
-  const ok = publicIncidentStore.permanentDelete(req.params.id)
+router.delete('/public/incident/:id/permanent', requireAuth, authorize('admin'), async (req, res) => {
+  const ok = await publicIncidentStore.permanentDelete(req.params.id)
   if (!ok) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'public-incident', resourceId: req.params.id })
+  await require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'public-incident', resourceId: req.params.id })
   res.json({ deleted: true, permanent: true })
 })
 
 // Admin: Vorfall wiederherstellen
-router.post('/public/incident/:id/restore', requireAuth, authorize('admin'), (req, res) => {
-  const item = publicIncidentStore.restore(req.params.id)
+router.post('/public/incident/:id/restore', requireAuth, authorize('admin'), async (req, res) => {
+  const item = await publicIncidentStore.restore(req.params.id)
   if (!item) return res.status(404).json({ error: 'Not found' })
-  require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'public-incident', resourceId: req.params.id })
+  await require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'public-incident', resourceId: req.params.id })
   res.json(item)
 })
 

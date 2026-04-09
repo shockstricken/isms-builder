@@ -2,6 +2,8 @@
 // Append-only audit log store.
 // Entries are stored in data/audit-log.json, capped at MAX_ENTRIES (rolling).
 
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 function uuidv4() {
@@ -79,4 +81,12 @@ function clear() {
   save([])
 }
 
-module.exports = { append, query, clear }
+const _jsonExports = { append, query, clear }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/auditStore')
+  _knex.init().catch(e => console.error('[auditStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

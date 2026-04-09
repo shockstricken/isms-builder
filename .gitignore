@@ -67,3 +67,4 @@ claude.md
 
 # Puppeteer cache
 .local-chromium/
+.lcm/

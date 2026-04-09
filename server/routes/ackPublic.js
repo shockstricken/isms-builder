@@ -7,8 +7,8 @@ const ackStore = require('../db/ackStore')
 const storage  = require('../storage')
 
 // ── GET /ack/:token — Bestätigungsseite anzeigen ──────────────────────────────
-router.get('/ack/:token', (req, res) => {
-  const ack  = ackStore.getAckByToken(req.params.token)
+router.get('/ack/:token', async (req, res) => {
+  const ack  = await ackStore.getAckByToken(req.params.token)
   if (!ack) {
     return res.status(404).send(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
       <title>ISMS Builder</title></head><body style="font-family:sans-serif;max-width:600px;margin:60px auto;padding:20px">
@@ -17,14 +17,14 @@ router.get('/ack/:token', (req, res) => {
       </body></html>`)
   }
 
-  const dist = ackStore.getDistribution(ack.distributionId)
+  const dist = await ackStore.getDistribution(ack.distributionId)
   if (!dist) return res.status(404).send('Verteilrunde nicht gefunden')
 
   // Policy-Inhalt laden
   let policyContent = ''
   let policyTitle   = dist.templateTitle
   try {
-    const all   = storage.getTemplates({}) || []
+    const all   = await storage.getTemplates({}) || []
     const tmpl  = all.find(t => t.id === dist.templateId)
     if (tmpl) {
       policyTitle   = tmpl.title   || dist.templateTitle
@@ -113,18 +113,18 @@ router.get('/ack/:token', (req, res) => {
 })
 
 // ── POST /ack/:token — Bestätigung speichern ──────────────────────────────────
-router.post('/ack/:token', express.urlencoded({ extended: false }), (req, res) => {
+router.post('/ack/:token', express.urlencoded({ extended: false }), async (req, res) => {
   const ip   = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || ''
   const name = (req.body.recipientName || '').trim().slice(0, 200)
 
-  const ack = ackStore.confirmByToken(req.params.token, { recipientName: name, ipAddress: ip })
+  const ack = await ackStore.confirmByToken(req.params.token, { recipientName: name, ipAddress: ip })
   if (!ack) {
     return res.status(404).send(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
       <title>ISMS Builder</title></head><body style="font-family:sans-serif;max-width:600px;margin:60px auto;padding:20px">
       <h2>Link ungültig</h2><p>Dieser Link ist nicht mehr gültig.</p></body></html>`)
   }
 
-  const dist = ackStore.getDistribution(ack.distributionId) || {}
+  const dist = await ackStore.getDistribution(ack.distributionId) || {}
 
   res.send(`<!DOCTYPE html>
 <html lang="de">

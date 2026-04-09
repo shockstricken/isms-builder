@@ -1,6 +1,9 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 // Entity Store – Konzernstruktur (Holding + Gesellschaften)
 // Persistenz: data/entities.json
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs = require('fs')
 const path = require('path')
 
@@ -37,14 +40,13 @@ function genId() { return `entity_${Date.now()}` }
 
 let store = load()
 
-module.exports = {
+const _jsonExports = {
   init: () => { store = load() },
 
   getAll: () => store.filter(e => e.active !== false),
 
   getById: (id) => store.find(e => e.id === id) || null,
 
-  // Hierarchische Baumstruktur
   getTree: () => {
     const all = store.filter(e => e.active !== false)
     const map = {}
@@ -84,10 +86,17 @@ module.exports = {
   delete: (id) => {
     const idx = store.findIndex(e => e.id === id)
     if (idx < 0) return false
-    // Soft-delete: deaktivieren statt löschen (Referenzintegrität)
     store[idx].active = false
     store[idx].updatedAt = nowISO()
     save(store)
     return true
   }
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/entityStore')
+  _knex.init().catch(e => console.error('[entityStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

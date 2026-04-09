@@ -1,6 +1,8 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 'use strict'
 
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -719,7 +721,7 @@ const deletionLog = {
   }
 }
 
-module.exports = {
+const _jsonExports = {
   vvt, av, dsfa, incidents, dsar, toms, dsb, deletionLog,
   getSummary,
   VVT_LEGAL_BASES, VVT_STATUSES,
@@ -728,4 +730,12 @@ module.exports = {
   INCIDENT_TYPES, INCIDENT_STATUSES,
   DSAR_TYPES, DSAR_STATUSES,
   TOM_CATEGORIES, TOM_STATUSES
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/gdprStore')
+  _knex.init().catch(e => console.error('[gdprStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

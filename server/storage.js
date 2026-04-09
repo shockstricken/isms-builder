@@ -5,7 +5,22 @@ const backend = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
 
 let store = null
 
-if (backend === 'mariadb' || backend === 'mysql') {
+if (backend !== 'json') {
+  try {
+    const knexTemplateStore = require('./db/stores/templateStore')
+    knexTemplateStore.init().then(() => {
+      console.log('[storage] Backend:', backend, '— Knex template store ready')
+    }).catch(e => {
+      console.error('[storage] Knex template store init failed:', e.message)
+    })
+    store = knexTemplateStore
+    console.log('[storage] Backend:', backend, '(Knex)')
+  } catch (e) {
+    console.warn('[storage] Knex template store failed to load. Falling back to legacy store.', e.message)
+  }
+}
+
+if (!store && (backend === 'mariadb' || backend === 'mysql')) {
   try {
     const mariadbStore = require('./db/mariadbStore')
     mariadbStore.init().then(() => {

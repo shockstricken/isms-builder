@@ -1,5 +1,8 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 'use strict'
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -261,9 +264,17 @@ function getSummary() {
   }
 }
 
-module.exports = {
+const _jsonExports = {
   getBia, getBiaById, createBia, updateBia, deleteBia,
   getPlans, getPlanById, createPlan, updatePlan, deletePlan,
   getExercises, getExerciseById, createExercise, updateExercise, deleteExercise,
   getSummary,
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/bcmStore')
+  _knex.init().catch(e => console.error('[bcmStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

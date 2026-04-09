@@ -6,71 +6,71 @@ const { requireAuth, authorize } = require('../auth')
 const supplierStore = require('../db/supplierStore')
 const embeddingStore = require('../ai/embeddingStore')
 
-router.get('/suppliers/summary', requireAuth, authorize('reader'), (req, res) => {
-  res.json(supplierStore.getSummary())
+router.get('/suppliers/summary', requireAuth, authorize('reader'), async (req, res) => {
+  res.json(await supplierStore.getSummary())
 })
 
-router.get('/suppliers', requireAuth, authorize('reader'), (req, res) => {
-  res.json(supplierStore.getAll(req.query))
+router.get('/suppliers', requireAuth, authorize('reader'), async (req, res) => {
+  res.json(await supplierStore.getAll(req.query))
 })
 
-router.get('/suppliers/:id', requireAuth, authorize('reader'), (req, res) => {
-  const s = supplierStore.getById(req.params.id)
+router.get('/suppliers/:id', requireAuth, authorize('reader'), async (req, res) => {
+  const s = await supplierStore.getById(req.params.id)
   if (!s) return res.status(404).json({ error: 'Not found' })
   res.json(s)
 })
 
-router.post('/suppliers', requireAuth, authorize('editor'), (req, res) => {
+router.post('/suppliers', requireAuth, authorize('editor'), async (req, res) => {
   try {
-    const item = supplierStore.create(req.body, { createdBy: req.user })
-    require('../db/auditStore').append({ user: req.user, action: 'create', resource: 'supplier', detail: item.name })
-    embeddingStore.indexDoc({ ...item, title: item.name }, 'Lieferant', '#suppliers').catch(() => {})
+    const item = await supplierStore.create(req.body, { createdBy: req.user })
+    await require('../db/auditStore').append({ user: req.user, action: 'create', resource: 'supplier', detail: item.name })
+    await embeddingStore.indexDoc({ ...item, title: item.name }, 'Lieferant', '#suppliers')
     res.status(201).json(item)
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
 })
 
-router.put('/suppliers/:id', requireAuth, authorize('editor'), (req, res) => {
+router.put('/suppliers/:id', requireAuth, authorize('editor'), async (req, res) => {
   try {
-    const updated = supplierStore.update(req.params.id, req.body, { changedBy: req.user })
+    const updated = await supplierStore.update(req.params.id, req.body, { changedBy: req.user })
     if (!updated) return res.status(404).json({ error: 'Not found' })
-    require('../db/auditStore').append({ user: req.user, action: 'update', resource: 'supplier', detail: updated.name })
-    embeddingStore.indexDoc({ ...updated, title: updated.name }, 'Lieferant', '#suppliers').catch(() => {})
+    await require('../db/auditStore').append({ user: req.user, action: 'update', resource: 'supplier', detail: updated.name })
+    await embeddingStore.indexDoc({ ...updated, title: updated.name }, 'Lieferant', '#suppliers')
     res.json(updated)
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
 })
 
-router.delete('/suppliers/:id/permanent', requireAuth, authorize('admin'), (req, res) => {
+router.delete('/suppliers/:id/permanent', requireAuth, authorize('admin'), async (req, res) => {
   try {
-    const ok = supplierStore.permanentDelete(req.params.id)
+    const ok = await supplierStore.permanentDelete(req.params.id)
     if (!ok) return res.status(404).json({ error: 'Not found' })
-    require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'supplier', detail: req.params.id })
-    embeddingStore.removeDoc(req.params.id)
+    await require('../db/auditStore').append({ user: req.user, action: 'permanent_delete', resource: 'supplier', detail: req.params.id })
+    await embeddingStore.removeDoc(req.params.id)
     res.json({ ok: true })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
 })
 
-router.post('/suppliers/:id/restore', requireAuth, authorize('admin'), (req, res) => {
+router.post('/suppliers/:id/restore', requireAuth, authorize('admin'), async (req, res) => {
   try {
-    const item = supplierStore.restore(req.params.id)
+    const item = await supplierStore.restore(req.params.id)
     if (!item) return res.status(404).json({ error: 'Not found' })
-    require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'supplier', detail: item.name })
+    await require('../db/auditStore').append({ user: req.user, action: 'restore', resource: 'supplier', detail: item.name })
     res.json(item)
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
 })
 
-router.delete('/suppliers/:id', requireAuth, authorize('admin'), (req, res) => {
+router.delete('/suppliers/:id', requireAuth, authorize('admin'), async (req, res) => {
   try {
-    const ok = supplierStore.remove(req.params.id, { deletedBy: req.user })
+    const ok = await supplierStore.remove(req.params.id, { deletedBy: req.user })
     if (!ok) return res.status(404).json({ error: 'Not found' })
-    require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'supplier', detail: req.params.id })
+    await require('../db/auditStore').append({ user: req.user, action: 'delete', resource: 'supplier', detail: req.params.id })
     res.json({ ok: true })
   } catch (e) {
     res.status(500).json({ error: e.message })

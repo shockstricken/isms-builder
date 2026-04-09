@@ -1,4 +1,5 @@
 // © 2026 Claude Hecker — ISMS Builder — AGPL-3.0
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
 // Policy Acknowledgement Store
 // Manages policy distribution campaigns and individual acknowledgements.
 
@@ -249,7 +250,7 @@ function getSummary() {
   }
 }
 
-module.exports = {
+const _jsonExports = {
   getDistributions,
   getDistribution,
   getDistributionWithStats,
@@ -265,4 +266,12 @@ module.exports = {
   importAcks,
   deleteAck,
   getSummary,
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/ackStore')
+  _knex.init().catch(e => console.error('[ackStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

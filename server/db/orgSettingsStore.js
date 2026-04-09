@@ -1,4 +1,7 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
+
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 // Persistent store for organisation-wide settings and role-specific config.
 // Data saved to data/org-settings.json
 
@@ -215,4 +218,12 @@ function update(patch) {
   return updated
 }
 
-module.exports = { get, update, DEFAULTS }
+const _jsonExports = { get, update, DEFAULTS }
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/orgSettingsStore')
+  _knex.init().catch(e => console.error('[orgSettingsStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
+}

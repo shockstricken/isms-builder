@@ -127,7 +127,7 @@ router.post('/admin/users', requireAuth, authorize('admin'), async (req, res) =>
   try {
     const user = await require('../rbacStore').createUser({ username, email, domain, role, functions, password })
     const fnStr = (functions||[]).join(', ') || '—'
-    auditStore.append({ user: req.user, action: 'create', resource: 'user', resourceId: username, detail: `Rolle: ${role} | Funktionen: ${fnStr}` })
+    await auditStore.append({ user: req.user, action: 'create', resource: 'user', resourceId: username, detail: `Rolle: ${role} | Funktionen: ${fnStr}` })
     res.status(201).json(user)
   } catch (e) {
     res.status(409).json({ error: e.message })
@@ -141,72 +141,73 @@ router.put('/admin/users/:username', requireAuth, authorize('admin'), async (req
   const updated = await require('../rbacStore').updateUser(username, { email, domain, role, functions, password: password || undefined })
   if (!updated) return res.status(404).json({ error: 'Not found' })
   const fnStr = (functions||[]).join(', ') || '—'
-  auditStore.append({ user: req.user, action: 'update', resource: 'user', resourceId: username, detail: role ? `Neue Rolle: ${role} | Funktionen: ${fnStr}` : 'Profil aktualisiert' })
+  await auditStore.append({ user: req.user, action: 'update', resource: 'user', resourceId: username, detail: role ? `Neue Rolle: ${role} | Funktionen: ${fnStr}` : 'Profil aktualisiert' })
   res.json(updated)
 })
 
-router.delete('/admin/users/:username', requireAuth, authorize('admin'), (req, res) => {
+router.delete('/admin/users/:username', requireAuth, authorize('admin'), async (req, res) => {
   const { username } = req.params
   if (username === req.user) return res.status(400).json({ error: 'Eigenen Account nicht löschbar' })
   const ok = require('../rbacStore').deleteUser(username)
   if (!ok) return res.status(404).json({ error: 'Not found' })
-  auditStore.append({ user: req.user, action: 'delete', resource: 'user', resourceId: username })
+  await auditStore.append({ user: req.user, action: 'delete', resource: 'user', resourceId: username })
   res.json({ deleted: true })
 })
 
 // ── Custom editable lists ──
-router.get('/admin/lists', requireAuth, (req, res) => {
-  res.json(customListsStore.getAll())
+router.get('/admin/lists', requireAuth, async (req, res) => {
+  res.json(await customListsStore.getAll())
 })
-router.put('/admin/list/:listId', requireAuth, authorize('admin'), (req, res) => {
+router.put('/admin/list/:listId', requireAuth, authorize('admin'), async (req, res) => {
   const { listId } = req.params
   const items = req.body
   if (!Array.isArray(items)) return res.status(400).json({ error: 'Body must be an array' })
-  const result = customListsStore.setList(listId, items)
+  const result = await customListsStore.setList(listId, items)
   if (result === null) return res.status(404).json({ error: 'Unknown list id' })
   res.json(result)
 })
-router.post('/admin/list/:listId/reset', requireAuth, authorize('admin'), (req, res) => {
-  const result = customListsStore.resetList(req.params.listId)
+router.post('/admin/list/:listId/reset', requireAuth, authorize('admin'), async (req, res) => {
+  const result = await customListsStore.resetList(req.params.listId)
   if (result === null) return res.status(404).json({ error: 'Unknown list id' })
   res.json(result)
 })
 
 // ── Organisationseinstellungen ──
-router.get('/admin/org-settings', requireAuth, authorize('reader'), (req, res) => {
-  res.json(orgSettingsStore.get())
+router.get('/admin/org-settings', requireAuth, authorize('reader'), async (req, res) => {
+  res.json(await orgSettingsStore.get())
 })
-router.put('/admin/org-settings', requireAuth, authorize('admin'), (req, res) => {
-  const updated = orgSettingsStore.update(req.body)
-  auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: 'Organisationseinstellungen aktualisiert' })
+router.put('/admin/org-settings', requireAuth, authorize('admin'), async (req, res) => {
+  const updated = await orgSettingsStore.update(req.body)
+  await auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: 'Organisationseinstellungen aktualisiert' })
   res.json(updated)
 })
 
 // Modul-Konfiguration
-router.get('/admin/modules', requireAuth, authorize('reader'), (req, res) => {
-  res.json(orgSettingsStore.get().modules || {})
+router.get('/admin/modules', requireAuth, authorize('reader'), async (req, res) => {
+  const s = await orgSettingsStore.get()
+  res.json(s.modules || {})
 })
-router.put('/admin/modules', requireAuth, authorize('admin'), (req, res) => {
-  const updated = orgSettingsStore.update({ modules: req.body })
-  auditStore.append({ user: req.user, action: 'settings', resource: 'modules', detail: 'Modul-Konfiguration aktualisiert' })
+router.put('/admin/modules', requireAuth, authorize('admin'), async (req, res) => {
+  const updated = await orgSettingsStore.update({ modules: req.body })
+  await auditStore.append({ user: req.user, action: 'settings', resource: 'modules', detail: 'Modul-Konfiguration aktualisiert' })
   res.json(updated.modules)
 })
 
 // 2FA-Enforcement
-router.get('/admin/security', requireAuth, authorize('reader'), (req, res) => {
-  const s = orgSettingsStore.get()
+router.get('/admin/security', requireAuth, authorize('reader'), async (req, res) => {
+  const s = await orgSettingsStore.get()
   res.json({ require2FA: s.require2FA === true })
 })
-router.put('/admin/security', requireAuth, authorize('admin'), (req, res) => {
+router.put('/admin/security', requireAuth, authorize('admin'), async (req, res) => {
   const { require2FA } = req.body
-  const updated = orgSettingsStore.update({ require2FA: !!require2FA })
-  auditStore.append({ user: req.user, action: 'settings', resource: 'security', detail: `2FA-Pflicht: ${updated.require2FA ? 'aktiviert' : 'deaktiviert'}` })
+  const updated = await orgSettingsStore.update({ require2FA: !!require2FA })
+  await auditStore.append({ user: req.user, action: 'settings', resource: 'security', detail: `2FA-Pflicht: ${updated.require2FA ? 'aktiviert' : 'deaktiviert'}` })
   res.json({ require2FA: updated.require2FA })
 })
 
 // Rollenspezifische Einstellungen
-router.get('/admin/role-settings', requireAuth, authorize('contentowner'), (req, res) => {
-  const s = orgSettingsStore.get()
+router.get('/admin/role-settings', requireAuth, authorize('contentowner'), async (req, res) => {
+  const s = await orgSettingsStore.get()
   res.json({
     cisoSettings:     s.cisoSettings,
     gdpoSettings:     s.gdpoSettings,
@@ -215,24 +216,24 @@ router.get('/admin/role-settings', requireAuth, authorize('contentowner'), (req,
     qmSettings:       s.qmSettings,
   })
 })
-router.put('/admin/role-settings', requireAuth, authorize('contentowner'), (req, res) => {
-  const updated = orgSettingsStore.update(req.body)
-  auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: 'Rolleneinstellungen aktualisiert' })
+router.put('/admin/role-settings', requireAuth, authorize('contentowner'), async (req, res) => {
+  const updated = await orgSettingsStore.update(req.body)
+  await auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: 'Rolleneinstellungen aktualisiert' })
   res.json(updated)
 })
 
 // ── Audit-Log ──
-router.get('/admin/audit-log', requireAuth, authorize('admin'), (req, res) => {
+router.get('/admin/audit-log', requireAuth, authorize('admin'), async (req, res) => {
   const { user, action, resource, from, to, limit, offset } = req.query
-  res.json(auditStore.query({
+  res.json(await auditStore.query({
     user, action, resource, from, to,
     limit:  limit  ? parseInt(limit)  : 200,
     offset: offset ? parseInt(offset) : 0,
   }))
 })
-router.delete('/admin/audit-log', requireAuth, authorize('admin'), (req, res) => {
-  auditStore.clear()
-  auditStore.append({ user: req.user, action: 'delete', resource: 'audit', detail: 'Audit-Log geleert' })
+router.delete('/admin/audit-log', requireAuth, authorize('admin'), async (req, res) => {
+  await auditStore.clear()
+  await auditStore.append({ user: req.user, action: 'delete', resource: 'audit', detail: 'Audit-Log geleert' })
   res.json({ ok: true })
 })
 
@@ -242,7 +243,7 @@ router.post('/admin/email/test', requireAuth, authorize('admin'), async (req, re
   if (!to) return res.status(400).json({ error: 'Empfängeradresse fehlt' })
   try {
     await mailer.sendTestMail(to)
-    auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: `Test-Mail an ${to} gesendet` })
+    await auditStore.append({ user: req.user, action: 'settings', resource: 'org', detail: `Test-Mail an ${to} gesendet` })
     res.json({ ok: true })
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -279,8 +280,8 @@ router.get('/api/storage-info', requireAuth, authorize('admin'), (req, res) => {
 })
 
 // ── KI-Einstellungen ──
-router.get('/admin/ai-settings', requireAuth, authorize('admin'), (req, res) => {
-  const cfg = orgSettingsStore.get()
+router.get('/admin/ai-settings', requireAuth, authorize('admin'), async (req, res) => {
+  const cfg = await orgSettingsStore.get()
   res.json({
     aiEnabled:    cfg.aiEnabled    ?? true,
     aiOllamaUrl:  cfg.aiOllamaUrl  || '',
@@ -294,8 +295,8 @@ router.put('/admin/ai-settings', requireAuth, authorize('admin'), async (req, re
   if (typeof aiEnabled    === 'boolean') patch.aiEnabled    = aiEnabled
   if (typeof aiOllamaUrl  === 'string')  patch.aiOllamaUrl  = aiOllamaUrl.trim()
   if (typeof aiEmbedModel === 'string')  patch.aiEmbedModel = aiEmbedModel.trim()
-  const updated = orgSettingsStore.update(patch)
-  auditStore.append({ user: req.user, action: 'update', resource: 'ai-settings', detail: `aiEnabled=${updated.aiEnabled}` })
+  const updated = await orgSettingsStore.update(patch)
+  await auditStore.append({ user: req.user, action: 'update', resource: 'ai-settings', detail: `aiEnabled=${updated.aiEnabled}` })
   res.json({ ok: true, aiEnabled: updated.aiEnabled, aiOllamaUrl: updated.aiOllamaUrl, aiEmbedModel: updated.aiEmbedModel })
 })
 
@@ -318,7 +319,7 @@ router.get('/admin/export', requireAuth, authorize('admin'), async (req, res) =>
         try { bundle.gdpr[f] = JSON.parse(fs.readFileSync(path.join(gdprDir, f), 'utf8')) } catch {}
       }
     }
-    auditStore.append({ user: req.user, action: 'export', resource: 'org', detail: 'Vollexport durchgeführt' })
+    await auditStore.append({ user: req.user, action: 'export', resource: 'org', detail: 'Vollexport durchgeführt' })
     res.setHeader('Content-Disposition', `attachment; filename="isms-export-${new Date().toISOString().slice(0,10)}.json"`)
     res.setHeader('Content-Type', 'application/json')
     res.json(bundle)
@@ -327,7 +328,7 @@ router.get('/admin/export', requireAuth, authorize('admin'), async (req, res) =>
   }
 })
 
-router.post('/admin/maintenance/cleanup', requireAuth, authorize('admin'), (req, res) => {
+router.post('/admin/maintenance/cleanup', requireAuth, authorize('admin'), async (req, res) => {
   const results = { removed: [], errors: [] }
   try {
     const attachDir = path.join(__dirname, '../../data/template-files')
@@ -344,7 +345,7 @@ router.post('/admin/maintenance/cleanup', requireAuth, authorize('admin'), (req,
       })
     }
   } catch (e) { results.errors.push('template-files: ' + e.message) }
-  auditStore.append({ user: req.user, action: 'delete', resource: 'org', detail: `Bereinigung: ${results.removed.length} Dateien entfernt` })
+  await auditStore.append({ user: req.user, action: 'delete', resource: 'org', detail: `Bereinigung: ${results.removed.length} Dateien entfernt` })
   res.json(results)
 })
 
@@ -432,7 +433,7 @@ router.post('/admin/demo-reset', requireAuth, authorize('admin'), async (req, re
       console.warn('[demo-reset] .env konnte nicht auf SQLite umgestellt werden:', e.message)
     }
 
-    auditStore.append({ user: req.user, action: 'demo_reset', resource: 'org', detail: 'Demo-Reset — alle Moduldaten geleert, Benutzer zurückgesetzt, STORAGE_BACKEND=sqlite gesetzt' })
+    await auditStore.append({ user: req.user, action: 'demo_reset', resource: 'org', detail: 'Demo-Reset — alle Moduldaten geleert, Benutzer zurückgesetzt, STORAGE_BACKEND=sqlite gesetzt' })
     res.setHeader('Content-Disposition', `attachment; filename="isms-demo-export-${new Date().toISOString().slice(0,10)}.json"`)
     res.setHeader('Content-Type', 'application/json')
     // restartRequired im Header mitgeben damit das Frontend informieren kann
@@ -498,15 +499,15 @@ router.post('/admin/demo-import', requireAuth, authorize('admin'), express.json(
     // Re-seed guidance docs (architecture, demo-overview, role guides, soa-guide, policy-guide)
     try {
       const gs = require('../db/guidanceStore')
-      gs.seedArchitectureDocs()
-      gs.seedDemoDoc()
-      gs.seedRoleGuides()
-      gs.seedSoaGuide()
-      gs.seedPolicyGuide()
-      gs.seedIsoNotice()
+      await gs.seedArchitectureDocs()
+      await gs.seedDemoDoc()
+      await gs.seedRoleGuides()
+      await gs.seedSoaGuide()
+      await gs.seedPolicyGuide()
+      await gs.seedIsoNotice()
     } catch {}
 
-    auditStore.append({ user: req.user, action: 'demo_import', resource: 'org', detail: 'Demo-Daten importiert — alice/bob wiederhergestellt' })
+    await auditStore.append({ user: req.user, action: 'demo_import', resource: 'org', detail: 'Demo-Daten importiert — alice/bob wiederhergestellt' })
     res.json({ ok: true, restoredAt: nowISO() })
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -514,19 +515,19 @@ router.post('/admin/demo-import', requireAuth, authorize('admin'), express.json(
 })
 
 // ── Seed-Sprache aktualisieren (ohne Bundle-Import) ──────────────────────────
-router.put('/admin/seed-lang', requireAuth, authorize('admin'), express.json(), (req, res) => {
+router.put('/admin/seed-lang', requireAuth, authorize('admin'), express.json(), async (req, res) => {
   const { lang } = req.body || {}
   const SUPPORTED = ['de', 'en', 'fr', 'nl']
   if (!SUPPORTED.includes(lang)) return res.status(400).json({ error: 'Unsupported language' })
   fs.writeFileSync(DEMO_LANG_FILE, JSON.stringify({ lang, setAt: nowISO() }))
   // Re-run all seed functions so guidance docs are immediately updated
   const gs = require('../db/guidanceStore')
-  try { gs.seedDemoDoc() }           catch {}
-  try { gs.seedRoleGuides() }        catch {}
-  try { gs.seedSoaGuide() }          catch {}
-  try { gs.seedPolicyGuide() }       catch {}
-  try { gs.seedIsoNotice() }         catch {}
-  try { gs.seedArchitectureDocs() }  catch {}
+  try { await gs.seedDemoDoc() }           catch {}
+  try { await gs.seedRoleGuides() }        catch {}
+  try { await gs.seedSoaGuide() }          catch {}
+  try { await gs.seedPolicyGuide() }       catch {}
+  try { await gs.seedIsoNotice() }         catch {}
+  try { await gs.seedArchitectureDocs() }  catch {}
   res.json({ ok: true, lang })
 })
 
@@ -593,15 +594,15 @@ router.post('/admin/demo-load-bundle', requireAuth, authorize('admin'), express.
     // Re-seed guidance docs (architecture, demo-overview, role guides, soa-guide, policy-guide)
     try {
       const gs = require('../db/guidanceStore')
-      gs.seedArchitectureDocs()
-      gs.seedDemoDoc()
-      gs.seedRoleGuides()
-      gs.seedSoaGuide()
-      gs.seedPolicyGuide()
-      gs.seedIsoNotice()
+      await gs.seedArchitectureDocs()
+      await gs.seedDemoDoc()
+      await gs.seedRoleGuides()
+      await gs.seedSoaGuide()
+      await gs.seedPolicyGuide()
+      await gs.seedIsoNotice()
     } catch {}
 
-    auditStore.append({ user: req.user, action: 'demo_import', resource: 'org', detail: `Demo-Bundle '${lang}' geladen` })
+    await auditStore.append({ user: req.user, action: 'demo_import', resource: 'org', detail: `Demo-Bundle '${lang}' geladen` })
     res.json({ ok: true, lang, loadedAt: nowISO() })
   } catch (e) {
     res.status(500).json({ error: e.message })

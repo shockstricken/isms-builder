@@ -10,6 +10,7 @@
 //
 // Persistenz: data/soa.json
 // Control-IDs sind framework-präfixiert (z.B. ISO-5.1, BSI-ISMS.1, NIS2-a, EUCS-1, EUAI-9)
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
 const fs = require('fs')
 const path = require('path')
 
@@ -322,7 +323,7 @@ function save(data) {
 
 let store = load()
 
-module.exports = {
+const _jsonExports = {
   init: () => { store = load() },
 
   getFrameworks: () => Object.values(FRAMEWORKS),
@@ -368,7 +369,6 @@ module.exports = {
     return store[controlId]
   },
 
-  // Zusammenfassung – optional pro Framework
   getSummary: (framework) => {
     const frameworks = framework ? [framework] : Object.keys(FRAMEWORKS)
     const result = {}
@@ -395,7 +395,6 @@ module.exports = {
     return framework ? result[framework] : result
   },
 
-  // Create a custom control (framework = 'CUSTOM', id = 'CUSTOM-<timestamp>')
   createCustomControl: (body, { changedBy } = {}) => {
     const title = (body.title || '').trim()
     if (!title) throw new Error('title required')
@@ -421,7 +420,6 @@ module.exports = {
     return store[id]
   },
 
-  // Update a custom control's editable metadata
   updateCustomControl: (id, body, { changedBy } = {}) => {
     if (!store[id] || !store[id].isCustom) return null
     const allowed = ['title', 'theme', 'description', 'owner', 'applicable', 'status', 'justification', 'linkedTemplates', 'applicableEntities']
@@ -434,7 +432,6 @@ module.exports = {
     return store[id]
   },
 
-  // Delete a custom control — only allowed when not yet linked to any templates
   deleteCustomControl: (id) => {
     const ctrl = store[id]
     if (!ctrl)           return { ok: false, reason: 'not_found' }
@@ -447,4 +444,12 @@ module.exports = {
 
   FRAMEWORKS,
   IMPLEMENTATION_STATUSES
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/soaStore')
+  _knex.init().catch(e => console.error('[soaStore] Knex init:', e.message))
+  module.exports = _knex
+} else {
+  module.exports = _jsonExports
 }

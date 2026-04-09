@@ -4,9 +4,15 @@ const { createTestDataDir, removeTestDataDir } = require('./setup/testEnv')
 
 let app, request, dataDir
 
-beforeAll(() => {
+beforeAll(async () => {
   dataDir = createTestDataDir()
   process.env.DATA_DIR = dataDir
+  process.env.JWT_SECRET = 'jest-test-findings'
+  process.env.NODE_ENV = 'test'
+  if (process.env.STORAGE_BACKEND && process.env.STORAGE_BACKEND !== 'json') {
+    const knexDb = require('../server/db/knexDatabase')
+    await knexDb.init()
+  }
   app     = require('../server/index')
   request = require('supertest')
 })

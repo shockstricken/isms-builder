@@ -5,7 +5,7 @@ const router = express.Router()
 const { requireAuth, authorize } = require('../auth')
 const storage = require('../storage')
 
-router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
+router.get('/trash', requireAuth, authorize('admin'), async (req, res) => {
   const riskStore       = require('../db/riskStore')
   const goalsStore      = require('../db/goalsStore')
   const guidanceStore   = require('../db/guidanceStore')
@@ -18,7 +18,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Templates
   try {
-    const deletedTmpl = storage.getDeletedTemplates?.() || []
+    const deletedTmpl = await storage.getDeletedTemplates?.() || []
     deletedTmpl.forEach(t => items.push({
       module: 'template', moduleLabel: 'Template',
       id: t.id, title: t.title || t.id,
@@ -30,7 +30,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Risks
   try {
-    const deletedRisks = riskStore.getDeleted?.() || []
+    const deletedRisks = await riskStore.getDeleted?.() || []
     deletedRisks.forEach(r => items.push({
       module: 'risk', moduleLabel: 'Risiko',
       id: r.id, title: r.title || r.id,
@@ -42,7 +42,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Goals
   try {
-    const deletedGoals = goalsStore.getDeleted?.() || []
+    const deletedGoals = await goalsStore.getDeleted?.() || []
     deletedGoals.forEach(g => items.push({
       module: 'goal', moduleLabel: 'Sicherheitsziel',
       id: g.id, title: g.title || g.id,
@@ -54,7 +54,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Guidance
   try {
-    const deletedGuidance = guidanceStore.getDeleted?.() || []
+    const deletedGuidance = await guidanceStore.getDeleted?.() || []
     deletedGuidance.forEach(d => items.push({
       module: 'guidance', moduleLabel: 'Guidance-Dokument',
       id: d.id, title: d.title || d.id,
@@ -66,7 +66,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Training
   try {
-    const deletedTraining = trainingStore.getDeleted?.() || []
+    const deletedTraining = await trainingStore.getDeleted?.() || []
     deletedTraining.forEach(t => items.push({
       module: 'training', moduleLabel: 'Schulung',
       id: t.id, title: t.title || t.id,
@@ -78,7 +78,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Legal: Contracts
   try {
-    const deletedContracts = legalStore.contracts.getDeleted?.() || []
+    const deletedContracts = await legalStore.contracts.getDeleted?.() || []
     deletedContracts.forEach(c => items.push({
       module: 'legal_contract', moduleLabel: 'Vertrag',
       id: c.id, title: c.title || c.id,
@@ -90,7 +90,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Legal: NDAs
   try {
-    const deletedNdas = legalStore.ndas.getDeleted?.() || []
+    const deletedNdas = await legalStore.ndas.getDeleted?.() || []
     deletedNdas.forEach(n => items.push({
       module: 'legal_nda', moduleLabel: 'NDA',
       id: n.id, title: n.title || n.id,
@@ -102,7 +102,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Legal: Privacy Policies
   try {
-    const deletedPolicies = legalStore.privacyPolicies.getDeleted?.() || []
+    const deletedPolicies = await legalStore.privacyPolicies.getDeleted?.() || []
     deletedPolicies.forEach(p => items.push({
       module: 'legal_policy', moduleLabel: 'Datenschutzrichtlinie',
       id: p.id, title: p.title || p.id,
@@ -114,7 +114,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: VVT
   try {
-    const deletedVvt = gdprStore.vvt.getDeleted?.() || []
+    const deletedVvt = await gdprStore.vvt.getDeleted?.() || []
     deletedVvt.forEach(v => items.push({
       module: 'gdpr_vvt', moduleLabel: 'VVT-Eintrag',
       id: v.id, title: v.title || v.id,
@@ -126,7 +126,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: AV
   try {
-    const deletedAv = gdprStore.av.getDeleted?.() || []
+    const deletedAv = await gdprStore.av.getDeleted?.() || []
     deletedAv.forEach(a => items.push({
       module: 'gdpr_av', moduleLabel: 'AV-Vertrag',
       id: a.id, title: a.title || a.id,
@@ -138,7 +138,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: DSFA
   try {
-    const deletedDsfa = gdprStore.dsfa.getDeleted?.() || []
+    const deletedDsfa = await gdprStore.dsfa.getDeleted?.() || []
     deletedDsfa.forEach(d => items.push({
       module: 'gdpr_dsfa', moduleLabel: 'DSFA',
       id: d.id, title: d.title || d.id,
@@ -150,7 +150,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: Incidents
   try {
-    const deletedIncidents = gdprStore.incidents.getDeleted?.() || []
+    const deletedIncidents = await gdprStore.incidents.getDeleted?.() || []
     deletedIncidents.forEach(i => items.push({
       module: 'gdpr_incident', moduleLabel: 'GDPR-Datenpanne',
       id: i.id, title: i.title || i.id,
@@ -162,7 +162,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: DSAR
   try {
-    const deletedDsar = gdprStore.dsar.getDeleted?.() || []
+    const deletedDsar = await gdprStore.dsar.getDeleted?.() || []
     deletedDsar.forEach(d => items.push({
       module: 'gdpr_dsar', moduleLabel: 'DSAR-Anfrage',
       id: d.id, title: `${d.requestType}: ${d.dataSubjectName || d.id}`,
@@ -174,7 +174,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // GDPR: TOMs
   try {
-    const deletedToms = gdprStore.toms.getDeleted?.() || []
+    const deletedToms = await gdprStore.toms.getDeleted?.() || []
     deletedToms.forEach(t => items.push({
       module: 'gdpr_toms', moduleLabel: 'TOM',
       id: t.id, title: t.title || t.id,
@@ -186,7 +186,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
 
   // Public Incidents
   try {
-    const deletedPub = pubStore.getDeleted?.() || []
+    const deletedPub = await pubStore.getDeleted?.() || []
     deletedPub.forEach(i => items.push({
       module: 'public_incident', moduleLabel: 'Öff. Vorfall-Meldung',
       id: i.id, title: `${i.refNumber}: ${i.incidentType}`,
@@ -199,7 +199,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
   // Suppliers
   try {
     const supplierStore = require('../db/supplierStore')
-    const deletedSuppliers = supplierStore.getDeleted?.() || []
+    const deletedSuppliers = await supplierStore.getDeleted?.() || []
     deletedSuppliers.forEach(s => items.push({
       module: 'supplier', moduleLabel: 'Lieferant',
       id: s.id, title: s.name || s.id,
@@ -212,7 +212,7 @@ router.get('/trash', requireAuth, authorize('admin'), (req, res) => {
   // Findings
   try {
     const findingStore = require('../db/findingStore')
-    const deletedFindings = findingStore.getDeleted?.() || []
+    const deletedFindings = await findingStore.getDeleted?.() || []
     deletedFindings.forEach(f => items.push({
       module: 'finding', moduleLabel: 'Audit-Feststellung',
       id: f.id, title: `${f.ref}: ${f.title || f.id}`,

@@ -1,6 +1,8 @@
 // © 2026 Claude Hecker — ISMS Builder V 1.29 — AGPL-3.0
 'use strict'
 
+const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
+
 const fs   = require('fs')
 const path = require('path')
 
@@ -3887,7 +3889,7 @@ function seedIsoNotice() {
   }
 }
 
-module.exports = {
+const _jsonExports = {
   getAll, getByCategory, search, getById, create, update, delete: del,
   permanentDelete, restore, getDeleted, getFilePath, VALID_CATEGORIES,
   seedArchitectureDocs,
@@ -3897,4 +3899,95 @@ module.exports = {
   seedPolicyGuide,
   seedIsoNotice,
   seedSystemhandbuch,
+}
+
+if (STORAGE_BACKEND !== 'json') {
+  const _knex = require('./stores/guidanceStore')
+  _knex.init().catch(e => console.error('[guidanceStore] Knex init:', e.message))
+
+  async function _knexSeedArchitectureDocs() {
+    const lang = _getDemoLang()
+    for (const entry of ARCH_SEED) {
+      const title = typeof entry.title === 'object' ? (entry.title[lang] || entry.title.en) : entry.title
+      if (!fs.existsSync(entry.srcFile)) continue
+      let content = fs.readFileSync(entry.srcFile, 'utf8')
+      if (entry.wrapCode) content = '```' + entry.wrapCode + '\n' + content + '\n```'
+      await _knex.upsertSeed(entry.seedId, {
+        id: 'guid_arch_' + entry.seedId, category: entry.category || 'admin-intern',
+        type: 'markdown', title, content, seedLang: lang,
+        minRole: entry.minRole !== undefined ? entry.minRole : 'admin',
+      })
+    }
+  }
+
+  async function _knexSeedDemoDoc() {
+    const lang = _getDemoLang()
+    const { title, content } = DEMO_DOC[lang] || DEMO_DOC.en
+    await _knex.upsertSeed(DEMO_GUIDE_SEED_ID, {
+      id: 'guid_demo_overview', category: 'systemhandbuch', type: 'markdown',
+      title, content, pinOrder: 1, minRole: null, seedLang: lang,
+    })
+  }
+
+  async function _knexSeedRoleGuides() {
+    const lang = _getDemoLang()
+    const langGuides = ROLE_GUIDES_I18N[lang] || ROLE_GUIDES_I18N.en
+    for (const guide of ROLE_GUIDES) {
+      const override = langGuides ? langGuides[guide.seedId] : null
+      const title   = override ? override.title   : guide.title
+      const content = override ? override.content : guide.content
+      await _knex.upsertSeed(guide.seedId, {
+        id: guide.id, category: 'rollen', type: 'markdown',
+        title, content, pinOrder: guide.pinOrder, minRole: guide.minRole,
+      })
+    }
+  }
+
+  async function _knexSeedSoaGuide() {
+    const lang = _getDemoLang()
+    const data = SOA_GUIDE[lang] || SOA_GUIDE.en
+    await _knex.upsertSeed(SOA_GUIDE_SEED_ID, {
+      id: 'guid_soa_audit_guide', category: 'soa-audit', type: 'markdown',
+      pinOrder: 1, minRole: null, ...data,
+    })
+  }
+
+  async function _knexSeedPolicyGuide() {
+    const lang = _getDemoLang()
+    const data = POLICY_GUIDE[lang] || POLICY_GUIDE.en
+    await _knex.upsertSeed(POLICY_GUIDE_SEED_ID, {
+      id: 'guid_policy_prozesse_guide', category: 'policy-prozesse', type: 'markdown',
+      pinOrder: 1, minRole: null, ...data,
+    })
+  }
+
+  async function _knexSeedIsoNotice() {
+    const lang = _getDemoLang()
+    const { title, content } = ISO_NOTICE[lang] || ISO_NOTICE.en
+    await _knex.upsertSeed(ISO_NOTICE_SEED_ID, {
+      id: 'guid_iso_controls_notice', category: 'systemhandbuch', type: 'markdown',
+      pinOrder: 2, minRole: null, title, content, seedLang: lang,
+    })
+  }
+
+  async function _knexSeedSystemhandbuch() {
+    await _knex.upsertSeed(SYSHANDBUCH_SEED_ID, {
+      id: 'guid_syshandbuch_quickref', category: 'systemhandbuch', type: 'markdown',
+      pinOrder: 3, minRole: null, title: 'Systemhandbuch ISMS Build',
+      content: SYSHANDBUCH_CONTENT,
+    })
+  }
+
+  module.exports = {
+    ..._knex,
+    seedArchitectureDocs: _knexSeedArchitectureDocs,
+    seedDemoDoc:          _knexSeedDemoDoc,
+    seedRoleGuides:       _knexSeedRoleGuides,
+    seedSoaGuide:         _knexSeedSoaGuide,
+    seedPolicyGuide:      _knexSeedPolicyGuide,
+    seedIsoNotice:        _knexSeedIsoNotice,
+    seedSystemhandbuch:   _knexSeedSystemhandbuch,
+  }
+} else {
+  module.exports = _jsonExports
 }

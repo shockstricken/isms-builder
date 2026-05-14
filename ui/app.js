@@ -43,7 +43,7 @@ const SECTION_META = [
   { id:'suppliers',  labelKey:'nav_suppliers',  label:'Supply Chain',       icon:'ph-truck',               minRole:'contentowner', functions:['ciso','revision'] },
   { id:'bcm',        labelKey:'nav_bcm',        label:'Business Continuity',icon:'ph-heartbeat',           minRole:'contentowner', functions:['ciso','revision'] },
   { id:'governance', labelKey:'nav_governance', label:'Governance',         icon:'ph-chalkboard-teacher',  minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
-  { id:'policy-acks', labelKey:'nav_policyAcks', label:'Richtlinien-Bestätigungen', icon:'ph-check-circle', minRole:'contentowner', functions:['ciso','revision','qmb'] },
+  { id:'policy-acks', labelKey:'nav_policyAcks', label:'Policy Acknowledgements', icon:'ph-check-circle', minRole:'contentowner', functions:['ciso','revision','qmb'] },
   { id:'reports',    labelKey:'nav_reports',    label:'Reports',            icon:'ph-chart-line',          minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
   { id:'settings',   labelKey:'nav_settings',   label:'Settings',           icon:'ph-gear',                minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
   // ── Nur Admin ────────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ function renderLifecycleActions(template) {
   if (available.length === 0) { bar.style.display = 'none'; return }
 
   bar.style.display = 'flex'
-  bar.innerHTML = `<span class="action-label">Aktion:</span>`
+  bar.innerHTML = `<span class="action-label">${t('common_action')}:</span>`
   available.forEach(tr => {
     const btn = document.createElement('button')
     btn.className = `btn-lifecycle ${tr.cls}`
@@ -206,7 +206,7 @@ function _initSemanticSearch() {
   }
 
   async function _doSearch(q) {
-    _open(`<div class="search-loading"><i class="ph ph-spinner"></i> Suche…</div>`)
+    _open(`<div class="search-loading"><i class="ph ph-spinner"></i> ${t('search')}</div>`)
     try {
       const res = await fetch(`/api/ai/search?q=${encodeURIComponent(q)}`, { credentials: 'include' })
       if (!res.ok) throw new Error('API error')
@@ -938,9 +938,9 @@ function removeAllDynamicPanels() {
 
 // ── Reports ─────────────────────────────────────────────────────────
 // ── Findings: Severity- und Status-Labels ─────────────────────────────────────
-const FINDING_SEVERITY_LABELS = { critical:'Kritisch', high:'Hoch', medium:'Mittel', low:'Niedrig', observation:'Hinweis' }
-const FINDING_STATUS_LABELS   = { open:'Offen', in_progress:'In Bearbeitung', resolved:'Behoben', accepted:'Akzeptiert' }
-const FINDING_ACT_STATUS_LABELS = { open:'Offen', in_progress:'In Bearbeitung', done:'Erledigt' }
+const FINDING_SEVERITY_LABELS = { critical:t('findings_critical'), high:t('findings_high'), medium:t('findings_medium'), low:t('findings_low'), observation:t('findings_observation') }
+const FINDING_STATUS_LABELS   = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), resolved:t('findings_statusResolved'), accepted:t('findings_statusAccepted') }
+const FINDING_ACT_STATUS_LABELS = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), done:t('findings_statusDone') }
 const FINDING_SEVERITY_COLOR  = { critical:'#f87171', high:'#fb923c', medium:'#fbbf24', low:'#4ade80', observation:'#60a5fa' }
 const FINDING_STATUS_COLOR    = { open:'#f87171', in_progress:'#fbbf24', resolved:'#4ade80', accepted:'#60a5fa' }
 
@@ -1325,7 +1325,7 @@ function exportReportPdf() {
   if (!resultEl || !_lastReportData) return alert('Please generate a report first.')
   const title = `ISMS Report — ${(_activeReportType||'').replace(/_/g,' ')} — ${new Date().toLocaleDateString('en-GB')}`
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blocked. Please allow pop-ups for this site.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${title}</title>
@@ -1380,34 +1380,34 @@ async function renderFindingsTab() {
   const sum      = sumRes.ok  ? await sumRes.json()  : {}
 
   const tabs = [
-    { id: 'list',     label: 'Alle',         icon: 'ph-list-bullets' },
-    { id: 'open',     label: 'Offen',        icon: 'ph-warning-circle' },
-    { id: 'resolved', label: 'Behoben',      icon: 'ph-check-circle' },
+    { id: 'list',     label: t('findings_tabList'),     icon: 'ph-list-bullets' },
+    { id: 'open',     label: t('findings_tabOpen'),     icon: 'ph-warning-circle' },
+    { id: 'resolved', label: t('findings_tabResolved'), icon: 'ph-check-circle' },
   ]
 
   content.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
       <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--text-inv)">
-        <i class="ph ph-magnifying-glass"></i> Audit-Feststellungen
+        <i class="ph ph-magnifying-glass"></i> ${t('findings_title')}
       </h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsJson()"><i class="ph ph-download-simple"></i> JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsCsv()"><i class="ph ph-file-csv"></i> CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsPdf()"><i class="ph ph-file-pdf"></i> PDF</button>
         ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="openFindingForm()">
-          <i class="ph ph-plus"></i> Neue Feststellung
+          <i class="ph ph-plus"></i> ${t('findings_new')}
         </button>` : ''}
       </div>
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
       ${[
-        { label:'Gesamt',       value: sum.total || 0,           color:'var(--text-primary)' },
-        { label:'Kritisch',     value: sum.bySeverity?.critical||0, color: FINDING_SEVERITY_COLOR.critical },
-        { label:'Hoch',         value: sum.bySeverity?.high||0,     color: FINDING_SEVERITY_COLOR.high },
-        { label:'Offen',        value: sum.byStatus?.open||0,        color: FINDING_STATUS_COLOR.open },
-        { label:'Maßn. offen',  value: sum.openActions||0,           color: sum.openActions > 0 ? '#fbbf24':'#4ade80' },
-        { label:'Maßn. überfällig', value: sum.overdueActions||0,   color: sum.overdueActions > 0 ? FINDING_SEVERITY_COLOR.critical:'#4ade80' },
+        { label:t('common_total'), value: sum.total || 0,           color:'var(--text-primary)' },
+        { label:t('findings_critical'), value: sum.bySeverity?.critical||0, color: FINDING_SEVERITY_COLOR.critical },
+        { label:t('findings_high'), value: sum.bySeverity?.high||0,     color: FINDING_SEVERITY_COLOR.high },
+        { label:t('findings_open'), value: sum.byStatus?.open||0,        color: FINDING_STATUS_COLOR.open },
+        { label:t('findings_actionsOpenShort'), value: sum.openActions||0,           color: sum.openActions > 0 ? '#fbbf24':'#4ade80' },
+        { label:t('findings_actionsOverdueShort'), value: sum.overdueActions||0,   color: sum.overdueActions > 0 ? FINDING_SEVERITY_COLOR.critical:'#4ade80' },
       ].map(k => `
         <div class="dash-card kpi" style="flex:1;min-width:100px;padding:10px 14px;text-align:center">
           <div style="font-size:1.4rem;font-weight:700;color:${k.color}">${k.value}</div>
@@ -1417,7 +1417,7 @@ async function renderFindingsTab() {
     </div>
 
     <div class="training-tab-bar" style="margin-bottom:12px">
-      ${tabs.map(tb => `<button class="training-tab${_findingsTab===tb.id?' active':''}"
+      ${tabs.map(tb => `<button class="training-tab${_findingsTab===tb.id?' active':''}" data-tab="${tb.id}"
         onclick="_switchFindingsTab('${tb.id}')">
         <i class="ph ${tb.icon}"></i> ${tb.label}
       </button>`).join('')}
@@ -1431,7 +1431,7 @@ async function renderFindingsTab() {
 function _switchFindingsTab(tab) {
   _findingsTab = tab
   document.querySelectorAll('#reportsMainContent .training-tab').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === ({list:'Alle',open:'Offen',resolved:'Behoben'}[tab]||tab))
+    b.classList.toggle('active', b.dataset.tab === tab)
   )
   fetch('/findings', { headers: apiHeaders() })
     .then(r => r.ok ? r.json() : [])
@@ -1454,7 +1454,7 @@ function _renderFindingsList(all, list) {
   if (!list.length) {
     area.innerHTML = `<div class="report-empty" style="padding:32px;text-align:center;color:var(--text-subtle)">
       <i class="ph ph-magnifying-glass" style="font-size:32px;display:block;margin-bottom:8px"></i>
-      Keine Feststellungen
+      ${t('findings_none')}
     </div>`
     return
   }
@@ -1473,13 +1473,13 @@ function _renderFindingsList(all, list) {
           </div>
           <div style="font-weight:600;color:var(--text-inv);margin-bottom:2px">${escHtml(f.title)}</div>
           <div style="font-size:12px;color:var(--text-subtle)">${escHtml(f.auditedArea || '')}
-            ${f.auditor ? `· Auditor: ${escHtml(f.auditor)}` : ''}
+            ${f.auditor ? `· ${t('findings_auditor')}: ${escHtml(f.auditor)}` : ''}
             ${f.auditPeriodFrom ? `· ${f.auditPeriodFrom}${f.auditPeriodTo?' – '+f.auditPeriodTo:''}` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:11px;color:${actOpen>0?'#fbbf24':'var(--text-subtle)'}">
-            <i class="ph ph-checks"></i> ${actOpen}/${actTotal} offen
+            <i class="ph ph-checks"></i> ${actOpen}/${actTotal} ${t('findings_statusOpen').toLowerCase()}
           </span>
           ${canEdit ? `
           <button class="btn btn-sm" onclick="event.stopPropagation();openFindingForm('${f.id}')">
@@ -1492,7 +1492,7 @@ function _renderFindingsList(all, list) {
         </div>
       </div>
       ${f.observation ? `<div style="font-size:12px;color:var(--text-subtle);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
-        <b>IST:</b> ${escHtml(f.observation.slice(0,120))}${f.observation.length>120?'…':''}
+        <b>${t('findings_observation_field')}:</b> ${escHtml(f.observation.slice(0,120))}${f.observation.length>120?'…':''}
       </div>` : ''}
     </div>`
   }).join('')
@@ -1519,7 +1519,7 @@ async function openFindingDetail(id) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchReportsMainTab('findings')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h3 class="training-form-title">
           <i class="ph ph-magnifying-glass"></i>
@@ -1527,38 +1527,38 @@ async function openFindingDetail(id) {
           ${escHtml(f.title)}
         </h3>
         <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="printFindingDetail('${f.id}')">
-          <i class="ph ph-printer"></i> Drucken / PDF
+          <i class="ph ph-printer"></i> ${t('common_print')} / PDF
         </button>
       </div>
       <div class="training-form-body">
 
         <div class="training-form-section">
           <h4 class="training-form-section-title" style="display:flex;align-items:center;gap:8px">
-            Feststellung ${_findingSeverityBadge(f.severity)} ${_findingStatusBadge(f.status)}
+            ${t('findings_singular')} ${_findingSeverityBadge(f.severity)} ${_findingStatusBadge(f.status)}
           </h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-bottom:12px;font-size:13px">
-            <div><span style="color:var(--text-subtle)">Bereich:</span> ${escHtml(f.auditedArea||'—')}</div>
-            <div><span style="color:var(--text-subtle)">Auditor:</span> ${escHtml(f.auditor||'—')}</div>
-            <div><span style="color:var(--text-subtle)">Zeitraum:</span>
+            <div><span style="color:var(--text-subtle)">${t('findings_auditedArea')}:</span> ${escHtml(f.auditedArea||'—')}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_auditor')}:</span> ${escHtml(f.auditor||'—')}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_period')}:</span>
               ${f.auditPeriodFrom ? escHtml(f.auditPeriodFrom)+(f.auditPeriodTo?' – '+escHtml(f.auditPeriodTo):'') : '—'}
             </div>
-            <div><span style="color:var(--text-subtle)">Erstellt:</span> ${f.createdAt?.slice(0,10)||'—'}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_created')}:</span> ${f.createdAt?.slice(0,10)||'—'}</div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color:var(--warn)">📋 IST-Zustand (Beobachtung)</label>
+            <label class="form-label" style="color:var(--warn)">📋 ${t('findings_observationFull')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.observation||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#60a5fa">🎯 SOLL-Zustand (Anforderung)</label>
+            <label class="form-label" style="color:#60a5fa">🎯 ${t('findings_requirementFull')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.requirement||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ Risiko / Auswirkung</label>
+            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ ${t('findings_impact')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.impact||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#4ade80">💡 Empfehlung</label>
+            <label class="form-label" style="color:#4ade80">💡 ${t('findings_recommendation')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.recommendation||'—')}</div>
           </div>
         </div>
@@ -1566,17 +1566,17 @@ async function openFindingDetail(id) {
         <div class="training-form-section" id="actionsSection">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
             <h4 class="training-form-section-title" style="margin:0">
-              <i class="ph ph-check-square"></i> Maßnahmenplan
+              <i class="ph ph-check-square"></i> ${t('findings_actions')}
             </h4>
             ${canAct ? `<button class="btn btn-primary btn-sm" onclick="openAddActionForm('${f.id}')">
-              <i class="ph ph-plus"></i> Maßnahme
+              <i class="ph ph-plus"></i> ${t('risk_measure')}
             </button>` : ''}
           </div>
           ${actTotal > 0 ? `
           <div style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-subtle);margin-bottom:4px">
-              <span>Fortschritt</span>
-              <span>${actDone} / ${actTotal} erledigt (${actPct} %)</span>
+              <span>${t('dash_progress')}</span>
+              <span>${actDone} / ${actTotal} ${t('findings_statusDone').toLowerCase()} (${actPct} %)</span>
             </div>
             <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
               <div style="height:100%;width:${actPct}%;background:${pbarColor};border-radius:4px;transition:width .3s ease"></div>
@@ -1590,7 +1590,7 @@ async function openFindingDetail(id) {
         ${canEdit ? `
         <div class="training-form-section">
           <button class="btn btn-primary" onclick="openFindingForm('${f.id}')">
-            <i class="ph ph-pencil-simple"></i> Feststellung bearbeiten
+            <i class="ph ph-pencil-simple"></i> ${t('findings_edit')}
           </button>
         </div>` : ''}
       </div>
@@ -1607,9 +1607,9 @@ async function printFindingDetail(findingId) {
   const done = actions.filter(a => a.status === 'done').length
   const pct  = actions.length ? Math.round(done / actions.length * 100) : 0
   const sevColor = { critical:'#c0392b', high:'#e67e22', medium:'#f39c12', low:'#27ae60', observation:'#2980b9' }
-  const actLabel = { open:'Offen', in_progress:'In Bearbeitung', done:'Erledigt' }
+  const actLabel = FINDING_ACT_STATUS_LABELS
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert. Bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${esc(f.ref)} — ${esc(f.title)}</title>
@@ -1636,26 +1636,26 @@ async function printFindingDetail(findingId) {
       <span class="badge" style="background:${sevColor[f.severity]||'#888'}">${esc(f.severity||'')}</span>
       <span class="badge" style="background:#555">${esc(f.status||'')}</span>
     </h1>
-    <div class="meta">Erstellt: ${(f.createdAt||'').slice(0,10)} · Auditor: ${esc(f.auditor)} · Bereich: ${esc(f.auditedArea)}</div>
+    <div class="meta">${t('findings_created')}: ${(f.createdAt||'').slice(0,10)} · ${t('findings_auditor')}: ${esc(f.auditor)} · ${t('findings_auditedArea')}: ${esc(f.auditedArea)}</div>
 
     <div class="section">
-      <h2>Feststellung</h2>
+      <h2>${t('findings_singular')}</h2>
       <div class="grid2">
-        <div><span style="color:#555">Zeitraum:</span> ${esc(f.auditPeriodFrom||'—')}${f.auditPeriodTo?' – '+esc(f.auditPeriodTo):''}</div>
-        <div><span style="color:#555">Verknüpfte Controls:</span> ${(f.linkedControls||[]).join(', ')||'—'}</div>
+        <div><span style="color:#555">${t('findings_period')}:</span> ${esc(f.auditPeriodFrom||'—')}${f.auditPeriodTo?' – '+esc(f.auditPeriodTo):''}</div>
+        <div><span style="color:#555">${t('findings_linkedControls')}:</span> ${(f.linkedControls||[]).join(', ')||'—'}</div>
       </div>
-      <div class="field"><div class="label">IST-Zustand (Beobachtung)</div><div class="value">${esc(f.observation)}</div></div>
-      <div class="field"><div class="label">SOLL-Zustand (Anforderung)</div><div class="value">${esc(f.requirement)}</div></div>
-      <div class="field"><div class="label">Risiko / Auswirkung</div><div class="value">${esc(f.impact)}</div></div>
-      <div class="field"><div class="label">Empfehlung</div><div class="value">${esc(f.recommendation)}</div></div>
+      <div class="field"><div class="label">${t('findings_observationFull')}</div><div class="value">${esc(f.observation)}</div></div>
+      <div class="field"><div class="label">${t('findings_requirementFull')}</div><div class="value">${esc(f.requirement)}</div></div>
+      <div class="field"><div class="label">${t('findings_impact')}</div><div class="value">${esc(f.impact)}</div></div>
+      <div class="field"><div class="label">${t('findings_recommendation')}</div><div class="value">${esc(f.recommendation)}</div></div>
     </div>
 
     <div class="section">
-      <h2>Maßnahmenplan — ${done} / ${actions.length} erledigt (${pct} %)</h2>
+      <h2>${t('findings_actions')} — ${done} / ${actions.length} ${t('findings_statusDone').toLowerCase()} (${pct} %)</h2>
       <div class="pbar-wrap"><div class="pbar"></div></div>
-      ${actions.length === 0 ? '<p style="color:#999;font-size:11px">Keine Maßnahmen eingetragen.</p>' : `
+      ${actions.length === 0 ? `<p style="color:#999;font-size:11px">${t('findings_noActions')}</p>` : `
       <table>
-        <thead><tr><th>Maßnahme</th><th>Verantwortlich</th><th>Fällig</th><th>Status</th></tr></thead>
+        <thead><tr><th>${t('risk_measure')}</th><th>${t('col_responsible')}</th><th>${t('col_dueDate')}</th><th>${t('col_status')}</th></tr></thead>
         <tbody>
           ${actions.map(a => `<tr>
             <td>${esc(a.description)}</td>
@@ -1703,10 +1703,10 @@ async function exportFindingsPdf() {
   const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
   const sevColor = { critical:'#c0392b', high:'#e67e22', medium:'#f39c12', low:'#27ae60', observation:'#2980b9' }
   const win  = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert. Bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
-    <title>Audit-Feststellungen — ${new Date().toLocaleDateString('de-DE')}</title>
+    <title>${t('findings_title')} — ${new Date().toLocaleDateString()}</title>
     <style>
       body  { font-family: Arial, sans-serif; font-size: 12px; color: #111; margin: 28px; }
       h1    { font-size: 15px; margin-bottom: 4px; }
@@ -1718,12 +1718,12 @@ async function exportFindingsPdf() {
       @media print { body { margin: 0; } }
     </style>
   </head><body>
-    <h1><i>Audit-Feststellungen</i></h1>
-    <div class="sub">Stand: ${new Date().toLocaleString('de-DE')} · ISMS Builder · ${list.length} Einträge</div>
+    <h1><i>${t('findings_title')}</i></h1>
+    <div class="sub">${t('dash_status')} ${new Date().toLocaleString()} · ISMS Builder · ${list.length} ${t('auditLog_total').toLowerCase()}</div>
     <table>
       <thead><tr>
-        <th>Ref</th><th>Titel</th><th>Schwere</th><th>Status</th>
-        <th>Bereich</th><th>Auditor</th><th>Zeitraum</th><th>Maßnahmen</th>
+        <th>Ref</th><th>${t('col_title')}</th><th>${t('findings_severity')}</th><th>${t('col_status')}</th>
+        <th>${t('findings_auditedArea')}</th><th>${t('findings_auditor')}</th><th>${t('findings_period')}</th><th>${t('findings_actions')}</th>
       </tr></thead>
       <tbody>
         ${list.map(f => {
@@ -1748,7 +1748,7 @@ async function exportFindingsPdf() {
 }
 
 function _renderActionsList(actions, findingId, canEdit) {
-  if (!actions.length) return `<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">Noch keine Maßnahmen eingetragen.</div>`
+  if (!actions.length) return `<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">${t('findings_noActions')}</div>`
   return actions.map(a => {
     const colAct = a.status === 'done' ? '#4ade80' : a.status === 'in_progress' ? '#fbbf24' : '#f87171'
     const overdue = a.status !== 'done' && a.dueDate && new Date(a.dueDate) < new Date()
@@ -1758,8 +1758,8 @@ function _renderActionsList(actions, findingId, canEdit) {
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px;margin-bottom:3px">${escHtml(a.description)}</div>
           <div style="font-size:12px;color:var(--text-subtle)">
-            Verantwortlich: <b>${escHtml(a.responsible||'—')}</b>
-            ${a.dueDate ? `· Fällig: <span style="color:${overdue?'#f87171':'inherit'}">${a.dueDate}${overdue?' ⚠':''}</span>` : ''}
+            ${t('col_responsible')}: <b>${escHtml(a.responsible||'—')}</b>
+            ${a.dueDate ? `· ${t('col_due')} <span style="color:${overdue?'#f87171':'inherit'}">${a.dueDate}${overdue?' ⚠':''}</span>` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -1768,7 +1768,7 @@ function _renderActionsList(actions, findingId, canEdit) {
             ${Object.entries(FINDING_ACT_STATUS_LABELS).map(([v,l]) =>
               `<option value="${v}"${a.status===v?' selected':''}>${l}</option>`).join('')}
           </select>
-          <button class="btn btn-sm" style="color:var(--danger)" title="Löschen"
+          <button class="btn btn-sm" style="color:var(--danger)" title="${t('delete')}"
             onclick="deleteAction('${findingId}','${a.id}')">
             <i class="ph ph-trash-simple"></i>
           </button>` : `<span style="color:${colAct};font-size:12px">${FINDING_ACT_STATUS_LABELS[a.status]||a.status}</span>`}
@@ -1788,22 +1788,22 @@ async function openAddActionForm(findingId) {
   el.style.cssText = 'background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px'
   el.innerHTML = `
     <div class="form-group">
-      <label class="form-label">Maßnahme <span class="form-required">*</span></label>
-      <textarea id="actDesc" class="form-input" rows="2" placeholder="Was wird konkret getan?"></textarea>
+      <label class="form-label">${t('risk_measure')} <span class="form-required">*</span></label>
+      <textarea id="actDesc" class="form-input" rows="2" placeholder="${t('findings_actionDescPlaceholder')}"></textarea>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Verantwortlich</label>
-        <input id="actResp" class="form-input" placeholder="Name / Rolle">
+        <label class="form-label">${t('col_responsible')}</label>
+        <input id="actResp" class="form-input" placeholder="${t('findings_responsiblePlaceholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Zieldatum</label>
+        <label class="form-label">${t('findings_targetDate')}</label>
         <input id="actDue" class="form-input" type="date">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-primary btn-sm" onclick="saveNewAction('${findingId}')">Speichern</button>
-      <button class="btn btn-secondary btn-sm" onclick="dom('${formId}').remove()">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewAction('${findingId}')">${t('save')}</button>
+      <button class="btn btn-secondary btn-sm" onclick="dom('${formId}').remove()">${t('cancel')}</button>
     </div>
   `
   area.prepend(el)
@@ -1820,7 +1820,7 @@ async function saveNewAction(findingId) {
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ description: desc, responsible: resp, dueDate: due })
   })
-  if (!r.ok) { showToast('Fehler beim Speichern', 'error'); return }
+  if (!r.ok) { showToast(t('err_saveFailed'), 'error'); return }
   openFindingDetail(findingId)
 }
 
@@ -1841,7 +1841,7 @@ async function updateActionStatus(findingId, actionId, status) {
 }
 
 async function deleteAction(findingId, actionId) {
-  if (!confirm('Maßnahme löschen?')) return
+  if (!confirm(t('findings_deleteActionConfirm'))) return
   await fetch(`/findings/${findingId}/actions/${actionId}`, { method: 'DELETE', headers: apiHeaders() })
   openFindingDetail(findingId)
 }
@@ -1860,31 +1860,31 @@ async function openFindingForm(id = null) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchReportsMainTab('findings')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h3 class="training-form-title">
           <i class="ph ph-magnifying-glass"></i>
-          ${isEdit ? `Feststellung bearbeiten <span style="font-family:monospace;font-size:12px;color:var(--text-subtle)">${escHtml(f?.ref||'')}</span>` : 'Neue Feststellung'}
+          ${isEdit ? `${t('findings_edit')} <span style="font-family:monospace;font-size:12px;color:var(--text-subtle)">${escHtml(f?.ref||'')}</span>` : t('findings_new')}
         </h3>
       </div>
       <div class="training-form-body">
 
         <div class="training-form-section">
-          <h4 class="training-form-section-title"><i class="ph ph-info"></i> Grunddaten</h4>
+          <h4 class="training-form-section-title"><i class="ph ph-info"></i> ${t('findings_basicData')}</h4>
           <div class="form-group">
-            <label class="form-label">Titel <span class="form-required">*</span></label>
-            <input id="fndTitle" class="form-input" value="${escHtml(f?.title||'')}" placeholder="Kurzer prägnanter Name der Feststellung">
+            <label class="form-label">${t('col_title')} <span class="form-required">*</span></label>
+            <input id="fndTitle" class="form-input" value="${escHtml(f?.title||'')}" placeholder="${t('findings_titlePlaceholder')}">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Schweregrad</label>
+              <label class="form-label">${t('findings_severity')}</label>
               <select id="fndSeverity" class="select">
                 ${Object.entries(FINDING_SEVERITY_LABELS).map(([v,l]) =>
                   `<option value="${v}"${(f?.severity||'medium')===v?' selected':''}>${l}</option>`).join('')}
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Status</label>
+              <label class="form-label">${t('col_status')}</label>
               <select id="fndStatus" class="select">
                 ${Object.entries(FINDING_STATUS_LABELS).map(([v,l]) =>
                   `<option value="${v}"${(f?.status||'open')===v?' selected':''}>${l}</option>`).join('')}
@@ -1893,58 +1893,58 @@ async function openFindingForm(id = null) {
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Geprüfter Bereich</label>
+              <label class="form-label">${t('findings_auditedArea')}</label>
               <input id="fndArea" class="form-input" value="${escHtml(f?.auditedArea||'')}" placeholder="z.B. IT-Operations / ISO A.8">
             </div>
             <div class="form-group">
-              <label class="form-label">Auditor</label>
-              <input id="fndAuditor" class="form-input" value="${escHtml(f?.auditor||'')}" placeholder="Name oder Kürzel">
+              <label class="form-label">${t('findings_auditor')}</label>
+              <input id="fndAuditor" class="form-input" value="${escHtml(f?.auditor||'')}" placeholder="${t('findings_auditorPlaceholder')}">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Audit-Zeitraum von</label>
+              <label class="form-label">${t('findings_periodFrom')}</label>
               <input id="fndPeriodFrom" class="form-input" type="date" value="${f?.auditPeriodFrom||''}">
             </div>
             <div class="form-group">
-              <label class="form-label">bis</label>
+              <label class="form-label">${t('reports_to')}</label>
               <input id="fndPeriodTo" class="form-input" type="date" value="${f?.auditPeriodTo||''}">
             </div>
           </div>
         </div>
 
         <div class="training-form-section">
-          <h4 class="training-form-section-title"><i class="ph ph-clipboard-text"></i> Feststellungsdetails</h4>
+          <h4 class="training-form-section-title"><i class="ph ph-clipboard-text"></i> ${t('findings_details')}</h4>
           <div class="form-group">
-            <label class="form-label" style="color:var(--warn)">📋 IST-Zustand (Beobachtung)</label>
+            <label class="form-label" style="color:var(--warn)">📋 ${t('findings_observationFull')}</label>
             <textarea id="fndObservation" class="form-input" rows="4"
-              placeholder="Was wurde gefunden? Stichprobengröße, konkrete Zahlen…">${escHtml(f?.observation||'')}</textarea>
+              placeholder="${t('findings_observationPlaceholder')}">${escHtml(f?.observation||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#60a5fa">🎯 SOLL-Zustand (Anforderung)</label>
+            <label class="form-label" style="color:#60a5fa">🎯 ${t('findings_requirementFull')}</label>
             <textarea id="fndRequirement" class="form-input" rows="3"
-              placeholder="Was verlangt die Norm oder die interne Richtlinie?">${escHtml(f?.requirement||'')}</textarea>
+              placeholder="${t('findings_requirementPlaceholder')}">${escHtml(f?.requirement||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ Risiko / Auswirkung</label>
+            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ ${t('findings_impact')}</label>
             <textarea id="fndImpact" class="form-input" rows="3"
-              placeholder="Was kann passieren, wenn das nicht behoben wird?">${escHtml(f?.impact||'')}</textarea>
+              placeholder="${t('findings_impactPlaceholder')}">${escHtml(f?.impact||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#4ade80">💡 Empfehlung</label>
+            <label class="form-label" style="color:#4ade80">💡 ${t('findings_recommendation')}</label>
             <textarea id="fndRecommendation" class="form-input" rows="3"
-              placeholder="Was sollte konkret getan werden?">${escHtml(f?.recommendation||'')}</textarea>
+              placeholder="${t('findings_recommendationPlaceholder')}">${escHtml(f?.recommendation||'')}</textarea>
           </div>
         </div>
 
         <div class="training-form-section">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="saveFinding(${id ? `'${id}'` : 'null'})">
-              <i class="ph ph-floppy-disk"></i> ${isEdit ? 'Speichern' : 'Feststellung anlegen'}
+              <i class="ph ph-floppy-disk"></i> ${isEdit ? t('save') : t('findings_create')}
             </button>
-            <button class="btn btn-secondary" onclick="switchReportsMainTab('findings')">Abbrechen</button>
+            <button class="btn btn-secondary" onclick="switchReportsMainTab('findings')">${t('cancel')}</button>
             ${isEdit ? `<button class="btn btn-secondary" onclick="openFindingDetail('${id}')">
-              <i class="ph ph-eye"></i> Detail-Ansicht
+              <i class="ph ph-eye"></i> ${t('findings_detailView')}
             </button>` : ''}
           </div>
           <p id="findingSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
@@ -1957,7 +1957,7 @@ async function openFindingForm(id = null) {
 
 async function saveFinding(id) {
   const title = dom('fndTitle')?.value.trim()
-  if (!title) { dom('fndTitle')?.focus(); showToast('Titel ist Pflichtfeld', 'error'); return }
+  if (!title) { dom('fndTitle')?.focus(); showToast(t('findings_titleRequired'), 'error'); return }
   const payload = {
     title,
     severity:        dom('fndSeverity')?.value,
@@ -1979,19 +1979,19 @@ async function saveFinding(id) {
   const msg = dom('findingSaveMsg')
   if (r.ok) {
     const saved = await r.json()
-    if (msg) { msg.textContent = id ? 'Gespeichert.' : `Feststellung ${saved.ref} angelegt.`; msg.style.color = 'var(--success,#4ade80)'; msg.style.display = '' }
+    if (msg) { msg.textContent = id ? t('msg_saved') : t('findings_createdMessage', { ref: saved.ref }); msg.style.color = 'var(--success,#4ade80)'; msg.style.display = '' }
     setTimeout(() => { if (id) openFindingDetail(id); else switchReportsMainTab('findings') }, 1000)
   } else {
     const e = await r.json().catch(() => ({}))
-    if (msg) { msg.textContent = 'Fehler: ' + (e.error || r.status); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = '' }
+    if (msg) { msg.textContent = t('error') + ': ' + (e.error || r.status); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = '' }
   }
 }
 
 async function deleteFinding(id) {
-  if (!confirm('Feststellung in den Papierkorb verschieben?')) return
+  if (!confirm(t('findings_trashConfirm'))) return
   const r = await fetch(`/findings/${id}`, { method: 'DELETE', headers: apiHeaders() })
-  if (r.ok) { showToast('Feststellung gelöscht', 'success'); switchReportsMainTab('findings') }
-  else showToast('Fehler beim Löschen', 'error')
+  if (r.ok) { showToast(t('findings_deleted'), 'success'); switchReportsMainTab('findings') }
+  else showToast(t('err_delete'), 'error')
 }
 
 // ── Ende Findings UI ──────────────────────────────────────────────────────────
@@ -2177,7 +2177,7 @@ async function loadIncidents() {
   const status = document.getElementById('incStatusFilter')?.value || ''
   const panel  = document.getElementById('incListPanel')
   if (!panel) return
-  panel.innerHTML = '<p class="report-loading">Lädt…</p>'
+  panel.innerHTML = `<p class="report-loading">${t('loading')}</p>`
 
   const res  = await fetch('/public/incidents' + (status ? `?status=${status}` : ''), { headers: apiHeaders() })
   const list = res.ok ? await res.json() : []
@@ -2754,10 +2754,10 @@ function openSoaIsoImport() {
       try {
         controls = JSON.parse(await file.text())
       } catch {
-        return showToast('Ungültige JSON-Datei.', 'error')
+        return showToast(t('err_invalidJson'), 'error')
       }
       if (!Array.isArray(controls) || controls.length === 0) {
-        return showToast('JSON muss ein Array von Controls enthalten.', 'error')
+        return showToast(t('soa_importArrayRequired'), 'error')
       }
       try {
         const res = await fetch('/soa/import-controls', {
@@ -2766,11 +2766,11 @@ function openSoaIsoImport() {
           body: JSON.stringify(controls)
         })
         const data = await res.json()
-        if (!res.ok) return showToast('Fehler: ' + (data.error || res.status), 'error')
-        showToast(`✓ ${data.imported} ISO-Controls importiert. Seite wird neu geladen…`, 'success')
+        if (!res.ok) return showToast(t('error') + ': ' + (data.error || res.status), 'error')
+        showToast(t('soa_importSuccess', { count: data.imported }), 'success')
         setTimeout(() => renderSoa(), 1200)
       } catch (e) {
-        showToast('Netzwerkfehler: ' + e.message, 'error')
+        showToast(t('err_network') + ': ' + e.message, 'error')
       }
     }
   }
@@ -2982,7 +2982,7 @@ async function renderDashboard() {
     if (findingsSummary?.overdueActions > 0)
       alerts.push({ color: '#f87171', icon: 'ph-magnifying-glass', text: `${findingsSummary.overdueActions} overdue action(s) in findings`, nav: 'reports' })
     if (reviewPending?.length > 0)
-      alerts.push({ color: '#f59e0b', icon: 'ph-shield-warning', text: `${reviewPending.length} Scan-Risiko(en) warten auf Freigabe`, nav: 'risk' })
+      alerts.push({ color: '#f59e0b', icon: 'ph-shield-warning', text: t('dash_scanRisksPending', { count: reviewPending.length }), nav: 'risk' })
     if (alerts.length === 0) return '<p class="dash-empty" style="color:var(--success-text)"><i class="ph ph-check-circle"></i> No critical issues</p>'
     return alerts.map(a => `<div class="dash-alert dash-link" data-nav="${a.nav}" style="border-left:3px solid ${a.color};padding:6px 10px;margin-bottom:6px;background:var(--surface);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px">
       <i class="ph ${a.icon}" style="color:${a.color};font-size:1rem"></i>
@@ -3211,17 +3211,17 @@ async function renderDashboard() {
 
     <!-- KPI Row: Policy Acknowledgements -->
     ${ackSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-check-circle"></i> Richtlinien-Bestätigungen</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-check-circle"></i> ${t('nav_policyAcks')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="policy-acks">
         <div class="kpi-value">${ackSummary.activeDistributions || 0}</div>
-        <div class="kpi-label">Aktive Verteilrunden</div>
+        <div class="kpi-label">${t('ack_activeDistributions')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="policy-acks">
         <div class="kpi-value" style="color:${(ackSummary.pendingAcks||0)>0?'#fbbf24':'var(--success-text)'}">
           ${ackSummary.pendingAcks || 0}
         </div>
-        <div class="kpi-label">Ausstehende Bestätigungen</div>
+        <div class="kpi-label">${t('ack_pendingAcknowledgements')}</div>
       </div>
     </div>` : ''}
 
@@ -4448,10 +4448,8 @@ async function renderAdminMaintenanceTab() {
       <div class="maintenance-section" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
         <h4 class="org-section-title"><i class="ph ph-shield-warning"></i> Greenbone Scan-Import</h4>
         <p class="settings-desc">
-          Importiert einen Greenbone-Sicherheitsbericht (XML oder PDF) als Risiko-Entwürfe.
-          Alle importierten Risiken erhalten den Status <strong>needsReview = true</strong> und
-          müssen von einem Auditor oder CISO geprüft und freigegeben werden,
-          bevor sie im Risikomanagement aktiv sind.
+          ${t('scanImport_descPrefix')}
+          ${t('scanImport_descSuffix')}
         </p>
         <form onsubmit="event.preventDefault();scanImportUpload(this)">
           <div style="display:flex;flex-direction:column;gap:10px;max-width:520px">
@@ -4460,20 +4458,20 @@ async function renderAdminMaintenanceTab() {
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:1;min-width:160px">
-                <label class="form-label" style="font-size:12px">Gesellschaft (optional)</label>
+                <label class="form-label" style="font-size:12px">${t('reports_entity')} (${t('ack_optional')})</label>
                 <select id="scanImportEntity" class="select" style="width:100%">
-                  <option value="">— keine Zuordnung —</option>
+                  <option value="">— ${t('scanImport_noAssignment')} —</option>
                   ${entityOpts}
                 </select>
               </div>
               <div style="flex:1;min-width:160px">
-                <label class="form-label" style="font-size:12px">Scan-Referenz (optional)</label>
-                <input type="text" id="scanImportRef" class="form-input" placeholder="z.B. Scan-2026-03" style="width:100%" />
+                <label class="form-label" style="font-size:12px">${t('scanImport_reference')} (${t('ack_optional')})</label>
+                <input type="text" id="scanImportRef" class="form-input" placeholder="${t('scanImport_referencePlaceholder')}" style="width:100%" />
               </div>
             </div>
             <div style="display:flex;gap:10px">
               <button type="submit" id="scanImportBtn" class="btn btn-primary">
-                <i class="ph ph-upload-simple"></i> Importieren
+                <i class="ph ph-upload-simple"></i> ${t('import_action')}
               </button>
             </div>
           </div>
@@ -6337,21 +6335,21 @@ async function tmplMgmtEdit(type, id) {
 }
 
 async function tmplMgmtSoftDelete(type, id, title) {
-  if (!confirm(`Template "${title}" in den Papierkorb verschieben?`)) return
+  if (!confirm(t('tmpl_trashConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, { method: 'DELETE', headers: apiHeaders('contentowner') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
 }
 
 async function tmplMgmtPermDelete(type, id, title) {
-  if (!confirm(`Template "${title}" endgültig löschen? Dies kann nicht rückgängig gemacht werden.`)) return
+  if (!confirm(t('tmpl_permanentDeleteConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', headers: apiHeaders('admin') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
 }
 
 async function tmplMgmtRestore(type, id, title) {
-  if (!confirm(`Template "${title}" wiederherstellen?`)) return
+  if (!confirm(t('tmpl_restoreConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}/restore`, { method: 'POST', headers: apiHeaders('admin') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
@@ -7442,7 +7440,7 @@ function printGuidanceDoc(docId) {
 
 function printGuidanceCategory() {
   const docs = _guidanceDocs.filter(d => d.type === 'markdown' || d.type === 'html')
-  if (docs.length === 0) return alert('Keine druckbaren Dokumente in dieser Kategorie.')
+  if (docs.length === 0) return alert(t('guidance_noPrintableDocs'))
   _printGuidanceDocs(docs)
 }
 
@@ -7463,7 +7461,7 @@ function _printGuidanceDocs(docs) {
   }).join('<div class="page-break"></div>')
 
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${escHtml(title)}</title>
@@ -7525,7 +7523,7 @@ function renderGuidanceSearchResults(results, query) {
   const ul = dom('guidanceDocList')
   if (!ul) return
   if (results.length === 0) {
-    ul.innerHTML = `<li style="padding:12px;color:var(--text-subtle);font-size:13px;">Keine Treffer für „${escHtml(query)}"</li>`
+    ul.innerHTML = `<li style="padding:12px;color:var(--text-subtle);font-size:13px;">${t('search_noResultsFor', { query: escHtml(query) })}</li>`
     renderGuidanceEmpty()
     return
   }
@@ -8001,16 +7999,16 @@ function calNavToday() {
 // ════════════════════════════════════════════════════════════
 
 let RISK_CATS = [
-  { id:'technical',       label:'Technisch',        icon:'ph-cpu' },
-  { id:'organizational',  label:'Organisatorisch',   icon:'ph-users' },
-  { id:'physical',        label:'Physisch',          icon:'ph-building' },
-  { id:'legal',           label:'Rechtlich',         icon:'ph-scales' },
+  { id:'technical',       labelKey:'risk_catTechnical',      icon:'ph-cpu' },
+  { id:'organizational',  labelKey:'risk_catOrganizational', icon:'ph-users' },
+  { id:'physical',        labelKey:'risk_catPhysical',       icon:'ph-building' },
+  { id:'legal',           labelKey:'risk_catLegal',          icon:'ph-scales' },
 ]
 let RISK_TREATMENTS = [
-  { id:'reduce',   label:'Reduzieren' },
-  { id:'accept',   label:'Akzeptieren' },
-  { id:'avoid',    label:'Vermeiden' },
-  { id:'transfer', label:'Übertragen' },
+  { id:'reduce',   labelKey:'risk_treatmentReduce' },
+  { id:'accept',   labelKey:'risk_treatmentAccept' },
+  { id:'avoid',    labelKey:'risk_treatmentAvoid' },
+  { id:'transfer', labelKey:'risk_treatmentTransfer' },
 ]
 const RISK_STATUSES = [
   { id:'open',         label:'Open' },
@@ -8029,16 +8027,19 @@ const RISK_LEVEL_CFG = {
  * https://www.first.org/cvss/specification-document */
 const CVSS_BANDS = [
   { min: 9.0, max: 10.0, label: 'Critical', cls: 'cvss-critical', color: '#dc2626',
-    desc: 'Kritisch: Schwachstelle ermöglicht vollständige Systemkompromittierung, oft ohne Authentifizierung und Nutzerinteraktion (z.B. Remote Code Execution).' },
+    descKey: 'cvss_descCritical' },
   { min: 7.0, max:  8.9, label: 'High',     cls: 'cvss-high',     color: '#ea580c',
-    desc: 'Hoch: Erheblicher Schaden möglich. Angreifer können wichtige Ressourcen kontrollieren oder vertrauliche Daten auslesen.' },
+    descKey: 'cvss_descHigh' },
   { min: 4.0, max:  6.9, label: 'Medium',   cls: 'cvss-medium',   color: '#ca8a04',
-    desc: 'Mittel: Eingeschränkter Schaden oder Ausnutzung erfordert bestimmte Vorbedingungen (z.B. Netzwerkzugang, Benutzerinteraktion).' },
+    descKey: 'cvss_descMedium' },
   { min: 0.1, max:  3.9, label: 'Low',      cls: 'cvss-low',      color: '#16a34a',
-    desc: 'Niedrig: Minimaler Schaden, schwer ausnutzbar oder starke einschränkende Faktoren vorhanden.' },
+    descKey: 'cvss_descLow' },
   { min: 0.0, max:  0.0, label: 'None',     cls: 'cvss-none',     color: '#6b7280',
-    desc: 'Kein Risiko: Keine Auswirkung auf Vertraulichkeit, Integrität oder Verfügbarkeit.' },
+    descKey: 'cvss_descNone' },
 ]
+function riskCatLabel(cat) { return cat ? t(cat.labelKey) : '' }
+function riskTreatmentLabel(treatment) { return treatment ? t(treatment.labelKey) : '' }
+function cvssDesc(info) { return info?.descKey ? t(info.descKey) : '' }
 
 function cvssInfo(score) {
   if (score == null || isNaN(score)) return null
@@ -8050,7 +8051,7 @@ function cvssBadgeHtml(score) {
   if (score == null || isNaN(score)) return ''
   const info = cvssInfo(score)
   const pct  = Math.round((parseFloat(score) / 10) * 100)
-  return `<span class="cvss-badge ${info.cls}" title="${info.desc}">CVSS ${parseFloat(score).toFixed(1)} — ${info.label}</span>`
+  return `<span class="cvss-badge ${info.cls}" title="${cvssDesc(info)}">CVSS ${parseFloat(score).toFixed(1)} — ${info.label}</span>`
 }
 
 function cvssBarHtml(score) {
@@ -8130,7 +8131,7 @@ async function renderRiskRegister(el) {
   const risks = res.ok ? await res.json() : []
 
   const catOpts = [{ id:'', label:t('filter_allCats') }, ...RISK_CATS].map(c =>
-    `<option value="${c.id}" ${_riskFilterCat === c.id ? 'selected':''}>${c.label}</option>`).join('')
+    `<option value="${c.id}" ${_riskFilterCat === c.id ? 'selected':''}>${c.label || riskCatLabel(c)}</option>`).join('')
   const stOpts = [{ id:'', label:t('filter_allStatuses') }, ...RISK_STATUSES].map(s =>
     `<option value="${s.id}" ${_riskFilterStatus === s.id ? 'selected':''}>${s.label}</option>`).join('')
 
@@ -8157,10 +8158,10 @@ async function renderRiskRegister(el) {
               <span class="risk-badge ${lv.cls}">${lv.label}</span>
               ${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : ''}
             </td>
-            <td class="risk-title-cell">${escHtml(r.title)}${r.needsReview ? ' <span class="badge-review-pending" title="Freigabe erforderlich">&#9888; Review</span>' : ''}</td>
-            <td>${escHtml(cat?.label || r.category)}</td>
+            <td class="risk-title-cell">${escHtml(r.title)}${r.needsReview ? ` <span class="badge-review-pending" title="${t('risk_approvalRequired')}">&#9888; Review</span>` : ''}</td>
+            <td>${escHtml(riskCatLabel(cat) || r.category)}</td>
             <td class="risk-score-cell">${r.probability} × ${r.impact} = <strong>${r.score}</strong></td>
-            <td>${escHtml(tr?.label || r.treatmentOption)}</td>
+            <td>${escHtml(riskTreatmentLabel(tr) || r.treatmentOption)}</td>
             <td><span class="risk-status-badge risk-st-${r.status}">${st?.label || r.status}</span></td>
             <td>${escHtml(r.owner || '—')}</td>
             <td onclick="event.stopPropagation()" class="risk-actions">
@@ -8242,12 +8243,12 @@ async function renderRiskHeatmap(el) {
       <div class="heatmap-risk-list-body">${listRows}</div>
     </div>
     <div class="heatmap-legend">
-      <span class="hm-leg hm-low">Low (1–4)</span>
-      <span class="hm-leg hm-medium">Medium (5–9)</span>
-      <span class="hm-leg hm-high">High (10–14)</span>
-      <span class="hm-leg hm-critical">Critical (15–25)</span>
+      <span class="hm-leg hm-low">${t('risk_levelLow')}</span>
+      <span class="hm-leg hm-medium">${t('risk_levelMed')}</span>
+      <span class="hm-leg hm-high">${t('risk_levelHigh')}</span>
+      <span class="hm-leg hm-critical">${t('risk_levelCrit')}</span>
     </div>
-    <p class="heatmap-hint">Click a point to open risk details.</p>`
+    <p class="heatmap-hint">${t('risk_heatmapHint')}</p>`
 
   el.innerHTML = grid
 }
@@ -8272,28 +8273,28 @@ async function renderRiskTreatments(el) {
     return new Date(a.dueDate) - new Date(b.dueDate)
   })
 
-  const statusLabel = { open:'Offen', in_progress:'In Arbeit', completed:'Abgeschlossen' }
+  const statusLabel = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), completed:t('risk_statusCompleted') }
   const today = new Date().toISOString().slice(0,10)
 
   const riskOpts = risks.map(r => `<option value="${escHtml(r.id)}">${escHtml(r.title)}</option>`).join('')
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <h4 style="margin:0;flex:1;">Alle Behandlungsmaßnahmen (${rows.length})</h4>
+      <h4 style="margin:0;flex:1;">${t('risk_allTreatments')} (${rows.length})</h4>
       ${canManageRisks() ? `
         <select id="tpRiskPicker" class="select" style="max-width:220px;">
-          <option value="">— Select risk —</option>
+          <option value="">— ${t('risk_select')} —</option>
           ${riskOpts}
         </select>
         <button class="btn btn-primary btn-sm" onclick="openTreatmentModalForRisk()">
-          <i class="ph ph-plus"></i> New Measure
+          <i class="ph ph-plus"></i> ${t('risk_newMeasure')}
         </button>` : ''}
     </div>
-    ${rows.length === 0 ? '<p class="risk-empty">No treatment measures recorded.</p>' : `
+    ${rows.length === 0 ? `<p class="risk-empty">${t('risk_noMeasures')}</p>` : `
     <table class="risk-table">
       <thead><tr>
-        <th>Measure</th><th>Risk</th><th>Responsible</th><th>Unit (OE)</th>
-        <th>Due Date</th><th>Status</th>
+        <th>${t('risk_measure')}</th><th>${t('risk_riskCol')}</th><th>${t('col_responsible')}</th><th>${t('risk_orgUnit')}</th>
+        <th>${t('col_dueDate')}</th><th>${t('col_status')}</th>
         ${canManageRisks() ? '<th style="width:90px;"></th>' : ''}
       </tr></thead>
       <tbody>
@@ -8326,7 +8327,7 @@ async function renderRiskTreatments(el) {
 function openTreatmentModalForRisk() {
   const sel = document.getElementById('tpRiskPicker')
   const riskId = sel?.value
-  if (!riskId) { alert('Please select a risk first.'); return }
+  if (!riskId) { alert(t('risk_selectFirst')); return }
   openTreatmentModal(riskId, null)
 }
 
@@ -8420,7 +8421,7 @@ async function renderRiskReports(el) {
         <h4>${t('risk_byCategory')}</h4>
         ${RISK_CATS.map(c => `
           <div class="risk-report-row">
-            <span style="width:130px;font-size:12px;">${c.label}</span>
+            <span style="width:130px;font-size:12px;">${riskCatLabel(c)}</span>
             ${bar(s.byCategory[c.id]||0, s.total, 'risk-cat-bar')}
           </div>`).join('')}
       </div>
@@ -8441,25 +8442,25 @@ async function renderRiskReports(el) {
       </div>
       ${pending.length > 0 ? `
       <div class="risk-report-card risk-report-full scan-review-banner" style="border-color:#f59e0b">
-        <h4><i class="ph ph-shield-warning" style="color:#f59e0b"></i> Freigabe ausstehend (${pending.length})</h4>
+        <h4><i class="ph ph-shield-warning" style="color:#f59e0b"></i> ${t('risk_approvalPending')} (${pending.length})</h4>
         <table class="risk-table">
-          <thead><tr><th>Titel</th><th>CVSS</th><th>Schweregrad</th><th>Host</th><th>CVEs</th><th>Aktion</th></tr></thead>
+          <thead><tr><th>${t('col_title')}</th><th>CVSS</th><th>${t('findings_severity')}</th><th>Host</th><th>CVEs</th><th>${t('common_action')}</th></tr></thead>
           <tbody>${pending.map(r => `<tr>
             <td>${escHtml(r.title)}</td>
             <td>${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : '—'}</td>
             <td><span class="risk-badge ${RISK_LEVEL_CFG[r.riskLevel]?.cls||''}">${RISK_LEVEL_CFG[r.riskLevel]?.label||r.riskLevel||'—'}</span></td>
             <td style="font-size:.8rem;color:var(--text-muted)">${escHtml(r.scanRef||'')}</td>
             <td style="font-size:.8rem">${(r.cveIds||[]).join(', ')||'—'}</td>
-            <td><button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check"></i> Freigeben</button></td>
+            <td><button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check"></i> ${t('risk_approve')}</button></td>
           </tr>`).join('')}
           </tbody>
         </table>
       </div>` : ''}
       ${scanRisks.length > 0 ? `
       <div class="risk-report-card risk-report-full">
-        <h4><i class="ph ph-scan" style="color:#3b82f6"></i> Scan-Importe (${scanRisks.length} freigegeben)</h4>
+        <h4><i class="ph ph-scan" style="color:#3b82f6"></i> ${t('risk_scanImports')} (${scanRisks.length} ${t('risk_approved').toLowerCase()})</h4>
         <table class="risk-table">
-          <thead><tr><th>Titel</th><th>CVSS</th><th>Schweregrad</th><th>CVEs</th><th>Score</th><th>Status</th><th>Genehmigt von</th></tr></thead>
+          <thead><tr><th>${t('col_title')}</th><th>CVSS</th><th>${t('findings_severity')}</th><th>CVEs</th><th>Score</th><th>${t('col_status')}</th><th>${t('risk_approvedBy')}</th></tr></thead>
           <tbody>${scanRisks.map(r => `<tr onclick="openRiskDetail('${r.id}')" style="cursor:pointer">
             <td>${escHtml(r.title)}</td>
             <td>${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : '—'}</td>
@@ -8498,21 +8499,21 @@ async function openRiskDetail(id) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchRiskTab('register')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h2 style="margin:0;flex:1;font-size:1.1rem;display:flex;align-items:center;gap:8px;">
           <span class="risk-badge ${lv.cls}">${lv.label}</span>
           ${escHtml(r.title)}
         </h2>
         ${canEditRisk(r) ? `<button class="btn btn-secondary btn-sm" onclick="openRiskModal('${r.id}')">
-          <i class="ph ph-pencil"></i> Bearbeiten
+          <i class="ph ph-pencil"></i> ${t('edit')}
         </button>` : ''}
       </div>
 
       ${r.needsReview ? `<div class="scan-review-banner" style="margin-bottom:16px">
         <i class="ph ph-warning"></i>
-        <span><strong>Freigabe erforderlich</strong> — Dieses Risiko wurde automatisch durch einen Scan-Import erstellt und muss geprüft und freigegeben werden.</span>
-        ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check-circle"></i> Freigeben</button>` : ''}
+        <span><strong>${t('risk_approvalRequired')}</strong> — ${t('risk_scanReviewText')}</span>
+        ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check-circle"></i> ${t('risk_approve')}</button>` : ''}
       </div>` : ''}
 
       ${r.source === 'greenbone-scan' ? (() => {
@@ -8529,12 +8530,12 @@ async function openRiskDetail(id) {
               ${cvssBarHtml(r.cvssScore)}
             ` : ''}
           </div>
-          ${ci ? `<p class="cvss-detail-desc">${ci.desc}</p>` : ''}
+          ${ci ? `<p class="cvss-detail-desc">${cvssDesc(ci)}</p>` : ''}
           ${r.cveIds?.length ? `<div class="cvss-cve-row">
             <span class="cvss-cve-label">CVEs:</span>
             ${r.cveIds.map(c => `<span class="cvss-cve-chip">${escHtml(c)}</span>`).join('')}
           </div>` : ''}
-          <p class="cvss-detail-source-note">Einstufung nach CVSS v3.1 — <a href="https://www.first.org/cvss/" target="_blank" rel="noopener" style="color:var(--accent)">FIRST.org</a></p>
+          <p class="cvss-detail-source-note">${t('cvss_sourceNote')} — <a href="https://www.first.org/cvss/" target="_blank" rel="noopener" style="color:var(--accent)">FIRST.org</a></p>
         </div>`
       })() : ''}
 
@@ -8551,23 +8552,23 @@ async function openRiskDetail(id) {
         </div>
         <div class="risk-detail-section">
           <h4>${t('risk_assessment')}</h4>
-          <div class="risk-detail-row"><label>Kategorie</label><span>${escHtml(cat?.label||r.category)}</span></div>
+          <div class="risk-detail-row"><label>${t('col_category')}</label><span>${escHtml(riskCatLabel(cat)||r.category)}</span></div>
           <div class="risk-detail-row"><label>${t('risk_probability')}</label><span>${r.probability} / 5</span></div>
           <div class="risk-detail-row"><label>${t('risk_impact')}</label><span>${r.impact} / 5</span></div>
           <div class="risk-detail-row"><label>Score</label><span><strong>${r.score}</strong> — <span class="risk-badge ${lv.cls}">${lv.label}</span></span></div>
-          <div class="risk-detail-row"><label>${t('risk_treatmentOpt')}</label><span>${escHtml(tr?.label||r.treatmentOption)}</span></div>
-          <div class="risk-detail-row"><label>Status</label><span class="risk-status-badge risk-st-${r.status}">${st?.label||r.status}</span></div>
+          <div class="risk-detail-row"><label>${t('risk_treatmentOpt')}</label><span>${escHtml(riskTreatmentLabel(tr)||r.treatmentOption)}</span></div>
+          <div class="risk-detail-row"><label>${t('col_status')}</label><span class="risk-status-badge risk-st-${r.status}">${st?.label||r.status}</span></div>
           <div class="risk-detail-row"><label>Owner</label><span>${escHtml(r.owner||'—')}</span></div>
-          <div class="risk-detail-row"><label>Fälligkeit</label><span>${r.dueDate ? new Date(r.dueDate).toLocaleDateString('de-DE') : '—'}</span></div>
+          <div class="risk-detail-row"><label>${t('col_dueDate')}</label><span>${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '—'}</span></div>
           <div class="risk-detail-row"><label>Review</label><span>${r.reviewDate ? new Date(r.reviewDate).toLocaleDateString('de-DE') : '—'}</span></div>
         </div>
       </div>
 
       <div class="risk-detail-section" style="margin-top:20px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <h4 style="margin:0;flex:1;">Behandlungsmaßnahmen (${(r.treatmentPlans||[]).length})</h4>
+          <h4 style="margin:0;flex:1;">${t('risk_treatmentsTab')} (${(r.treatmentPlans||[]).length})</h4>
           ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="openTreatmentModal('${r.id}',null)">
-            <i class="ph ph-plus"></i> Maßnahme
+            <i class="ph ph-plus"></i> ${t('risk_measure')}
           </button>` : ''}
         </div>
         <div id="riskDetailTps">
@@ -8596,14 +8597,14 @@ async function openRiskDetail(id) {
       </div>
 
       ${r.linkedControls?.length ? `<div class="risk-detail-section" style="margin-top:16px">
-        <h4>Verknüpfte SoA-Controls (${r.linkedControls.length})</h4>
+        <h4>${t('risk_linkedControls')} (${r.linkedControls.length})</h4>
         <div class="tmpl-controls-bar" style="display:flex;flex-wrap:wrap;gap:6px;">
           ${r.linkedControls.map(c => `<span class="tmpl-bar-pill">${escHtml(c)}</span>`).join('')}
         </div>
       </div>` : ''}
 
       ${r.applicableEntities?.length ? `<div class="risk-detail-section" style="margin-top:16px">
-        <h4>Gültig für Gesellschaften</h4>
+        <h4>${t('common_applicableEntities')}</h4>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${r.applicableEntities.map(e => `<span class="tmpl-bar-pill"><i class="ph ph-buildings"></i> ${escHtml(entityMap[e] || e)}</span>`).join('')}
         </div>
@@ -8613,7 +8614,7 @@ async function openRiskDetail(id) {
 
 async function approveRisk(id) {
   const res = await fetch(`/risks/${id}/approve`, { method: 'POST', headers: apiHeaders() })
-  if (!res.ok) return alert('Freigabe fehlgeschlagen')
+  if (!res.ok) return alert(t('risk_approvalFailed'))
   await openRiskDetail(id)
 }
 
@@ -8622,7 +8623,7 @@ async function scanImportUpload(formEl) {
   const file     = formEl.querySelector('#scanImportFile').files[0]
   const entityId = formEl.querySelector('#scanImportEntity')?.value || ''
   const scanRef  = formEl.querySelector('#scanImportRef')?.value || ''
-  if (!file) return alert('Bitte eine Datei auswählen')
+  if (!file) return alert(t('file_selectRequired'))
 
   const fd = new FormData()
   fd.append('file', file)
@@ -8631,27 +8632,27 @@ async function scanImportUpload(formEl) {
 
   const btn = formEl.querySelector('#scanImportBtn')
   btn.disabled = true
-  btn.textContent = 'Importiere…'
+  btn.textContent = t('importing')
 
   try {
     const res  = await fetch('/admin/scan-import/upload', { method: 'POST', headers: { Authorization: apiHeaders().Authorization }, body: fd })
     const data = await res.json()
-    if (!res.ok) { alert('Fehler: ' + (data.error || res.status)); return }
+    if (!res.ok) { alert(t('error') + ': ' + (data.error || res.status)); return }
     const resultEl = document.getElementById('scanImportResult')
     if (resultEl) resultEl.innerHTML = `
       <div class="scan-import-result ok">
-        <strong>Import erfolgreich</strong><br>
-        Gefundene Findings: ${data.findings} &nbsp;|&nbsp;
-        Geclusterte Risiken: ${data.clusters} &nbsp;|&nbsp;
-        Erstellt: <strong>${data.created}</strong> &nbsp;|&nbsp;
-        Übersprungen (Duplikat): ${data.skipped}
-        <br><small>Methode: ${data.parseMethod?.toUpperCase()}</small>
+        <strong>${t('import_success')}</strong><br>
+        ${t('import_findingsFound')}: ${data.findings} &nbsp;|&nbsp;
+        ${t('import_clusteredRisks')}: ${data.clusters} &nbsp;|&nbsp;
+        ${t('import_created')}: <strong>${data.created}</strong> &nbsp;|&nbsp;
+        ${t('import_skippedDuplicates')}: ${data.skipped}
+        <br><small>${t('import_method')}: ${data.parseMethod?.toUpperCase()}</small>
       </div>`
   } catch (e) {
-    alert('Netzwerkfehler: ' + e.message)
+    alert(t('err_network') + ': ' + e.message)
   } finally {
     btn.disabled = false
-    btn.textContent = 'Importieren'
+    btn.textContent = t('import_action')
   }
 }
 
@@ -10398,7 +10399,7 @@ async function switchTrainingTab(tab) {
     if (tab === 'plan')      await renderTrainingPlan(el)
     if (tab === 'evidence')  await renderTrainingEvidence(el)
   } catch(e) {
-    el.innerHTML = `<p style="color:var(--danger-text);padding:24px"><i class="ph ph-warning"></i> Error loading: ${e.message}. Bitte Server neu starten.</p>`
+    el.innerHTML = `<p style="color:var(--danger-text);padding:24px"><i class="ph ph-warning"></i> ${t('err_load')}: ${e.message}. ${t('err_restartServer')}</p>`
   }
 }
 
@@ -13440,24 +13441,24 @@ async function renderPolicyAcks() {
     mode = cfg.policyAckMode || 'manual'
   } catch {}
 
-  const modeLabels = { email_campaign: 'E-Mail-Kampagne', manual: 'Manuell / CSV', distribution_only: 'Nur Verteilung dokumentieren' }
+  const modeLabels = { email_campaign: t('ack_modeEmail'), manual: t('ack_modeManualShort'), distribution_only: t('ack_modeDistributionOnly') }
   const modeIcons  = { email_campaign: 'ph-envelope', manual: 'ph-pencil', distribution_only: 'ph-file-text' }
 
   container.innerHTML = `
     <div class="reports-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <h2 class="reports-title"><i class="ph ph-check-circle"></i> Richtlinien-Bestätigungen</h2>
+      <h2 class="reports-title"><i class="ph ph-check-circle"></i> ${t('nav_policyAcks')}</h2>
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)">
         <i class="ph ${modeIcons[mode]}"></i>
-        Modus: <strong>${modeLabels[mode] || mode}</strong>
-        ${getCurrentRole() === 'admin' ? `<button class="btn btn-secondary btn-sm" onclick="renderPolicyAckSettings()"><i class="ph ph-gear"></i> Modus ändern</button>` : ''}
+        ${t('ack_mode')}: <strong>${modeLabels[mode] || mode}</strong>
+        ${getCurrentRole() === 'admin' ? `<button class="btn btn-secondary btn-sm" onclick="renderPolicyAckSettings()"><i class="ph ph-gear"></i> ${t('ack_changeMode')}</button>` : ''}
       </div>
     </div>
     <div class="training-tab-bar" style="margin-bottom:16px">
       <button class="training-tab${_ackTab==='list'?' active':''}" onclick="_ackTab='list';renderPolicyAcks()">
-        <i class="ph ph-list-checks"></i> Verteilrunden
+        <i class="ph ph-list-checks"></i> ${t('ack_distributions')}
       </button>
       <button class="training-tab${_ackTab==='new'?' active':''}" onclick="_ackTab='new';renderPolicyAcks()">
-        <i class="ph ph-plus-circle"></i> Neue Verteilrunde
+        <i class="ph ph-plus-circle"></i> ${t('ack_newDistribution')}
       </button>
     </div>
     <div id="policyAcksContent"></div>
@@ -13477,17 +13478,17 @@ async function _renderDistributionList(container, mode) {
   try { dists = await fetch('/distributions', { headers: apiHeaders() }).then(r => r.json()) } catch {}
 
   if (!Array.isArray(dists) || dists.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="ph ph-check-circle" style="font-size:48px;color:var(--text-muted)"></i><p>Noch keine Verteilrunden vorhanden.</p><button class="btn btn-primary" onclick="_ackTab='new';renderPolicyAcks()"><i class="ph ph-plus"></i> Erste Verteilrunde anlegen</button></div>`
+    container.innerHTML = `<div class="empty-state"><i class="ph ph-check-circle" style="font-size:48px;color:var(--text-muted)"></i><p>${t('ack_noDistributions')}</p><button class="btn btn-primary" onclick="_ackTab='new';renderPolicyAcks()"><i class="ph ph-plus"></i> ${t('ack_createFirst')}</button></div>`
     return
   }
 
-  const statusLabel  = { active: 'Aktiv', completed: 'Abgeschlossen', expired: 'Abgelaufen' }
+  const statusLabel  = { active: t('ack_statusActive'), completed: t('ack_statusCompleted'), expired: t('ack_statusExpired') }
   const statusColor  = { active: '#4ade80', completed: '#60a5fa', expired: '#f87171' }
 
   container.innerHTML = `
     <table class="data-table" style="width:100%">
       <thead><tr>
-        <th>Richtlinie</th><th>Zielgruppe</th><th>Frist</th><th>Fortschritt</th><th>Status</th><th>Erstellt</th><th></th>
+        <th>${t('ack_policy')}</th><th>${t('ack_targetGroup')}</th><th>${t('ack_deadline')}</th><th>${t('dash_progress')}</th><th>${t('col_status')}</th><th>${t('findings_created')}</th><th></th>
       </tr></thead>
       <tbody>
         ${dists.map(d => {
@@ -13509,7 +13510,7 @@ async function _renderDistributionList(container, mode) {
             <td style="font-size:12px;color:var(--text-muted)">${new Date(d.createdAt).toLocaleDateString('de-DE')}</td>
             <td style="white-space:nowrap">
               <button class="btn btn-secondary btn-sm" onclick="openDistributionDetail('${d.id}')"><i class="ph ph-eye"></i></button>
-              ${d.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" title="Erinnerung senden" onclick="sendAckReminder('${d.id}')"><i class="ph ph-envelope"></i></button>` : ''}
+              ${d.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" title="${t('ack_sendReminder')}" onclick="sendAckReminder('${d.id}')"><i class="ph ph-envelope"></i></button>` : ''}
               <a href="/distributions/${d.id}/export/csv" class="btn btn-secondary btn-sm" title="CSV-Export"><i class="ph ph-download-simple"></i></a>
               ${getCurrentRole() === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteDistribution('${d.id}')"><i class="ph ph-trash"></i></button>` : ''}
             </td>
@@ -13522,43 +13523,43 @@ async function _renderDistributionList(container, mode) {
 
 function _renderNewDistributionForm(container, mode) {
   const modeInfo = {
-    email_campaign:    'E-Mails mit Token-Link werden verschickt. Mitarbeiter bestätigen ohne Login.',
-    manual:            'Bestätigungen werden manuell eingetragen oder per CSV importiert.',
-    distribution_only: 'Es werden keine Einzelbestätigungen erfasst — nur die Verteilung dokumentiert.',
+    email_campaign:    t('ack_modeEmailDesc'),
+    manual:            t('ack_modeManualDesc'),
+    distribution_only: t('ack_modeDistributionOnlyDesc'),
   }
 
   container.innerHTML = `
     <div class="training-form-page">
-      <div class="form-section-header"><h3><i class="ph ph-plus-circle"></i> Neue Verteilrunde anlegen</h3></div>
+      <div class="form-section-header"><h3><i class="ph ph-plus-circle"></i> ${t('ack_newDistribution')}</h3></div>
 
       <div class="info-box" style="margin-bottom:20px">
-        <i class="ph ph-info"></i> <strong>Aktiver Modus:</strong> ${modeInfo[mode] || mode}
+        <i class="ph ph-info"></i> <strong>${t('ack_activeMode')}:</strong> ${modeInfo[mode] || mode}
       </div>
 
-      <label class="form-label">Richtlinie (nur freigegebene) <span style="color:#f87171">*</span></label>
+      <label class="form-label">${t('ack_policyApprovedOnly')} <span style="color:#f87171">*</span></label>
       <select id="ackTemplateId" class="select" style="margin-bottom:16px">
-        <option value="">Wird geladen…</option>
+        <option value="">${t('loading')}</option>
       </select>
 
-      <label class="form-label">Zielgruppe / Beschreibung</label>
-      <input type="text" id="ackTargetGroup" class="form-input" placeholder="z.B. Alle Mitarbeiter, IT-Abteilung…" style="margin-bottom:16px"/>
+      <label class="form-label">${t('ack_targetGroupDescription')}</label>
+      <input type="text" id="ackTargetGroup" class="form-input" placeholder="${t('ack_targetGroupPlaceholder')}" style="margin-bottom:16px"/>
 
-      <label class="form-label">Frist (optional)</label>
+      <label class="form-label">${t('ack_deadlineOptional')}</label>
       <input type="date" id="ackDueDate" class="form-input" style="margin-bottom:16px"/>
 
       ${mode === 'email_campaign' ? `
-      <label class="form-label">E-Mail-Adressen <span style="color:var(--text-muted);font-weight:400">(eine pro Zeile oder kommagetrennt)</span></label>
+      <label class="form-label">${t('ack_emailAddresses')} <span style="color:var(--text-muted);font-weight:400">(${t('ack_emailHint')})</span></label>
       <textarea id="ackEmailList" class="form-textarea" rows="6" placeholder="alice@firma.de&#10;bob@firma.de&#10;carol@firma.de"></textarea>
       ` : ''}
 
-      <label class="form-label">Notizen</label>
-      <textarea id="ackNotes" class="form-textarea" rows="3" placeholder="Optionale Notizen zu dieser Verteilrunde" style="margin-bottom:20px"></textarea>
+      <label class="form-label">${t('ack_notes')}</label>
+      <textarea id="ackNotes" class="form-textarea" rows="3" placeholder="${t('ack_notesPlaceholder')}" style="margin-bottom:20px"></textarea>
 
       <div style="display:flex;gap:12px">
         <button class="btn btn-primary" onclick="saveNewDistribution()">
-          <i class="ph ph-paper-plane-tilt"></i> ${mode === 'email_campaign' ? 'Anlegen & E-Mails vorbereiten' : 'Verteilrunde anlegen'}
+          <i class="ph ph-paper-plane-tilt"></i> ${mode === 'email_campaign' ? t('ack_createAndPrepareEmails') : t('ack_createDistribution')}
         </button>
-        <button class="btn btn-secondary" onclick="_ackTab='list';renderPolicyAcks()">Abbrechen</button>
+        <button class="btn btn-secondary" onclick="_ackTab='list';renderPolicyAcks()">${t('cancel')}</button>
       </div>
     </div>
   `
@@ -13570,7 +13571,7 @@ function _renderNewDistributionForm(container, mode) {
       const sel = dom('ackTemplateId')
       if (!sel) return
       const approved = Array.isArray(templates) ? templates.filter(t => t.status === 'approved') : []
-      sel.innerHTML = `<option value="">Richtlinie wählen…</option>` +
+      sel.innerHTML = `<option value="">${t('ack_choosePolicy')}</option>` +
         approved.map(t => `<option value="${t.id}">${escHtml(t.title)} (${escHtml(t.type)})</option>`).join('')
     }).catch(() => {})
 }
@@ -13581,7 +13582,7 @@ async function saveNewDistribution() {
   const dueDate     = dom('ackDueDate')?.value || null
   const notes       = dom('ackNotes')?.value?.trim() || ''
 
-  if (!templateId) { alert('Bitte eine Richtlinie wählen.'); return }
+  if (!templateId) { alert(t('ack_choosePolicyAlert')); return }
 
   // E-Mail-Liste parsen (für email_campaign Modus)
   let emailList = []
@@ -13597,7 +13598,7 @@ async function saveNewDistribution() {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    alert(err.error || 'Fehler beim Anlegen')
+    alert(err.error || t('ack_createFailed'))
     return
   }
 
@@ -13613,12 +13614,12 @@ async function saveNewDistribution() {
     })
     if (sendRes.ok) {
       const r = await sendRes.json()
-      alert(`Verteilrunde angelegt. ${r.sent} E-Mail(s) verschickt.`)
+      alert(t('ack_createdEmailsSent', { count: r.sent }))
     } else {
-      alert('Verteilrunde angelegt. E-Mails konnten nicht gesendet werden (SMTP nicht konfiguriert?).')
+      alert(t('ack_createdEmailsFailed'))
     }
   } else {
-    alert('Verteilrunde erfolgreich angelegt.')
+    alert(t('ack_created'))
   }
 
   _ackTab = 'list'
@@ -13636,17 +13637,17 @@ async function openDistributionDetail(id) {
   const container = dom('policyAcksContent')
   if (!container) return
 
-  const modeLabels = { email_campaign: 'E-Mail-Kampagne', manual: 'Manuell / CSV', distribution_only: 'Nur Verteilung' }
+  const modeLabels = { email_campaign: t('ack_modeEmail'), manual: t('ack_modeManualShort'), distribution_only: t('ack_modeDistributionOnlyShort') }
   const pct = dist.stats.total > 0 ? Math.round(dist.stats.confirmed / dist.stats.total * 100) : 0
 
   const acksHtml = acks.length === 0
-    ? `<p style="color:var(--text-muted);padding:20px 0">Noch keine Bestätigungen.</p>`
+    ? `<p style="color:var(--text-muted);padding:20px 0">${t('ack_noAcknowledgements')}</p>`
     : `<table class="data-table" style="width:100%;margin-top:12px">
-        <thead><tr><th>E-Mail</th><th>Name</th><th>Bestätigt am</th><th>Methode</th>${getCurrentRole()==='admin'?'<th></th>':''}</tr></thead>
+        <thead><tr><th>E-Mail</th><th>${t('col_name')}</th><th>${t('ack_confirmedAt')}</th><th>${t('ack_method')}</th>${getCurrentRole()==='admin'?'<th></th>':''}</tr></thead>
         <tbody>${acks.map(a => `<tr>
           <td>${escHtml(a.recipientEmail||'–')}</td>
           <td>${escHtml(a.recipientName||'–')}</td>
-          <td>${a.acknowledgedAt ? new Date(a.acknowledgedAt).toLocaleString('de-DE') : '<span style="color:#fbbf24">Ausstehend</span>'}</td>
+          <td>${a.acknowledgedAt ? new Date(a.acknowledgedAt).toLocaleString() : `<span style="color:#fbbf24">${t('ack_pending')}</span>`}</td>
           <td style="font-size:12px;color:var(--text-muted)">${a.method||'–'}</td>
           ${getCurrentRole()==='admin'?`<td><button class="btn btn-danger btn-sm" onclick="deleteAck('${a.id}','${id}')"><i class="ph ph-trash"></i></button></td>`:''}
         </tr>`).join('')}</tbody>
@@ -13655,17 +13656,17 @@ async function openDistributionDetail(id) {
   // Manuelle Bestätigung hinzufügen (nur für manual/csv mode)
   const addManualHtml = (dist.mode !== 'email_campaign') ? `
     <div style="margin-top:24px;border-top:1px solid var(--border-color);padding-top:20px">
-      <h4 style="margin-bottom:12px"><i class="ph ph-plus"></i> Bestätigung manuell hinzufügen</h4>
+      <h4 style="margin-bottom:12px"><i class="ph ph-plus"></i> ${t('ack_addManual')}</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
         <div>
           <label class="form-label">E-Mail</label>
           <input type="email" id="manAckEmail" class="form-input" placeholder="alice@firma.de"/>
         </div>
         <div>
-          <label class="form-label">Name</label>
+          <label class="form-label">${t('col_name')}</label>
           <input type="text" id="manAckName" class="form-input" placeholder="Alice Müller"/>
         </div>
-        <button class="btn btn-primary" onclick="addManualAck('${id}')"><i class="ph ph-plus"></i> Hinzufügen</button>
+        <button class="btn btn-primary" onclick="addManualAck('${id}')"><i class="ph ph-plus"></i> ${t('add')}</button>
       </div>
     </div>
   ` : ''
@@ -13673,40 +13674,40 @@ async function openDistributionDetail(id) {
   // CSV-Import-Bereich (nur manual mode)
   const csvImportHtml = dist.mode === 'manual' ? `
     <div style="margin-top:16px">
-      <h4 style="margin-bottom:8px"><i class="ph ph-upload-simple"></i> CSV importieren</h4>
-      <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Format: <code>email;name;datum</code> (eine Zeile pro Person, Datum optional)</p>
+      <h4 style="margin-bottom:8px"><i class="ph ph-upload-simple"></i> ${t('ack_importCsv')}</h4>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">${t('ack_csvFormat')}: <code>email;name;date</code> (${t('ack_csvHint')})</p>
       <textarea id="csvImportData" class="form-textarea" rows="4" placeholder="alice@firma.de;Alice Müller;2026-03-13&#10;bob@firma.de;Bob Schmidt;"></textarea>
-      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="importAcksCsv('${id}')"><i class="ph ph-upload-simple"></i> Importieren</button>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="importAcksCsv('${id}')"><i class="ph ph-upload-simple"></i> ${t('import_action')}</button>
     </div>
   ` : ''
 
   container.innerHTML = `
     <div class="training-form-page">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <button class="btn btn-secondary btn-sm" onclick="_ackTab='list';renderPolicyAcks()"><i class="ph ph-arrow-left"></i> Zurück</button>
+        <button class="btn btn-secondary btn-sm" onclick="_ackTab='list';renderPolicyAcks()"><i class="ph ph-arrow-left"></i> ${t('common_back')}</button>
         <h3 style="margin:0">${escHtml(dist.templateTitle)}</h3>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
-        <div class="kpi-card"><div class="kpi-label">Modus</div><div class="kpi-value">${modeLabels[dist.mode]||dist.mode}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Zielgruppe</div><div class="kpi-value" style="font-size:14px">${escHtml(dist.targetGroup||'–')}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Frist</div><div class="kpi-value" style="font-size:14px">${dist.dueDate ? new Date(dist.dueDate).toLocaleDateString('de-DE') : '–'}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_mode')}</div><div class="kpi-value">${modeLabels[dist.mode]||dist.mode}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_targetGroup')}</div><div class="kpi-value" style="font-size:14px">${escHtml(dist.targetGroup||'–')}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_deadline')}</div><div class="kpi-value" style="font-size:14px">${dist.dueDate ? new Date(dist.dueDate).toLocaleDateString() : '–'}</div></div>
         ${dist.mode !== 'distribution_only' ? `
-        <div class="kpi-card"><div class="kpi-label">Bestätigt</div><div class="kpi-value">${dist.stats.confirmed}/${dist.stats.total} <span style="font-size:13px;color:var(--text-muted)">(${pct}%)</span></div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_confirmed')}</div><div class="kpi-value">${dist.stats.confirmed}/${dist.stats.total} <span style="font-size:13px;color:var(--text-muted)">(${pct}%)</span></div></div>
         ` : ''}
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
         <a href="/distributions/${id}/export/csv" class="btn btn-secondary btn-sm"><i class="ph ph-download-simple"></i> CSV-Export</a>
-        ${dist.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" onclick="sendAckReminder('${id}')"><i class="ph ph-envelope"></i> Erinnerung senden</button>` : ''}
+        ${dist.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" onclick="sendAckReminder('${id}')"><i class="ph ph-envelope"></i> ${t('ack_sendReminder')}</button>` : ''}
         <select id="distStatusSel" class="select" style="max-width:180px;padding:6px 10px;font-size:13px" onchange="updateDistStatus('${id}',this.value)">
-          <option value="active"${dist.status==='active'?' selected':''}>Aktiv</option>
-          <option value="completed"${dist.status==='completed'?' selected':''}>Abgeschlossen</option>
-          <option value="expired"${dist.status==='expired'?' selected':''}>Abgelaufen</option>
+          <option value="active"${dist.status==='active'?' selected':''}>${t('ack_statusActive')}</option>
+          <option value="completed"${dist.status==='completed'?' selected':''}>${t('ack_statusCompleted')}</option>
+          <option value="expired"${dist.status==='expired'?' selected':''}>${t('ack_statusExpired')}</option>
         </select>
       </div>
 
-      <h4>Bestätigungen (${acks.length})</h4>
+      <h4>${t('ack_acknowledgements')} (${acks.length})</h4>
       ${acksHtml}
       ${addManualHtml}
       ${csvImportHtml}
@@ -13715,10 +13716,10 @@ async function openDistributionDetail(id) {
 }
 
 async function sendAckReminder(distId) {
-  if (!confirm('Erinnerungs-Mail an alle noch nicht bestätigten Empfänger senden?')) return
+  if (!confirm(t('ack_sendReminderConfirm'))) return
   const res = await fetch(`/distributions/${distId}/remind`, { method: 'POST', headers: apiHeaders() })
   const r = await res.json().catch(() => ({}))
-  alert(res.ok ? `${r.sent} Erinnerung(en) gesendet.` : (r.error || 'Fehler'))
+  alert(res.ok ? t('ack_remindersSent', { count: r.sent }) : (r.error || t('error')))
 }
 
 async function updateDistStatus(distId, status) {
@@ -13730,22 +13731,22 @@ async function updateDistStatus(distId, status) {
 }
 
 async function deleteDistribution(id) {
-  if (!confirm('Verteilrunde und alle Bestätigungen löschen?')) return
+  if (!confirm(t('ack_deleteDistributionConfirm'))) return
   const res = await fetch(`/distributions/${id}`, { method: 'DELETE', headers: apiHeaders() })
-  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Fehler'); return }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || t('error')); return }
   renderPolicyAcks()
 }
 
 async function addManualAck(distId) {
   const email = dom('manAckEmail')?.value?.trim()
   const name  = dom('manAckName')?.value?.trim() || ''
-  if (!email) { alert('E-Mail-Adresse eingeben'); return }
+  if (!email) { alert(t('ack_enterEmail')); return }
   const res = await fetch(`/distributions/${distId}/acks`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ recipientEmail: email, recipientName: name }),
   })
-  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Fehler'); return }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || t('error')); return }
   openDistributionDetail(distId)
 }
 
@@ -13756,19 +13757,19 @@ async function importAcksCsv(distId) {
     const parts = line.split(';')
     return { email: (parts[0]||'').trim(), name: (parts[1]||'').trim(), acknowledgedAt: (parts[2]||'').trim() || null }
   }).filter(r => r.email)
-  if (!rows.length) { alert('Keine gültigen Zeilen gefunden.'); return }
+  if (!rows.length) { alert(t('ack_noValidRows')); return }
   const res = await fetch(`/distributions/${distId}/acks/import`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ rows }),
   })
   const r = await res.json().catch(() => ({}))
-  alert(`${r.imported || 0} importiert, ${r.skipped || 0} übersprungen.`)
+  alert(t('ack_importSummary', { imported: r.imported || 0, skipped: r.skipped || 0 }))
   openDistributionDetail(distId)
 }
 
 async function deleteAck(ackId, distId) {
-  if (!confirm('Bestätigung löschen?')) return
+  if (!confirm(t('ack_deleteConfirm'))) return
   await fetch(`/distributions/${distId}/acks/${ackId}`, { method: 'DELETE', headers: apiHeaders() })
   openDistributionDetail(distId)
 }
@@ -13783,20 +13784,20 @@ async function renderPolicyAckSettings() {
   container.innerHTML = `
     <div class="training-form-page">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-        <button class="btn btn-secondary btn-sm" onclick="renderPolicyAcks()"><i class="ph ph-arrow-left"></i> Zurück</button>
-        <h3 style="margin:0"><i class="ph ph-gear"></i> Bestätigungs-Modus konfigurieren</h3>
+        <button class="btn btn-secondary btn-sm" onclick="renderPolicyAcks()"><i class="ph ph-arrow-left"></i> ${t('common_back')}</button>
+        <h3 style="margin:0"><i class="ph ph-gear"></i> ${t('ack_configureMode')}</h3>
       </div>
 
       <div class="info-box" style="margin-bottom:24px">
-        <i class="ph ph-warning"></i> Diese Einstellung gilt für <strong>alle zukünftigen Verteilrunden</strong>.
-        Bestehende Kampagnen behalten ihren ursprünglichen Modus.
+        <i class="ph ph-warning"></i> ${t('ack_modeWarningPrefix')} <strong>${t('ack_modeWarningEmphasis')}</strong>.
+        ${t('ack_modeWarningSuffix')}
       </div>
 
       <div style="display:flex;flex-direction:column;gap:12px;max-width:600px">
         ${[
-          { val:'email_campaign',    icon:'ph-envelope',   title:'E-Mail-Kampagne',              desc:'Token-Links per E-Mail — Mitarbeiter bestätigen ohne ISMS-Zugang' },
-          { val:'manual',            icon:'ph-pencil',     title:'Manuell / CSV-Import',         desc:'Bestätigungen werden manuell eingetragen oder per CSV importiert' },
-          { val:'distribution_only', icon:'ph-file-text',  title:'Nur Verteilung dokumentieren', desc:'Keine Einzelbestätigungen — nur Nachweis der Verteilung' },
+          { val:'email_campaign',    icon:'ph-envelope',   title:t('ack_modeEmail'),              desc:t('ack_modeEmailDesc') },
+          { val:'manual',            icon:'ph-pencil',     title:t('ack_modeManual'),             desc:t('ack_modeManualDesc') },
+          { val:'distribution_only', icon:'ph-file-text',  title:t('ack_modeDistributionOnly'),    desc:t('ack_modeDistributionOnlyDesc') },
         ].map(opt => `
           <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid ${current===opt.val?'var(--brand-color)':'var(--border-color)'};border-radius:8px;cursor:pointer;background:${current===opt.val?'var(--brand-color)18':'transparent'}">
             <input type="radio" name="ackMode" value="${opt.val}" ${current===opt.val?'checked':''} style="margin-top:3px;accent-color:var(--brand-color)"/>
@@ -13809,8 +13810,8 @@ async function renderPolicyAckSettings() {
       </div>
 
       <div style="margin-top:24px;display:flex;gap:12px">
-        <button class="btn btn-primary" onclick="savePolicyAckMode()"><i class="ph ph-floppy-disk"></i> Modus speichern</button>
-        <button class="btn btn-secondary" onclick="renderPolicyAcks()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="savePolicyAckMode()"><i class="ph ph-floppy-disk"></i> ${t('ack_saveMode')}</button>
+        <button class="btn btn-secondary" onclick="renderPolicyAcks()">${t('cancel')}</button>
       </div>
     </div>
   `
@@ -13824,7 +13825,7 @@ async function savePolicyAckMode() {
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ policyAckMode: sel.value }),
   })
-  if (res.ok) { renderPolicyAcks() } else { alert('Fehler beim Speichern') }
+  if (res.ok) { renderPolicyAcks() } else { alert(t('err_saveFailed')) }
 }
 
 // Init app after DOM load – nur auf der SPA-Hauptseite (index.html)

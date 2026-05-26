@@ -29,7 +29,7 @@
     "mysql2": "^3.11.0"
   },
   "devDependencies": {
-    "jest": "^30.2.0",
+    "jest": "^30.4.2",
     "puppeteer": "^24.43.1",
     "supertest": "^7.2.2"
   }

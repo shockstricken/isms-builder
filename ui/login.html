@@ -94,6 +94,20 @@
     }
 
     /* ── Demo-Reset-Banner ── */
+    .dev-warning-banner {
+      display: none; width: 360px; max-width: 95vw;
+      margin-bottom: 18px; padding: 16px 18px;
+      background: #FFD700; border: 2px solid #E6B800;
+      border-radius: 8px; color: #1a1200;
+      font-size: 13.5px; line-height: 1.6; text-align: center;
+    }
+    .dev-warning-banner .dev-warn-title {
+      display: block; font-size: 15px; font-weight: 700;
+      margin-bottom: 6px; letter-spacing: .01em;
+    }
+    .dev-warning-banner .dev-warn-title i { font-size: 18px; vertical-align: -3px; margin-right: 5px; }
+    .dev-warning-banner.visible { display: block; }
+
     .demo-reset-banner {
       display: none; width: 360px; max-width: 95vw;
       margin-bottom: 16px; padding: 14px 16px;
@@ -298,6 +312,12 @@
   <div class="login-brand">
     <i class="ph ph-shield-check"></i>
     ISMS Builder
+  </div>
+
+  <div class="dev-warning-banner" id="devWarningBanner">
+    <span class="dev-warn-title"><i class="ph ph-warning-diamond-fill"></i> Development Demo</span>
+    This system is under active development. Data may be reset at any time.
+    Do not use for production or store sensitive information.
   </div>
 
   <div class="demo-reset-banner" id="demoResetBanner">
@@ -608,6 +628,11 @@
     document.getElementById('incOverlay').addEventListener('click', function(e) {
       if (e.target === this) closeIncModal()
     })
+
+    // Development-Warning-Banner — nur auf demo.isms-builder.de
+    if (location.hostname === 'demo.isms-builder.de') {
+      document.getElementById('devWarningBanner').classList.add('visible')
+    }
 
     // Demo-Reset-Banner anzeigen wenn Flag gesetzt
     ;(async () => {

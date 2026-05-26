@@ -2915,13 +2915,13 @@ async function renderDashboard() {
     ])
     if (!dashRes.ok) throw new Error('API error')
     data             = await dashRes.json()
-    soaSummary       = soaRes.ok       ? await soaRes.json()       : null
-    riskSummary      = riskRes.ok      ? await riskRes.json()      : null
-    gdprDash         = gdprRes.ok      ? await gdprRes.json()      : null
-    trainSummary     = trainRes.ok     ? await trainRes.json()     : null
-    legalSummary     = legalRes.ok     ? await legalRes.json()     : null
-    calEvents        = calRes.ok       ? await calRes.json()       : []
-    goalsSummary     = goalsRes.ok     ? await goalsRes.json()     : null
+    soaSummary       = soaRes?.ok      ? await soaRes.json()       : null
+    riskSummary      = riskRes?.ok     ? await riskRes.json()      : null
+    gdprDash         = gdprRes?.ok     ? await gdprRes.json()      : null
+    trainSummary     = trainRes?.ok    ? await trainRes.json()     : null
+    legalSummary     = legalRes?.ok    ? await legalRes.json()     : null
+    calEvents        = calRes?.ok      ? await calRes.json()       : []
+    goalsSummary     = goalsRes?.ok    ? await goalsRes.json()     : null
     assetSummary     = assetRes?.ok    ? await assetRes.json()     : null
     govSummary       = govRes?.ok      ? await govRes.json()       : null
     bcmSummary       = bcmRes?.ok      ? await bcmRes.json()       : null
@@ -7394,7 +7394,7 @@ function renderGuidanceDoc(doc) {
         <button class="btn btn-secondary btn-sm" onclick="printGuidanceDoc('${doc.id}')" title="Dieses Dokument als PDF drucken">
           <i class="ph ph-file-pdf"></i> PDF
         </button>` : ''}
-      ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="openGuidanceEditor(${JSON.stringify(doc).replace(/"/g,"'")})">
+      ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="openGuidanceEditor('${doc.id}')">
         <i class="ph ph-pencil"></i> Edit
       </button>` : ''}
       ${canDel ? `<button class="btn btn-sm" style="color:var(--danger-text);" onclick="deleteGuidanceDoc('${doc.id}')">
@@ -7532,10 +7532,9 @@ async function deleteGuidanceDoc(id) {
 // ── Editor Inline Form ──
 
 function openGuidanceEditor(docArg) {
-  // If called from inline HTML with single-quoted JSON string
   let doc = null
-  if (typeof docArg === 'string') {
-    try { doc = JSON.parse(docArg.replace(/'/g, '"')) } catch { doc = null }
+  if (typeof docArg === 'string' && docArg) {
+    doc = _guidanceDocs.find(d => d.id === docArg) || null
   } else if (docArg && typeof docArg === 'object') {
     doc = docArg
   }
@@ -8576,6 +8575,13 @@ async function openRiskDetail(id) {
         </div>
       </div>` : ''}
 
+      ${r.linkedPolicies?.length ? `<div class="risk-detail-section" style="margin-top:16px">
+        <h4>Verknüpfte Policies (${r.linkedPolicies.length})</h4>
+        <div class="tmpl-controls-bar" style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${r.linkedPolicies.map(c => `<span class="tmpl-bar-pill">${escHtml(c)}</span>`).join('')}
+        </div>
+      </div>` : ''}
+
       ${r.applicableEntities?.length ? `<div class="risk-detail-section" style="margin-top:16px">
         <h4>${t('common_applicableEntities')}</h4>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -8792,6 +8798,11 @@ async function openRiskModal(id) {
             </div>
           </div>` : ''}
 
+          <div class="risk-form-card risk-form-full">
+            <h3 class="risk-form-section-title"><i class="ph ph-link"></i> Linked Controls & Policies</h3>
+            ${renderLinksBlock('risk', risk?.linkedControls||[], risk?.linkedPolicies||[])}
+          </div>
+
         </div>
 
         <div class="risk-form-footer">
@@ -8805,6 +8816,7 @@ async function openRiskModal(id) {
     </div>`
 
   updateRiskScorePreview()
+  initLinkPickers('risk')
 }
 
 function riskEntityCascade(cb) {
@@ -8888,7 +8900,9 @@ async function submitRiskForm() {
     owner,
     dueDate:           dom('rModalDue')?.value      || null,
     reviewDate:        dom('rModalReview')?.value   || null,
-    applicableEntities
+    applicableEntities,
+    linkedControls:    getLinkedValues('risk', 'ctrl'),
+    linkedPolicies:    getLinkedValues('risk', 'pol')
   }
 
   const editId = _riskEditId
@@ -13147,6 +13161,7 @@ async function switchSuppliersTab(tab) {
               <td class="${overdue ? 'bcm-overdue' : ''}">${s.nextAuditDate || '—'}${overdue ? ' <i class="ph ph-warning-circle" title="Overdue!"></i>' : ''}</td>
               <td>${escHtml(SUP_AUDIT_LABELS[s.auditResult] || s.auditResult || '—')}</td>
               <td style="white-space:nowrap">
+                <button class="btn btn-secondary btn-xs" title="Self-Assessments" onclick="openSupplierAssessments('${s.id}')"><i class="ph ph-clipboard-text"></i></button>
                 ${canEdit ? `<button class="btn btn-secondary btn-xs" onclick="openSupplierForm('${s.id}')"><i class="ph ph-pencil"></i></button>` : ''}
                 ${isAdmin ? `<button class="btn btn-danger btn-xs" onclick="deleteSupplier('${s.id}')"><i class="ph ph-trash"></i></button>` : ''}
               </td>
@@ -13389,6 +13404,296 @@ async function deleteSupplier(id) {
   const res = await fetch(`/suppliers/${id}`, { method: 'DELETE', headers: apiHeaders() })
   if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Error'); return }
   renderSuppliers()
+}
+
+// ════════════════════════════════════════════════════════════
+// SUPPLIER SELF-ASSESSMENTS
+// ════════════════════════════════════════════════════════════
+
+// Supplier-Name per API laden — nie per onclick-Parameter übertragen
+async function _getSupplierName(supplierId) {
+  try {
+    const r = await fetch(`/suppliers/${supplierId}`, { headers: apiHeaders() })
+    if (r.ok) return (await r.json()).name || supplierId
+  } catch {}
+  return supplierId
+}
+
+function _assessmentAnswersTable(a) {
+  return a.questions.map(section => {
+    const qHtml = section.questions.map(q => {
+      const ans = (a.answers || []).find(x => x.id === q.id)
+      const val = ans?.value || '—'
+      const display = q.type === 'yesno'
+        ? (val === 'yes' ? '✓ Ja' : val === 'no' ? '✗ Nein' : '—')
+        : escHtml(val)
+      const color = q.type === 'yesno' ? (val === 'yes' ? 'var(--success-text)' : val === 'no' ? 'var(--danger-text)' : '') : ''
+      return `<tr><td style="width:65%">${escHtml(q.text)}</td><td style="font-weight:600;color:${color}">${display}</td></tr>`
+    }).join('')
+    return `<tr><td colspan="2" style="background:var(--bg-subtle,#f4f5f7);font-weight:700;padding:8px 12px">${escHtml(section.section)}</td></tr>${qHtml}`
+  }).join('')
+}
+
+async function openSupplierAssessments(supplierId) {
+  const el = dom('suppliersTabContent')
+  if (!el) return
+  const rank    = ROLE_RANK[getCurrentRole()] || 0
+  const canEdit = rank >= ROLE_RANK.editor
+  const isAdmin = rank >= ROLE_RANK.admin
+
+  el.innerHTML = '<p class="report-loading">Loading…</p>'
+
+  const [supplierName, listRes] = await Promise.all([
+    _getSupplierName(supplierId),
+    fetch(`/assessments?supplierId=${encodeURIComponent(supplierId)}`, { headers: apiHeaders() }),
+  ])
+  const list = listRes.ok ? await listRes.json() : []
+
+  const STATUS_BADGE = {
+    pending:   '<span class="badge badge-warn">Pending</span>',
+    submitted: '<span class="badge badge-info">Submitted</span>',
+    reviewed:  '<span class="badge badge-success">Reviewed</span>',
+    accepted:  '<span class="badge badge-success">Accepted</span>',
+    rejected:  '<span class="badge badge-danger">Rejected</span>',
+  }
+
+  const LANG_FLAG = { de: '🇩🇪', en: '🇬🇧', fr: '🇫🇷', nl: '🇳🇱' }
+
+  const rows = list.map(a => {
+    const scoreHtml = a.score !== null
+      ? `<span style="font-weight:700;color:${a.score>=70?'var(--success-text)':a.score>=40?'var(--warning-text)':'var(--danger-text)'}">${a.score}%</span>`
+      : '—'
+    const langFlag = LANG_FLAG[a.language] || ''
+    return `<tr>
+      <td>${langFlag} ${escHtml(a.title)}</td>
+      <td>${STATUS_BADGE[a.status] || escHtml(a.status)}</td>
+      <td>${scoreHtml}</td>
+      <td>${a.dueDate || '—'}</td>
+      <td>${a.submittedAt ? new Date(a.submittedAt).toLocaleDateString('de-DE') : '—'}</td>
+      <td style="white-space:nowrap">
+        ${a.status === 'pending' ? `<button class="btn btn-secondary btn-xs" title="Link kopieren" data-token="${a.token}" onclick="copyAssessmentLink(this)"><i class="ph ph-link"></i></button>` : ''}
+        ${(canEdit && a.status === 'submitted') ? `<button class="btn btn-primary btn-xs" onclick="openAssessmentReview('${a.id}')"><i class="ph ph-check-circle"></i> Review</button>` : ''}
+        ${(canEdit && a.status !== 'pending') ? `<button class="btn btn-secondary btn-xs" onclick="openAssessmentDetail('${a.id}')"><i class="ph ph-eye"></i></button>` : ''}
+        ${isAdmin ? `<button class="btn btn-danger btn-xs" onclick="deleteAssessment('${a.id}', '${supplierId}')"><i class="ph ph-trash"></i></button>` : ''}
+      </td>
+    </tr>`
+  }).join('')
+
+  el.innerHTML = `
+    <div class="training-form-page">
+      <div class="training-form-header">
+        <button class="btn btn-secondary btn-sm" onclick="switchSuppliersTab('list')">
+          <i class="ph ph-arrow-left"></i> Back
+        </button>
+        <h3 style="margin:0">Self-Assessments: ${escHtml(supplierName)}</h3>
+        ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="openCreateAssessment('${supplierId}')">
+          <i class="ph ph-plus"></i> New Assessment Link
+        </button>` : ''}
+      </div>
+
+      ${list.length ? `
+        <table class="bcm-table" style="margin-top:16px">
+          <thead><tr>
+            <th>Title</th><th>Status</th><th>Score</th><th>Due Date</th><th>Submitted</th><th>Actions</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      ` : `<p class="dash-empty" style="margin-top:24px">No assessments yet. Create one to generate a link for the supplier.</p>`}
+    </div>`
+}
+
+async function openCreateAssessment(supplierId) {
+  const el = dom('suppliersTabContent')
+  if (!el) return
+  const supplierName = await _getSupplierName(supplierId)
+
+  el.innerHTML = `
+    <div class="training-form-page">
+      <div class="training-form-header">
+        <button class="btn btn-secondary btn-sm" onclick="openSupplierAssessments('${supplierId}')">
+          <i class="ph ph-arrow-left"></i> Back
+        </button>
+        <h3 style="margin:0">New Assessment Link — ${escHtml(supplierName)}</h3>
+      </div>
+      <div class="form-grid" style="margin-top:20px;max-width:600px">
+        <label class="form-label">Language</label>
+        <select id="assLanguage" class="form-select" onchange="updateAssTitle(this)">
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="nl">🇳🇱 Nederlands</option>
+        </select>
+
+        <label class="form-label">Title</label>
+        <input id="assTitle" class="form-input" value="Lieferanten-Selbstauskunft" />
+
+        <label class="form-label">Due Date (optional)</label>
+        <input id="assDueDate" type="date" class="form-input" />
+
+        <label class="form-label">Note to Supplier (optional)</label>
+        <textarea id="assNote" class="form-textarea" rows="2" placeholder="Bitte bis zum Fälligkeitsdatum ausfüllen."></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" onclick="createAssessment('${supplierId}')">
+            <i class="ph ph-link"></i> Generate Link
+          </button>
+          <button class="btn btn-secondary" onclick="openSupplierAssessments('${supplierId}')">Cancel</button>
+        </div>
+      </div>
+    </div>`
+}
+
+const ASS_DEFAULT_TITLES = { de: 'Lieferanten-Selbstauskunft', en: 'Supplier Self-Assessment', fr: 'Auto-évaluation fournisseur', nl: 'Leveranciers zelfevaluatie' }
+
+function updateAssTitle(sel) {
+  const t = dom('assTitle')
+  if (!t) return
+  const current = t.value.trim()
+  const wasDefault = Object.values(ASS_DEFAULT_TITLES).includes(current) || current === ''
+  if (wasDefault) t.value = ASS_DEFAULT_TITLES[sel.value] || current
+}
+
+async function createAssessment(supplierId) {
+  const lang = dom('assLanguage')?.value || 'de'
+  const payload = {
+    supplierId,
+    language: lang,
+    title:   dom('assTitle')?.value?.trim()   || ASS_DEFAULT_TITLES[lang],
+    dueDate: dom('assDueDate')?.value         || '',
+    note:    dom('assNote')?.value?.trim()    || '',
+  }
+  const res = await fetch('/assessments', {
+    method: 'POST',
+    headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Error'); return }
+  const a    = await res.json()
+  const link = `${location.origin}/supplier-assessment/${a.token}`
+  const el   = dom('suppliersTabContent')
+  if (!el) return
+  el.innerHTML = `
+    <div class="training-form-page">
+      <div class="training-form-header">
+        <h3 style="margin:0"><i class="ph ph-check-circle" style="color:var(--success-text)"></i> Link generated!</h3>
+      </div>
+      <div class="dash-card" style="margin-top:20px;max-width:700px;padding:24px">
+        <p style="margin:0 0 8px;font-weight:600">Assessment link for ${escHtml(a.supplierName)}:</p>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" class="form-input" id="assessLinkInput" value="${escHtml(link)}" readonly style="font-family:monospace;font-size:13px;flex:1" />
+          <button class="btn btn-primary" data-token="${a.token}" onclick="copyAssessmentLink(this)">
+            <i class="ph ph-copy"></i> Copy
+          </button>
+        </div>
+        <p style="margin:12px 0 0;color:var(--text-subtle);font-size:13px">
+          Send this link to the supplier. No login required. The link stays active until the questionnaire is submitted.
+        </p>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="openSupplierAssessments('${supplierId}')">
+          <i class="ph ph-arrow-left"></i> Back to Assessments
+        </button>
+      </div>
+    </div>`
+}
+
+function copyAssessmentLink(btn) {
+  const token = btn.dataset.token
+  const link  = `${location.origin}/supplier-assessment/${token}`
+  navigator.clipboard.writeText(link).then(() => {
+    const old = btn.innerHTML
+    btn.innerHTML = '<i class="ph ph-check"></i> Copied!'
+    setTimeout(() => { btn.innerHTML = old }, 2000)
+  }).catch(() => { prompt('Copy link:', link) })
+}
+
+async function openAssessmentDetail(id) {
+  const el = dom('suppliersTabContent')
+  if (!el) return
+  const res = await fetch(`/assessments/${id}`, { headers: apiHeaders() })
+  if (!res.ok) { alert('Not found'); return }
+  const a = await res.json()
+  const scoreColor = a.score >= 70 ? 'var(--success-text)' : a.score >= 40 ? 'var(--warning-text)' : 'var(--danger-text)'
+
+  el.innerHTML = `
+    <div class="training-form-page">
+      <div class="training-form-header">
+        <button class="btn btn-secondary btn-sm" onclick="openSupplierAssessments('${a.supplierId}')">
+          <i class="ph ph-arrow-left"></i> Back
+        </button>
+        <h3 style="margin:0">${escHtml(a.title)} — ${escHtml(a.supplierName)}</h3>
+        ${a.score !== null ? `<span style="font-size:1.4rem;font-weight:700;color:${scoreColor}">${a.score}%</span>` : ''}
+      </div>
+      ${a.reviewNote ? `<div class="dash-card" style="margin:12px 0;padding:14px 18px;border-left:4px solid var(--color-B300,#0052cc)">
+        <strong>Review Note:</strong> ${escHtml(a.reviewNote)}
+        ${a.reviewedBy ? `<span style="color:var(--text-subtle);font-size:12px;margin-left:8px">— ${escHtml(a.reviewedBy)}, ${new Date(a.reviewedAt).toLocaleDateString('de-DE')}</span>` : ''}
+      </div>` : ''}
+      <table class="bcm-table" style="margin-top:12px">
+        <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+        <tbody>${_assessmentAnswersTable(a)}</tbody>
+      </table>
+    </div>`
+}
+
+async function openAssessmentReview(id) {
+  const el = dom('suppliersTabContent')
+  if (!el) return
+  const res = await fetch(`/assessments/${id}`, { headers: apiHeaders() })
+  if (!res.ok) { alert('Not found'); return }
+  const a = await res.json()
+  const scoreColor = a.score >= 70 ? 'var(--success-text)' : a.score >= 40 ? 'var(--warning-text)' : 'var(--danger-text)'
+
+  el.innerHTML = `
+    <div class="training-form-page">
+      <div class="training-form-header">
+        <button class="btn btn-secondary btn-sm" onclick="openSupplierAssessments('${a.supplierId}')">
+          <i class="ph ph-arrow-left"></i> Back
+        </button>
+        <h3 style="margin:0">Review: ${escHtml(a.title)} — ${escHtml(a.supplierName)}</h3>
+        ${a.score !== null ? `<span style="font-size:1.4rem;font-weight:700;color:${scoreColor}">Score: ${a.score}%</span>` : ''}
+      </div>
+      <table class="bcm-table" style="margin:12px 0 20px">
+        <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+        <tbody>${_assessmentAnswersTable(a)}</tbody>
+      </table>
+      <div class="form-grid" style="max-width:600px">
+        <label class="form-label">Review Note</label>
+        <textarea id="assReviewNote" class="form-textarea" rows="3" placeholder="Bewertungskommentar…"></textarea>
+        <label class="form-label">Status</label>
+        <select id="assReviewStatus" class="form-select">
+          <option value="reviewed">Reviewed</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-primary" onclick="submitAssessmentReview('${id}', '${a.supplierId}')">
+            <i class="ph ph-check"></i> Save Review
+          </button>
+          <button class="btn btn-secondary" onclick="openSupplierAssessments('${a.supplierId}')">Cancel</button>
+        </div>
+      </div>
+    </div>`
+}
+
+async function submitAssessmentReview(id, supplierId) {
+  const payload = {
+    reviewNote: dom('assReviewNote')?.value?.trim() || '',
+    status:     dom('assReviewStatus')?.value       || 'reviewed',
+  }
+  const res = await fetch(`/assessments/${id}/review`, {
+    method: 'PUT',
+    headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Error'); return }
+  openSupplierAssessments(supplierId)
+}
+
+async function deleteAssessment(id, supplierId) {
+  if (!confirm('Delete this assessment permanently?')) return
+  const res = await fetch(`/assessments/${id}`, { method: 'DELETE', headers: apiHeaders() })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Error'); return }
+  openSupplierAssessments(supplierId)
 }
 
 // ════════════════════════════════════════════════════════════

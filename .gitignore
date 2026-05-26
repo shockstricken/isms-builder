@@ -68,3 +68,10 @@ claude.md
 # Puppeteer cache
 .local-chromium/
 .lcm/
+
+# Demo-Server-Management (nicht publizieren)
+demo-management/
+
+# Privates Backlog (nicht publizieren)
+docs/private/
+landing/

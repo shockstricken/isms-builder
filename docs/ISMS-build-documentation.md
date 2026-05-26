@@ -263,6 +263,12 @@ tar czf ~/isms-data-$(date +%F).tar.gz ./data
 
 ## 7. Automatisierte Tests
 
+> **Hinweis:** Die Test-Suite unter `tests/` sind persönliche Entwicklungstests des Autors,
+> die aus Transparenzgründen mit dem Projekt ausgeliefert werden. Sie sind **kein Bestandteil
+> der Anwendung** und zum Betrieb von ISMS Builder **nicht erforderlich**. Die Tests prüfen
+> internes API-Verhalten und verwenden fest kodierte Test-Zugangsdaten, die ausschließlich
+> in einer isolierten Testumgebung existieren — ohne jeden Bezug zu Produktiv- oder Demo-Daten.
+
 **Stack:** Jest + Supertest | **Ausführung:** sequenziell (`--runInBand`)
 
 ```bash
@@ -291,7 +297,7 @@ tests/
 
 **Datenisolation:** Jede Testdatei bekommt ein eigenes `mkdtemp`-Verzeichnis mit frischen Seed-Daten. `DATA_DIR`-Umgebungsvariable wird vor dem Server-Require gesetzt — alle Stores lesen diesen Pfad beim Laden. Temp-Dirs werden in `afterAll` gelöscht.
 
-**Aktueller Stand:** 109/109 Tests bestehen.
+**Aktueller Stand:** 265/265 Tests bestehen.
 
 ---
 

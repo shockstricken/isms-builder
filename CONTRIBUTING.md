@@ -6,20 +6,29 @@ ISMS Builder is an open-source Information Security Management System platform.
 
 ---
 
+## About the Test Suite
+
+The `tests/` directory contains the author's personal development tests, shipped with the
+project for transparency. They are **not** part of the application and **not required** to
+run ISMS Builder. The tests cover internal API behaviour using hardcoded test credentials
+that only exist in an isolated temp environment — completely separate from any real data.
+
+If you contribute code, running the tests is encouraged but the suite reflects the author's
+own quality baseline, not a formal CI requirement imposed on contributors.
+
 ## Getting Started
 
 ```bash
-git clone https://github.com/claudehecker/isms-builder.git
+git clone https://github.com/coolstartnow/isms-builder.git
 cd isms-builder
 npm install
 cp .env.example .env     # adjust JWT_SECRET
-npm test                 # all tests must be green before you start
 npm start
 ```
 
 ## Development Rules
 
-- **All 176+ tests must pass** before opening a PR — run `npm test -- --runInBand`
+- **All 265+ tests must pass** before opening a PR — run `npm test -- --runInBand`
 - **No new feature without a test** — add a test file under `tests/` for every new module
 - **One route file per module** — new modules go into `server/routes/yourmodule.js`
 - **One store file per module** — data access goes into `server/db/yourmoduleStore.js`

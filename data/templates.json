@@ -8,9 +8,9 @@
     "version": 1,
     "status": "approved",
     "owner": "admin",
-    "reviewDate": "2027-01-01",
+    "reviewDate": "2026-03-12T20:29:37.966Z",
     "createdAt": "2026-01-01T08:00:00.000Z",
-    "updatedAt": "2026-01-15T10:00:00.000Z",
+    "updatedAt": "2026-03-12T20:29:37.966Z",
     "history": [],
     "statusHistory": [
       {
@@ -27,6 +27,16 @@
         "status": "approved",
         "changedBy": "admin",
         "changedAt": "2026-01-15T10:00:00.000Z"
+      },
+      {
+        "status": "review",
+        "changedBy": "ciso",
+        "changedAt": "2026-03-12T20:29:30.810Z"
+      },
+      {
+        "status": "approved",
+        "changedBy": "ciso",
+        "changedAt": "2026-03-12T20:29:37.966Z"
       }
     ],
     "linkedControls": [
@@ -73,13 +83,24 @@
     "language": "de",
     "title": "Incident-Response-Verfahren",
     "content": "# Incident-Response-Verfahren\n\n## 1. Zweck\n\nDieses Verfahren definiert die Schritte zur Reaktion auf Informationssicherheitsvorfälle.\n\n## 2. Vorfallsklassifizierung\n\n| Schweregrad | Reaktionszeit | Eskalation |\n|-------------|--------------|------------|\n| Kritisch | 1 Stunde | CISO + Geschäftsleitung |\n| Hoch | 4 Stunden | CISO |\n| Mittel | 24 Stunden | IT-Sicherheit |\n| Niedrig | 5 Werktage | IT-Helpdesk |\n\n## 3. Reaktionsschritte\n\n1. **Erkennung**: Vorfall identifizieren und validieren\n2. **Eindämmung**: Betroffene Systeme isolieren\n3. **Beseitigung**: Bedrohung entfernen\n4. **Wiederherstellung**: Systeme in normalen Betrieb zurückführen\n5. **Nachbereitung**: Erkenntnisse und Verbesserungen dokumentieren\n",
-    "version": 1,
-    "status": "review",
+    "version": 3,
+    "status": "approved",
     "owner": "alice",
-    "reviewDate": "2026-06-01",
+    "reviewDate": "2026-03-12T20:27:11.512Z",
     "createdAt": "2026-02-01T08:00:00.000Z",
-    "updatedAt": "2026-02-15T10:00:00.000Z",
-    "history": [],
+    "updatedAt": "2026-03-12T20:28:01.263Z",
+    "history": [
+      {
+        "version": 2,
+        "content": "# Incident-Response-Verfahren\n\n## 1. Zweck\n\nDieses Verfahren definiert die Schritte zur Reaktion auf Informationssicherheitsvorfälle.\n\n## 2. Vorfallsklassifizierung\n\n| Schweregrad | Reaktionszeit | Eskalation |\n|-------------|--------------|------------|\n| Kritisch | 1 Stunde | CISO + Geschäftsleitung |\n| Hoch | 4 Stunden | CISO |\n| Mittel | 24 Stunden | IT-Sicherheit |\n| Niedrig | 5 Werktage | IT-Helpdesk |\n\n## 3. Reaktionsschritte\n\n1. **Erkennung**: Vorfall identifizieren und validieren\n2. **Eindämmung**: Betroffene Systeme isolieren\n3. **Beseitigung**: Bedrohung entfernen\n4. **Wiederherstellung**: Systeme in normalen Betrieb zurückführen\n5. **Nachbereitung**: Erkenntnisse und Verbesserungen dokumentieren\n",
+        "updatedAt": "2026-03-12T20:27:42.648Z"
+      },
+      {
+        "version": 3,
+        "content": "# Incident-Response-Verfahren\n\n## 1. Zweck\n\nDieses Verfahren definiert die Schritte zur Reaktion auf Informationssicherheitsvorfälle.\n\n## 2. Vorfallsklassifizierung\n\n| Schweregrad | Reaktionszeit | Eskalation |\n|-------------|--------------|------------|\n| Kritisch | 1 Stunde | CISO + Geschäftsleitung |\n| Hoch | 4 Stunden | CISO |\n| Mittel | 24 Stunden | IT-Sicherheit |\n| Niedrig | 5 Werktage | IT-Helpdesk |\n\n## 3. Reaktionsschritte\n\n1. **Erkennung**: Vorfall identifizieren und validieren\n2. **Eindämmung**: Betroffene Systeme isolieren\n3. **Beseitigung**: Bedrohung entfernen\n4. **Wiederherstellung**: Systeme in normalen Betrieb zurückführen\n5. **Nachbereitung**: Erkenntnisse und Verbesserungen dokumentieren\n",
+        "updatedAt": "2026-03-12T20:28:01.263Z"
+      }
+    ],
     "statusHistory": [
       {
         "status": "draft",
@@ -90,6 +111,11 @@
         "status": "review",
         "changedBy": "alice",
         "changedAt": "2026-02-15T10:00:00.000Z"
+      },
+      {
+        "status": "approved",
+        "changedBy": "ciso",
+        "changedAt": "2026-03-12T20:27:11.512Z"
       }
     ],
     "linkedControls": [
@@ -97,6 +123,61 @@
       "NIS2-f"
     ],
     "linkedPolicies": [],
-    "applicableEntities": []
+    "applicableEntities": [
+      "entity_holding",
+      "entity_sub1",
+      "entity_sub2",
+      "entity_sub3"
+    ],
+    "nextReviewDate": null
+  },
+  {
+    "id": "SoA_1773342650821",
+    "type": "SoA",
+    "language": "de",
+    "title": "local control",
+    "content": "",
+    "version": 4,
+    "status": "draft",
+    "owner": "admin",
+    "nextReviewDate": null,
+    "createdAt": "2026-03-12T19:10:50.821Z",
+    "updatedAt": "2026-03-12T20:04:34.140Z",
+    "linkedControls": [],
+    "applicableEntities": [],
+    "attachments": [],
+    "parentId": null,
+    "sortOrder": 0,
+    "history": [
+      {
+        "version": 1,
+        "content": "",
+        "updatedAt": "2026-03-12T19:10:50.821Z"
+      },
+      {
+        "version": 2,
+        "content": "",
+        "updatedAt": "2026-03-12T20:03:28.298Z"
+      },
+      {
+        "version": 3,
+        "content": "",
+        "updatedAt": "2026-03-12T20:03:33.456Z"
+      },
+      {
+        "version": 4,
+        "content": "",
+        "updatedAt": "2026-03-12T20:04:34.140Z"
+      }
+    ],
+    "statusHistory": [
+      {
+        "status": "draft",
+        "changedBy": "admin",
+        "changedAt": "2026-03-12T19:10:50.821Z"
+      }
+    ],
+    "deletedAt": "2026-03-12T20:04:41.183Z",
+    "deletedBy": "admin"
   }
 ]

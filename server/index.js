@@ -30,7 +30,12 @@ const PUBLIC_UI_FILES = new Set([
 app.use('/ui', (req, res, next) => {
   const filename = path.basename(req.path)
   if (filename === 'login.html') {
-    res.clearCookie('sm_session', { path: '/' })
+    // ACHTUNG: clearCookie NUR wenn KEINE gültige Session existiert.
+    // Ein bedingungsloses clearCookie löscht die Session auch bei eingeloggten
+    // Nutzern (z.B. bfcache-Rückkehr, SPA-Navigation) → alle API-Calls 401.
+    // Regressionstest: tests/auth.test.js → "Session-Persistenz"
+    const sess = getSessionFromReq(req)
+    if (!sess) res.clearCookie('sm_session', { path: '/' })
     res.setHeader('Cache-Control', 'no-store')
     return uiStatic(req, res, next)
   }
@@ -75,9 +80,33 @@ try {
 storage.init?.()
 
 // ── Root route ──
+// Leitet zur Login-Seite weiter — die eigentliche App liegt unter /ui/.
+// Vorher: res.send('ISMS Templates API') → verwirrte Nutzer die localhost:3000 aufriefen.
+// Fix für GitHub Issue #11 (dukefleed66, 2026-03-16).
 app.get('/', (req, res) => {
-  res.send('ISMS Templates API')
+  res.redirect('/ui/login.html')
 })
+
+// ── Health Check (kein Auth erforderlich) ──
+// Prüft: Express läuft, SQLite erreichbar, JSON-Datei lesbar
+// Für Monitoring / Demo-Server-Cron aktivieren
+/*
+app.get('/health', (req, res) => {
+  const result = { status: 'ok', sqlite: false, json: false, ts: new Date().toISOString() }
+  try {
+    const db = require('./db/database').getDb()
+    db.prepare('SELECT 1').get()
+    result.sqlite = true
+  } catch {}
+  try {
+    const orgFile = path.join(__dirname, '../data/org-settings.json')
+    fs.readFileSync(orgFile)
+    result.json = true
+  } catch {}
+  if (!result.sqlite || !result.json) result.status = 'degraded'
+  res.status(result.status === 'ok' ? 200 : 503).json(result)
+})
+*/
 
 // ── Mount routers ──
 app.use(require('./routes/auth'))
@@ -104,6 +133,8 @@ app.use(require('./routes/ai'))
 app.use(require('./routes/orgUnits'))
 app.use(require('./routes/acknowledgements'))
 app.use(require('./routes/ackPublic'))
+app.use(require('./routes/assessments'))
+app.use(require('./routes/assessmentPublic'))
 
 // Test-user management routes (temporary, test-env only)
 try {

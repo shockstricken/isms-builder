@@ -26,7 +26,7 @@
     "functions": [
       "ciso"
     ],
-    "passwordHash": "$2a$12$0ukS19emO09dsLWviE/NzOnEWQIqCaVkmHPT/FPKiCdrDhr28mIDa",
+    "passwordHash": "$2a$12$tDGJVeKKjvYG9WM/Sgs.l.uKkkhn4/hDW1y7zAi5KHPWjITAPsQg.",
     "totpSecret": "M525IVTX6QWVMZXLOYIDJ3UBAZNDH4KL",
     "sections": []
   },

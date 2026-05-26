@@ -292,6 +292,234 @@ async function main() {
       str(d.createdBy), d.createdAt||now(), d.updatedAt||now(),
     ]))
 
+    // ── BCM ───────────────────────────────────────────────────────────────────
+    const bcmRaw = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(DATA, 'bcm.json'), 'utf8')) } catch { return {} }
+    })()
+    const bcmRows = [
+      ...(bcmRaw.bia       || []).map(x => ({ ...x, _type: 'bia' })),
+      ...(bcmRaw.plans     || []).map(x => ({ ...x, _type: 'plan' })),
+      ...(bcmRaw.exercises || []).map(x => ({ ...x, _type: 'exercise' })),
+    ]
+    await run(conn, 'BCM', `
+      INSERT IGNORE INTO bcm_entries (id, bcm_type, data, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?)
+    `, bcmRows.map(x => [
+      x.id, x._type, JSON.stringify(x),
+      str(x.createdBy), x.createdAt||now(), x.updatedAt||now(), x.deletedAt||null,
+    ]))
+
+    // ── Legal ─────────────────────────────────────────────────────────────────
+    const legalDir = path.join(DATA, 'legal')
+    const legalRows = [
+      ...(() => { try { return JSON.parse(fs.readFileSync(path.join(legalDir, 'contracts.json'), 'utf8')) } catch { return [] } })()
+        .map(x => ({ ...x, _type: 'contract' })),
+      ...(() => { try { return JSON.parse(fs.readFileSync(path.join(legalDir, 'ndas.json'), 'utf8')) } catch { return [] } })()
+        .map(x => ({ ...x, _type: 'nda' })),
+      ...(() => { try { return JSON.parse(fs.readFileSync(path.join(legalDir, 'policies.json'), 'utf8')) } catch { return [] } })()
+        .map(x => ({ ...x, _type: 'policy' })),
+    ]
+    await run(conn, 'Legal', `
+      INSERT IGNORE INTO legal_entries (id, legal_type, data, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?)
+    `, legalRows.map(x => [
+      x.id, x._type, JSON.stringify(x),
+      str(x.createdBy), x.createdAt||now(), x.updatedAt||now(), x.deletedAt||null,
+    ]))
+
+    // ── Findings ──────────────────────────────────────────────────────────────
+    const findings = readJson('findings.json', [])
+    await run(conn, 'Findings', `
+      INSERT IGNORE INTO findings (id, data, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?)
+    `, findings.map(f => [
+      f.id, JSON.stringify(f),
+      str(f.createdBy), f.createdAt||now(), f.updatedAt||now(), f.deletedAt||null,
+    ]))
+
+    // ── Public Incidents ──────────────────────────────────────────────────────
+    const pubInc = readJson('public-incidents.json', [])
+    await run(conn, 'Public Incidents', `
+      INSERT IGNORE INTO public_incidents (id, ref, data, submitted_at, deleted_at)
+      VALUES (?,?,?,?,?)
+    `, pubInc.map(p => [
+      p.id, str(p.refNumber || p.ref || ''), JSON.stringify(p),
+      p.submittedAt||p.createdAt||now(), p.deletedAt||null,
+    ]))
+
+    // ── SoA Controls ──────────────────────────────────────────────────────────
+    const soa = readJson('soa.json', [])
+    await run(conn, 'SoA Controls', `
+      INSERT IGNORE INTO soa_controls
+        (id, framework, control_id, title, description, theme, applicable,
+         implementation_status, justification, evidence, owner,
+         applicable_entities, linked_templates, created_at, updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `, soa.map(c => [
+      c.id, str(c.framework), str(c.controlId || c.control_id || ''),
+      str(c.title), str(c.description || ''), str(c.theme || ''),
+      bit(c.applicable !== false),
+      str(c.implementationStatus || c.implementation_status || 'not_implemented'),
+      str(c.justification || ''), str(c.evidence || ''), str(c.owner || ''),
+      arr(c.applicableEntities), arr(c.linkedTemplates),
+      c.createdAt||now(), c.updatedAt||now(),
+    ]))
+
+    // ── RBAC Users ────────────────────────────────────────────────────────────
+    const rbacRaw = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(DATA, 'rbac_users.json'), 'utf8')) } catch { return {} }
+    })()
+    const rbacRows = Object.values(rbacRaw)
+    await run(conn, 'RBAC Users', `
+      INSERT IGNORE INTO rbac_users
+        (id, email, display_name, role, functions, password_hash, totp_secret, totp_enabled, created_at, updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?)
+    `, rbacRows.map(u => [
+      u.id || u.username || u.email,
+      str(u.email || u.username),
+      str(u.displayName || u.display_name || u.username || ''),
+      str(u.role || 'reader'),
+      arr(u.functions),
+      str(u.passwordHash || u.password_hash || ''),
+      u.totpSecret || u.totp_secret || null,
+      bit(u.totpEnabled || u.totp_enabled),
+      u.createdAt || now(), u.updatedAt || now(),
+    ]))
+
+    // ── Org Settings ──────────────────────────────────────────────────────────
+    const orgSettings = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(DATA, 'org-settings.json'), 'utf8')) } catch { return {} }
+    })()
+    const orgRows = Object.entries(orgSettings).map(([k, v]) => [k, JSON.stringify(v)])
+    await run(conn, 'Org Settings', `
+      INSERT IGNORE INTO org_settings (key_name, value) VALUES (?,?)
+    `, orgRows)
+
+    // ── Org Units ─────────────────────────────────────────────────────────────
+    const orgUnits = readJson('org-units.json', [])
+    await run(conn, 'Org Units', `
+      INSERT IGNORE INTO org_units (id, data, created_at, updated_at)
+      VALUES (?,?,?,?)
+    `, orgUnits.map(u => [
+      u.id, JSON.stringify(u), u.createdAt||now(), u.updatedAt||now(),
+    ]))
+
+    // ── Governance ────────────────────────────────────────────────────────────
+    const govRaw = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(DATA, 'governance.json'), 'utf8')) } catch { return {} }
+    })()
+    await run(conn, 'Governance Reviews', `
+      INSERT IGNORE INTO governance_reviews
+        (id, title, type, date, next_review_date, status, chair, participants,
+         input_audit_results, input_stakeholder_feedback, input_performance,
+         input_nonconformities, input_previous_actions, input_risks_opportunities,
+         input_external_changes, decisions, improvements, resource_needs, notes,
+         linked_controls, linked_policies, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `, (govRaw.reviews||[]).map(r => [
+      r.id, str(r.title), str(r.type||'annual'),
+      str(r.date||''), str(r.nextReviewDate||''), str(r.status||'planned'), str(r.chair||''),
+      str(r.participants||''),
+      str(r.inputAuditResults||''), str(r.inputStakeholderFeedback||''),
+      str(r.inputPerformance||''), str(r.inputNonconformities||''),
+      str(r.inputPreviousActions||''), str(r.inputRisksOpportunities||''),
+      str(r.inputExternalChanges||''),
+      str(r.decisions||''), str(r.improvements||''), str(r.resourceNeeds||''), str(r.notes||''),
+      arr(r.linkedControls), arr(r.linkedPolicies),
+      str(r.createdBy), r.createdAt||now(), r.updatedAt||now(), r.deletedAt||null,
+    ]))
+    await run(conn, 'Governance Actions', `
+      INSERT IGNORE INTO governance_actions
+        (id, title, description, status, priority, due_date, responsible,
+         linked_review, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    `, (govRaw.actions||[]).map(a => [
+      a.id, str(a.title), str(a.description||''),
+      str(a.status||'open'), str(a.priority||'medium'),
+      a.dueDate||null, str(a.responsible||''),
+      a.linkedReview||null,
+      str(a.createdBy), a.createdAt||now(), a.updatedAt||now(), a.deletedAt||null,
+    ]))
+    await run(conn, 'Governance Meetings', `
+      INSERT IGNORE INTO governance_meetings
+        (id, title, date, location, participants, agenda, minutes, status,
+         created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    `, (govRaw.meetings||[]).map(m => [
+      m.id, str(m.title), str(m.date||''), str(m.location||''),
+      str(m.participants||''), str(m.agenda||''), str(m.minutes||''),
+      str(m.status||'planned'),
+      str(m.createdBy), m.createdAt||now(), m.updatedAt||now(), m.deletedAt||null,
+    ]))
+
+    // ── Crossmap Groups ───────────────────────────────────────────────────────
+    const crossmap = readJson('crossmap.json', [])
+    await run(conn, 'Crossmap Groups', `
+      INSERT IGNORE INTO crossmap_groups (id, topic, description, controls, created_at, updated_at)
+      VALUES (?,?,?,?,?,?)
+    `, crossmap.map(g => [
+      g.id, str(g.topic), str(g.description||''),
+      arr(g.controls), g.createdAt||now(), g.updatedAt||now(),
+    ]))
+
+    // ── Custom Lists ──────────────────────────────────────────────────────────
+    const customLists = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(DATA, 'custom-lists.json'), 'utf8')) } catch { return {} }
+    })()
+    await run(conn, 'Custom Lists', `
+      INSERT IGNORE INTO custom_lists (key_name, value) VALUES (?,?)
+    `, Object.entries(customLists).map(([k, v]) => [k, JSON.stringify(v)]))
+
+    // ── Policy Distributions ──────────────────────────────────────────────────
+    const dists = readJson('policy-distributions.json', [])
+    await run(conn, 'Policy Distributions', `
+      INSERT IGNORE INTO policy_distributions
+        (id, template_id, template_title, template_type, template_version,
+         mode, target_group, due_date, email_list, notes, status,
+         created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `, dists.map(d => [
+      d.id, str(d.templateId), str(d.templateTitle||''),
+      str(d.templateType||'Policy'), d.templateVersion||1,
+      str(d.mode||'manual'), str(d.targetGroup||''),
+      d.dueDate||null, arr(d.emailList), str(d.notes||''), str(d.status||'active'),
+      str(d.createdBy), d.createdAt||now(), d.updatedAt||d.createdAt||now(), d.deletedAt||null,
+    ]))
+
+    // ── Policy Acknowledgements ───────────────────────────────────────────────
+    const acks = readJson('policy-acks.json', [])
+    await run(conn, 'Policy Acks', `
+      INSERT IGNORE INTO policy_acks
+        (id, distribution_id, recipient_email, recipient_name, token,
+         status, acknowledged_at, ip_address, user_agent, created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?)
+    `, acks.map(a => [
+      a.id, str(a.distributionId), str(a.recipientEmail||''),
+      str(a.recipientName||''), str(a.token||''),
+      str(a.status||'pending'), a.acknowledgedAt||null,
+      a.ipAddress||null, a.userAgent||null,
+      a.createdAt||now(),
+    ]))
+
+    // ── Assessments ───────────────────────────────────────────────────────────
+    const assessments = readJson('assessments.json', [])
+    await run(conn, 'Assessments', `
+      INSERT IGNORE INTO assessments
+        (id, supplier_id, title, language, status, due_date, token,
+         questions, answers, score, submitted_at, reviewed_by, reviewed_at,
+         notes, created_by, created_at, updated_at, deleted_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `, assessments.map(a => [
+      a.id, str(a.supplierId), str(a.title||''),
+      str(a.language||'de'), str(a.status||'pending'),
+      a.dueDate||null, str(a.token||''),
+      arr(a.questions), arr(a.answers),
+      a.score ?? null, a.submittedAt||null,
+      a.reviewedBy||null, a.reviewedAt||null,
+      str(a.notes||''), str(a.createdBy),
+      a.createdAt||now(), a.updatedAt||now(), a.deletedAt||null,
+    ]))
+
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log(`\n✓ Migration complete: ${migrated} rows inserted, ${skipped} rows skipped (already existed).`)
     console.log(`\n  Next steps:`)

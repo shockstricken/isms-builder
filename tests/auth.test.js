@@ -107,6 +107,44 @@ describe('GET /whoami', () => {
   })
 })
 
+// ─── Session-Persistenz: login.html darf aktive Session nicht löschen ─────────
+// Regression: res.clearCookie wurde früher bedingungslos aufgerufen wenn
+// login.html ausgeliefert wurde → alle nachfolgenden API-Calls lieferten 401.
+
+describe('Session-Persistenz: login.html löscht keine aktive Session', () => {
+  let cookie
+
+  beforeAll(async () => {
+    const res = await request(app).post('/login').send({ username: 'admin', password: 'adminpass' })
+    cookie = res.headers['set-cookie'][0].split(';')[0]
+  })
+
+  test('GET /ui/login.html mit gültiger Session → kein Set-Cookie das sm_session löscht', async () => {
+    const res = await request(app).get('/ui/login.html').set('Cookie', cookie)
+    const setCookies = res.headers['set-cookie'] || []
+    const clears = setCookies.filter(c =>
+      c.startsWith('sm_session=;') ||
+      c.includes('sm_session=; ') ||
+      (c.includes('sm_session') && c.includes('Expires=Thu, 01 Jan 1970'))
+    )
+    expect(clears).toHaveLength(0)
+  })
+
+  test('GET /whoami nach GET /ui/login.html → Session noch gültig (Regressionstest #clearCookie)', async () => {
+    await request(app).get('/ui/login.html').set('Cookie', cookie)
+    const res = await request(app).get('/whoami').set('Cookie', cookie)
+    expect(res.status).toBe(200)
+    expect(res.body.username).toBe('admin')
+  })
+
+  test('GET /ui/login.html ohne Session → Set-Cookie löscht sm_session (Schutz gegen stale JWT)', async () => {
+    const res = await request(app).get('/ui/login.html')
+    const setCookies = res.headers['set-cookie'] || []
+    const clears = setCookies.filter(c => c.includes('sm_session'))
+    expect(clears.length).toBeGreaterThan(0)
+  })
+})
+
 // ─── Logout ───────────────────────────────────────────────────────────────────
 
 describe('GET /logout', () => {

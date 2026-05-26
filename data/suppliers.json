@@ -38,9 +38,10 @@
     ],
     "linkedPolicies": [],
     "createdAt": "2025-01-15T09:00:00.000Z",
-    "updatedAt": "2025-11-01T10:00:00.000Z",
+    "updatedAt": "2026-03-12T20:06:41.346Z",
     "createdBy": "admin",
-    "deletedAt": null
+    "deletedAt": null,
+    "updatedBy": "admin"
   },
   {
     "id": "sup_demo_de_002",

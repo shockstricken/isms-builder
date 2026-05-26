@@ -102,6 +102,51 @@ SoA zeigt: Status 'partial', verknüpft mit Procedure + 3 Risiken aus Greenbone-
 
 ---
 
+## Eigene Controls (CUSTOM-Framework)
+
+Neben den integrierten Frameworks (ISO 27001, BSI, NIS2 etc.) bietet das SoA-Modul ein
+**CUSTOM-Framework** für organisationsspezifische Controls — also Maßnahmen, die in keinem
+Standardrahmenwerk enthalten sind, aber trotzdem nachweispflichtig sein sollen.
+
+**Typische Anwendungsfälle:**
+- Interne Sicherheitsrichtlinien die über ISO Annex A hinausgehen
+- Branchenspezifische Anforderungen (z.B. Bankaufsicht, Medizinprodukte)
+- Vertragliche Verpflichtungen gegenüber Kunden oder Lieferanten
+- Eigene Best Practices die dauerhaft im ISMS verankert werden sollen
+
+**Voraussetzung:** Rolle `contentowner` oder höher.
+
+**Workflow:**
+
+**Schritt 1 — CUSTOM-Tab öffnen**
+In der SoA-Sektion den Tab **„CUSTOM"** anklicken. Dieser Tab ist immer vorhanden,
+unabhängig von den aktivierten Frameworks.
+
+**Schritt 2 — Eigenen Control anlegen**
+Über die Schaltfläche **„+ Add Custom Control"** (nur für `contentowner`/`admin` sichtbar)
+öffnet sich ein Formular mit:
+- **Control-ID** — frei wählbar (z.B. `ORG-01`, `BANK-12`)
+- **Titel** — kurze Bezeichnung
+- **Beschreibung** — was der Control fordert
+- **Domäne** — thematische Einordnung
+
+**Schritt 3 — Wie Standard-Controls behandeln**
+Eigene Controls verhalten sich identisch zu integrierten Controls:
+- Applicable / Not Applicable markieren
+- Umsetzungsstatus pflegen (`not_started` → `partial` → `implemented` → `optimized`)
+- Mit Policies, Procedures und Risiken verknüpfen
+- Erscheinen im Compliance-Report und in der Gap Analysis
+
+**Schritt 4 — Löschen**
+Eigene Controls können über den Löschen-Button entfernt werden — sofern **keine Templates
+verknüpft** sind. Integrierte Controls (ISO, BSI etc.) können nicht gelöscht werden.
+
+> **Hinweis für den Audit:** Der Auditor sieht CUSTOM-Controls im JSON-Export des SoA.
+> Eine kurze Notiz in der Beschreibung warum dieser Control existiert (z.B. „vertragliche
+> Anforderung Kunde XYZ") macht die Nachvollziehbarkeit im Audit deutlich einfacher.
+
+---
+
 ## Abgrenzung: SoA-Modul vs. SoA-Template-Typ
 
 | | SoA-Modul (obere Navigation) | SoA-Template (Sidebar) |

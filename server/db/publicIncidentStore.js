@@ -5,6 +5,7 @@ const STORAGE_BACKEND = (process.env.STORAGE_BACKEND || 'json').toLowerCase()
 // Public Incident Store – Vorfall-Meldungen ohne Login (Login-Seite)
 // Persistenz: data/public-incidents.json
 
+
 const fs   = require('fs')
 const path = require('path')
 const { randomUUID } = require('crypto')

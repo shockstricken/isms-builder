@@ -4,7 +4,7 @@
   "ismsScope": "",
   "logoText": "",
   "require2FA": false,
-  "aiEnabled": false,
+  "aiEnabled": true,
   "aiOllamaUrl": "",
   "aiEmbedModel": "",
   "cisoName": "",
@@ -47,13 +47,13 @@
     "suppliers": true
   },
   "soaFrameworks": {
-    "ISO27001": true,
+    "ISO27001": false,
     "BSI": true,
     "NIS2": true,
     "EUCS": true,
     "EUAI": true,
-    "ISO9000": true,
-    "ISO9001": true,
+    "ISO9000": false,
+    "ISO9001": false,
     "CRA": true
   },
   "icsSettings": {
@@ -85,6 +85,19 @@
     "user": "",
     "pass": "",
     "from": ""
+  },
+  "splashScreen": {
+    "enabled": true,
+    "duration": 7
+  },
+  "languageConfig": {
+    "available": [
+      "de",
+      "en",
+      "fr",
+      "nl"
+    ],
+    "default": "en"
   },
   "navOrder": [
     "dashboard",

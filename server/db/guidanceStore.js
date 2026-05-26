@@ -271,6 +271,94 @@ const ARCH_SEED = [
     minRole:       null,
   },
   {
+    seedId:        'seed_tmpl_usage',
+    title:         { de: 'Templates – Nutzung und Lebenszyklus',                   en: 'Templates – Usage and Lifecycle',                                 fr: 'Modèles – Utilisation et cycle de vie',                   nl: 'Sjablonen – Gebruik en levenscyclus' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/template-usage.md'),        en: path.join(PROJECT_ROOT, 'docs/template-usage.en.md'),        fr: path.join(PROJECT_ROOT, 'docs/template-usage.fr.md'),        nl: path.join(PROJECT_ROOT, 'docs/template-usage.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_policy_acks',
+    title:         { de: 'Modul: Richtlinien-Bestätigung (Policy Acknowledgements)', en: 'Module: Policy Acknowledgements',                                fr: 'Module: Confirmations de politique',                       nl: 'Module: Beleidsbevestigingen' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-policy-acknowledgements.md'), en: path.join(PROJECT_ROOT, 'docs/module-policy-acknowledgements.en.md'), fr: path.join(PROJECT_ROOT, 'docs/module-policy-acknowledgements.fr.md'), nl: path.join(PROJECT_ROOT, 'docs/module-policy-acknowledgements.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_gdpr',
+    title:         { de: 'Modul: DSGVO (Datenschutz)',                              en: 'Module: GDPR (Data Protection)',                                  fr: 'Module: RGPD (Protection des données)',                   nl: 'Module: AVG (Gegevensbescherming)' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-gdpr.md'),            en: path.join(PROJECT_ROOT, 'docs/module-gdpr.en.md'),            fr: path.join(PROJECT_ROOT, 'docs/module-gdpr.fr.md'),            nl: path.join(PROJECT_ROOT, 'docs/module-gdpr.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_goals',
+    title:         { de: 'Modul: Sicherheitsziele (Goals)',                         en: 'Module: Security Goals',                                          fr: 'Module: Objectifs de sécurité',                          nl: 'Module: Beveiligingsdoelen' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-goals.md'),           en: path.join(PROJECT_ROOT, 'docs/module-goals.en.md'),           fr: path.join(PROJECT_ROOT, 'docs/module-goals.fr.md'),           nl: path.join(PROJECT_ROOT, 'docs/module-goals.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_assets',
+    title:         { de: 'Modul: Assets (Informationswerte)',                       en: 'Module: Assets (Information Assets)',                             fr: 'Module: Actifs (valeurs informatives)',                   nl: 'Module: Bedrijfsmiddelen' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-assets.md'),          en: path.join(PROJECT_ROOT, 'docs/module-assets.en.md'),          fr: path.join(PROJECT_ROOT, 'docs/module-assets.fr.md'),          nl: path.join(PROJECT_ROOT, 'docs/module-assets.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_suppliers',
+    title:         { de: 'Modul: Lieferantenbewertung',                             en: 'Module: Supplier Management',                                     fr: 'Module: Gestion des fournisseurs',                       nl: 'Module: Leveranciersbeheer' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-suppliers.md'),       en: path.join(PROJECT_ROOT, 'docs/module-suppliers.en.md'),       fr: path.join(PROJECT_ROOT, 'docs/module-suppliers.fr.md'),       nl: path.join(PROJECT_ROOT, 'docs/module-suppliers.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_bcm',
+    title:         { de: 'Modul: Business Continuity Management (BCM)',             en: 'Module: Business Continuity Management (BCM)',                    fr: 'Module: Gestion de la continuité des activités (BCM)',   nl: 'Module: Bedrijfscontinuïteitsbeheer (BCM)' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-bcm.md'),             en: path.join(PROJECT_ROOT, 'docs/module-bcm.en.md'),             fr: path.join(PROJECT_ROOT, 'docs/module-bcm.fr.md'),             nl: path.join(PROJECT_ROOT, 'docs/module-bcm.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_training',
+    title:         { de: 'Modul: Schulungen und Awareness',                         en: 'Module: Training and Awareness',                                  fr: 'Module: Formation et sensibilisation',                   nl: 'Module: Training en bewustwording' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-training.md'),        en: path.join(PROJECT_ROOT, 'docs/module-training.en.md'),        fr: path.join(PROJECT_ROOT, 'docs/module-training.fr.md'),        nl: path.join(PROJECT_ROOT, 'docs/module-training.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_governance',
+    title:         { de: 'Modul: Governance (ISMS-Steuerung)',                      en: 'Module: Governance (ISMS Management)',                            fr: 'Module: Gouvernance (Gestion SMSI)',                     nl: 'Module: Governance (ISMS-beheer)' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-governance.md'),      en: path.join(PROJECT_ROOT, 'docs/module-governance.en.md'),      fr: path.join(PROJECT_ROOT, 'docs/module-governance.fr.md'),      nl: path.join(PROJECT_ROOT, 'docs/module-governance.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_legal',
+    title:         { de: 'Modul: Legal (Verträge und Rechtsdokumente)',             en: 'Module: Legal (Contracts and Legal Documents)',                   fr: 'Module: Juridique (Contrats et documents légaux)',       nl: 'Module: Juridisch (Contracten en rechtsdocumenten)' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-legal.md'),           en: path.join(PROJECT_ROOT, 'docs/module-legal.en.md'),           fr: path.join(PROJECT_ROOT, 'docs/module-legal.fr.md'),           nl: path.join(PROJECT_ROOT, 'docs/module-legal.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
+    seedId:        'seed_module_reports',
+    title:         { de: 'Modul: Reports und Exporte',                              en: 'Module: Reports and Exports',                                     fr: 'Module: Rapports et exportations',                      nl: 'Module: Rapporten en exports' },
+    srcFiles:      { de: path.join(PROJECT_ROOT, 'docs/module-reports.md'),         en: path.join(PROJECT_ROOT, 'docs/module-reports.en.md'),         fr: path.join(PROJECT_ROOT, 'docs/module-reports.fr.md'),         nl: path.join(PROJECT_ROOT, 'docs/module-reports.nl.md') },
+    refreshContent: true,
+    category:      'systemhandbuch',
+    minRole:       null,
+  },
+  {
     seedId:        'seed_changelog',
     title:         'ISMS Builder – Changelog',
     srcFile:       path.join(PROJECT_ROOT, 'CHANGELOG.md'),
@@ -293,19 +381,30 @@ function seedArchitectureDocs() {
 
   for (const entry of ARCH_SEED) {
     const title = typeof entry.title === 'object' ? (entry.title[lang] || entry.title.en) : entry.title
+    // srcFiles: { de, en, fr, nl } — optional; falls back to srcFile
+    const srcFile = entry.srcFiles
+      ? (entry.srcFiles[lang] || entry.srcFiles.en || entry.srcFile)
+      : entry.srcFile
     const existing = docs.find(d => d.seedId === entry.seedId && !d.deletedAt)
 
     if (existing) {
-      // Update title and seedLang if language changed
+      // Update title, content and seedLang if language changed
       if (existing.seedLang !== lang) {
         existing.title    = title
         existing.seedLang = lang
         existing.updatedAt = new Date().toISOString()
         changed = true
+        // Refresh content when language changes (for srcFiles entries)
+        if (entry.srcFiles && srcFile && fs.existsSync(srcFile)) {
+          let fresh = fs.readFileSync(srcFile, 'utf8')
+          if (entry.wrapCode) fresh = `\`\`\`${entry.wrapCode}\n${fresh}\n\`\`\``
+          existing.content   = fresh
+          existing.updatedAt = new Date().toISOString()
+        }
       }
       // Always refresh content for entries that change frequently (e.g. CHANGELOG)
-      if (entry.refreshContent && fs.existsSync(entry.srcFile)) {
-        let fresh = fs.readFileSync(entry.srcFile, 'utf8')
+      if (entry.refreshContent && srcFile && fs.existsSync(srcFile)) {
+        let fresh = fs.readFileSync(srcFile, 'utf8')
         if (entry.wrapCode) fresh = `\`\`\`${entry.wrapCode}\n${fresh}\n\`\`\``
         if (existing.content !== fresh) {
           existing.content   = fresh
@@ -316,9 +415,9 @@ function seedArchitectureDocs() {
       continue
     }
 
-    if (!fs.existsSync(entry.srcFile)) continue
+    if (!srcFile || !fs.existsSync(srcFile)) continue
 
-    let content = fs.readFileSync(entry.srcFile, 'utf8')
+    let content = fs.readFileSync(srcFile, 'utf8')
     if (entry.wrapCode) {
       content = `\`\`\`${entry.wrapCode}\n${content}\n\`\`\``
     }

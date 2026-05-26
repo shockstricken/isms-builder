@@ -206,8 +206,14 @@ See [`docs/architecture/`](docs/architecture/) for C4 diagrams, full data model,
 
 ## Running Tests
 
+> **Note:** The test suite under `tests/` is the author's personal development tests and is
+> shipped alongside the project for transparency. It is **not** part of the application itself
+> and is **not required** to run the app. The tests cover internal API behaviour and use
+> hardcoded test credentials that only exist in the isolated test environment — they have no
+> relation to any production or demo data.
+
 ```bash
-npm test                  # runs all 176 tests
+npm test                  # runs all 265 tests
 npm test -- --verbose     # with test names
 ```
 

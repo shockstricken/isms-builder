@@ -112,8 +112,13 @@ router.get('/whoami', (req, res) => {
   res.json({ ...sess, functions, has2FA })
 })
 
-// Logout
+// Logout — GET (Legacy) und POST (UI seit app.js fetch-Aufruf)
+// Die UI ruft fetch('/logout', { method: 'POST' }) auf. GET bleibt für Direktaufrufe.
 router.get('/logout', (req, res) => {
+  res.clearCookie('sm_session')
+  res.json({ ok: true })
+})
+router.post('/logout', (req, res) => {
   res.clearCookie('sm_session')
   res.json({ ok: true })
 })

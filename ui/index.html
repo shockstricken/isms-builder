@@ -14,7 +14,7 @@
 
   <!-- ── Topbar ── -->
   <header class="topbar">
-    <button class="topbar-hamburger" id="sidebarToggle" title="Sidebar ein-/ausblenden">
+    <button class="topbar-hamburger" id="sidebarToggle" title="Sidebar ein-/ausblenden" data-i18n-title="topbar_toggleSidebar">
       <i class="ph ph-list"></i>
     </button>
     <a class="topbar-brand" href="#">
@@ -30,7 +30,7 @@
     </div>
     <div class="topbar-right">
       <div id="topbarFnBadges" style="display:flex;align-items:center;gap:4px;"></div>
-      <button class="topbar-2fa-hint" id="topbar2faHint" style="display:none" title="2FA nicht eingerichtet – jetzt aktivieren" onclick="loadSection('settings')">
+      <button class="topbar-2fa-hint" id="topbar2faHint" style="display:none" title="2FA nicht eingerichtet – jetzt aktivieren" data-i18n-title="tfa_title" onclick="loadSection('settings')">
         <i class="ph ph-shield-warning"></i>
         <span data-i18n="tfa_hint">2FA nicht aktiv</span>
       </button>
@@ -102,29 +102,29 @@
       <div class="editor-card" id="editorCard" style="display:none;">
         <nav id="breadcrumb" class="tmpl-breadcrumb" style="display:none;"></nav>
         <div class="editor-toolbar">
-          <span class="toolbar-tag">Typ</span>
+          <span class="toolbar-tag" data-i18n="col_type">Typ</span>
           <span id="selType" class="toolbar-badge">—</span>
-          <span class="toolbar-tag">Status</span>
+          <span class="toolbar-tag" data-i18n="col_status">Status</span>
           <span id="statusBadge" class="toolbar-badge status-badge status-draft">—</span>
           <span id="ownerInfo" class="owner-info"></span>
           <span class="toolbar-spacer"></span>
           <button id="btnChildPage" class="btn btn-secondary btn-sm" style="display:none;" onclick="openChildPageModal()">
-            <i class="ph ph-git-branch"></i> Kind-Seite
+            <i class="ph ph-git-branch"></i> <span data-i18n="tmpl_childPage">Kind-Seite</span>
           </button>
           <button id="btnMovePage" class="btn btn-secondary btn-sm" style="display:none;" onclick="openMoveDialog()">
-            <i class="ph ph-arrows-out-cardinal"></i> Verschieben
+            <i class="ph ph-arrows-out-cardinal"></i> <span data-i18n="tmpl_move">Verschieben</span>
           </button>
           <button id="btnHistory" class="btn btn-secondary btn-sm">
-            <i class="ph ph-clock-counter-clockwise"></i> Verlauf
+            <i class="ph ph-clock-counter-clockwise"></i> <span data-i18n="tmpl_history">Verlauf</span>
           </button>
           <button id="btnControls" class="btn btn-secondary btn-sm" onclick="openControlPicker()">
-            <i class="ph ph-link"></i> SoA-Controls
+            <i class="ph ph-link"></i> <span data-i18n="tmpl_soaControls">SoA-Controls</span>
           </button>
           <button id="btnEntities" class="btn btn-secondary btn-sm" onclick="openEntityPickerForTemplate()">
-            <i class="ph ph-buildings"></i> Gilt für
+            <i class="ph ph-buildings"></i> <span data-i18n="tmpl_appliesTo">Gilt für</span>
           </button>
           <button id="btnSave" class="btn btn-primary">
-            <i class="ph ph-floppy-disk"></i> Speichern
+            <i class="ph ph-floppy-disk"></i> <span data-i18n="save">Speichern</span>
           </button>
         </div>
         <div id="lifecycleActions" class="lifecycle-actions" style="display:none;"></div>
@@ -133,18 +133,18 @@
         <div id="tmplAttachmentsBar" class="tmpl-attachments-bar" style="display:none;"></div>
         <div class="tmpl-review-bar">
           <i class="ph ph-calendar-check"></i>
-          <label class="tmpl-review-label" for="inputNextReview">Nächstes Review:</label>
+          <label class="tmpl-review-label" for="inputNextReview"><span data-i18n="tmpl_nextReview">Nächstes Review:</span></label>
           <input id="inputNextReview" type="date" class="tmpl-review-input" />
           <span id="inputNextReviewHint" class="tmpl-review-hint"></span>
         </div>
-        <input id="inputTitle" class="form-input" placeholder="Titel des Templates" />
-        <textarea id="contentEditor" class="form-textarea" placeholder="Inhalt des Templates…"></textarea>
+        <input id="inputTitle" class="form-input" placeholder="Titel des Templates" data-i18n-placeholder="tmpl_titlePlaceholder" />
+        <textarea id="contentEditor" class="form-textarea" placeholder="Inhalt des Templates…" data-i18n-placeholder="tmpl_contentPlaceholder"></textarea>
       </div>
 
       <!-- Template List -->
       <section class="list-panel" id="listPanel" style="display:none;">
         <div class="list-panel-header">
-          <h3 class="list-panel-title">Vorhandene Templates</h3>
+          <h3 class="list-panel-title"><span data-i18n="admin_templates">Vorhandene Templates</span></h3>
         </div>
         <ul id="templateList" class="template-list"></ul>
       </section>
@@ -155,21 +155,21 @@
   <div id="controlPickerModal" class="modal" aria-hidden="true" style="visibility:hidden;">
     <div class="modal-content modal-lg">
       <div class="modal-header">
-        <h3 class="modal-title"><i class="ph ph-link"></i> SoA-Controls verknüpfen</h3>
+        <h3 class="modal-title"><i class="ph ph-link"></i> <span data-i18n="tmpl_linkSoaControls">SoA-Controls verknüpfen</span></h3>
         <button class="modal-close" onclick="closeControlPicker()"><i class="ph ph-x"></i></button>
       </div>
       <div class="modal-body">
         <div class="picker-toolbar">
-          <input id="controlPickerSearch" class="form-input" placeholder="Controls suchen…" oninput="filterControlPicker()" />
+          <input id="controlPickerSearch" class="form-input" placeholder="Controls suchen…" data-i18n-placeholder="tmpl_controlSearchPlaceholder" oninput="filterControlPicker()" />
           <div id="controlPickerFwTabs" class="picker-fw-tabs"></div>
         </div>
         <div id="controlPickerList" class="picker-list"></div>
       </div>
       <div class="modal-footer">
         <span id="controlPickerCount" class="picker-count"></span>
-        <button class="btn btn-secondary" onclick="closeControlPicker()">Abbrechen</button>
+        <button class="btn btn-secondary" onclick="closeControlPicker()"><span data-i18n="cancel">Abbrechen</span></button>
         <button class="btn btn-primary" onclick="saveControlPicker()">
-          <i class="ph ph-floppy-disk"></i> Speichern
+          <i class="ph ph-floppy-disk"></i> <span data-i18n="save">Speichern</span>
         </button>
       </div>
     </div>
@@ -179,20 +179,20 @@
   <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Neues Template erstellen</h3>
+        <h3 class="modal-title" id="modalTitle"><span data-i18n="tmpl_createNew">Neues Template erstellen</span></h3>
       </div>
       <div class="modal-body">
-        <label class="form-label">Typ</label>
+        <label class="form-label"><span data-i18n="col_type">Typ</span></label>
         <select id="newType" class="select"></select>
-        <label class="form-label">Titel</label>
-        <input id="newTitle" class="input" placeholder="Titel eingeben…" />
+        <label class="form-label"><span data-i18n="col_title">Titel</span></label>
+        <input id="newTitle" class="input" placeholder="Titel eingeben…" data-i18n-placeholder="tmpl_newTitlePlaceholder" />
         <input id="newParentId" type="hidden" value="" />
         <div id="modalParentHint" class="modal-parent-hint" style="display:none;"></div>
       </div>
       <div class="modal-footer">
-        <button id="modalCancel" class="btn btn-secondary">Abbrechen</button>
+        <button id="modalCancel" class="btn btn-secondary"><span data-i18n="cancel">Abbrechen</span></button>
         <button id="modalCreate" class="btn btn-primary">
-          <i class="ph ph-plus"></i> Erstellen
+          <i class="ph ph-plus"></i> <span data-i18n="create">Erstellen</span>
         </button>
       </div>
     </div>
@@ -209,6 +209,9 @@
       })
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         el.placeholder = t(el.dataset.i18nPlaceholder)
+      })
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        el.title = t(el.dataset.i18nTitle)
       })
       document.documentElement.lang = window.LANG || 'de'
     })

@@ -43,7 +43,7 @@ const SECTION_META = [
   { id:'suppliers',  labelKey:'nav_suppliers',  label:'Supply Chain',       icon:'ph-truck',               minRole:'contentowner', functions:['ciso','revision'] },
   { id:'bcm',        labelKey:'nav_bcm',        label:'Business Continuity',icon:'ph-heartbeat',           minRole:'contentowner', functions:['ciso','revision'] },
   { id:'governance', labelKey:'nav_governance', label:'Governance',         icon:'ph-chalkboard-teacher',  minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
-  { id:'policy-acks', labelKey:'nav_policyAcks', label:'Richtlinien-Bestätigungen', icon:'ph-check-circle', minRole:'contentowner', functions:['ciso','revision','qmb'] },
+  { id:'policy-acks', labelKey:'nav_policyAcks', label:'Policy Acknowledgements', icon:'ph-check-circle', minRole:'contentowner', functions:['ciso','revision','qmb'] },
   { id:'reports',    labelKey:'nav_reports',    label:'Reports',            icon:'ph-chart-line',          minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
   { id:'settings',   labelKey:'nav_settings',   label:'Settings',           icon:'ph-gear',                minRole:'contentowner', functions:['ciso','dso','revision','qmb'] },
   // ── Nur Admin ────────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ function renderLifecycleActions(template) {
   if (available.length === 0) { bar.style.display = 'none'; return }
 
   bar.style.display = 'flex'
-  bar.innerHTML = `<span class="action-label">Aktion:</span>`
+  bar.innerHTML = `<span class="action-label">${t('common_action')}:</span>`
   available.forEach(tr => {
     const btn = document.createElement('button')
     btn.className = `btn-lifecycle ${tr.cls}`
@@ -206,20 +206,20 @@ function _initSemanticSearch() {
   }
 
   async function _doSearch(q) {
-    _open(`<div class="search-loading"><i class="ph ph-spinner"></i> Suche…</div>`)
+    _open(`<div class="search-loading"><i class="ph ph-spinner"></i> ${t('search')}</div>`)
     try {
       const res = await fetch(`/api/ai/search?q=${encodeURIComponent(q)}`, { credentials: 'include' })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
       _results = data.results || []
       if (!_results.length) {
-        _open(`<div class="search-no-results">No results for <strong>${q}</strong></div>`)
+        _open(`<div class="search-no-results">${t('search_noResultsFor')} <strong>${q}</strong></div>`)
         return
       }
       const mode = data.mode || 'keyword'
       const modeBadge = mode === 'semantic'
-        ? '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(168,85,247,.15);color:#a855f7;font-weight:600;margin-left:6px;">KI</span>'
-        : '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.08);color:var(--text-subtle);font-weight:600;margin-left:6px;">Keyword</span>'
+        ? `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(168,85,247,.15);color:#a855f7;font-weight:600;margin-left:6px;">${t('search_ai')}</span>`
+        : `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(255,255,255,.08);color:var(--text-subtle);font-weight:600;margin-left:6px;">${t('search_keyword')}</span>`
       const rows = _results.map((r, i) => {
         const icon = TYPE_ICONS[r.type] || 'ph-magnifying-glass'
         return `<div class="search-result-item" data-idx="${i}" onclick="_searchNavigate('${r.url}')">
@@ -233,10 +233,10 @@ function _initSemanticSearch() {
           </div>
         </div>`
       }).join('')
-      _open(`<div class="search-dropdown-header">Suchergebnisse (${_results.length})${modeBadge}</div>${rows}`)
+      _open(`<div class="search-dropdown-header">${t('search_results')} (${_results.length})${modeBadge}</div>${rows}`)
       _activeIdx = -1
     } catch {
-      _open(`<div class="search-offline"><i class="ph ph-plug-slash"></i> AI search unavailable</div>`)
+      _open(`<div class="search-offline"><i class="ph ph-plug-slash"></i> ${t('search_aiUnavailable')}</div>`)
     }
   }
 
@@ -938,9 +938,9 @@ function removeAllDynamicPanels() {
 
 // ── Reports ─────────────────────────────────────────────────────────
 // ── Findings: Severity- und Status-Labels ─────────────────────────────────────
-const FINDING_SEVERITY_LABELS = { critical:'Kritisch', high:'Hoch', medium:'Mittel', low:'Niedrig', observation:'Hinweis' }
-const FINDING_STATUS_LABELS   = { open:'Offen', in_progress:'In Bearbeitung', resolved:'Behoben', accepted:'Akzeptiert' }
-const FINDING_ACT_STATUS_LABELS = { open:'Offen', in_progress:'In Bearbeitung', done:'Erledigt' }
+const FINDING_SEVERITY_LABELS = { critical:t('findings_critical'), high:t('findings_high'), medium:t('findings_medium'), low:t('findings_low'), observation:t('findings_observation') }
+const FINDING_STATUS_LABELS   = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), resolved:t('findings_statusResolved'), accepted:t('findings_statusAccepted') }
+const FINDING_ACT_STATUS_LABELS = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), done:t('findings_statusDone') }
 const FINDING_SEVERITY_COLOR  = { critical:'#f87171', high:'#fb923c', medium:'#fbbf24', low:'#4ade80', observation:'#60a5fa' }
 const FINDING_STATUS_COLOR    = { open:'#f87171', in_progress:'#fbbf24', resolved:'#4ade80', accepted:'#60a5fa' }
 
@@ -949,15 +949,15 @@ let _findingsTab     = 'list'      // 'list' | 'open' | 'resolved'
 let _findingFormBack = 'list'
 
 const REPORT_TYPES = [
-  { id: 'compliance', label: 'Compliance',            icon: 'ph-shield-check',            desc: 'Implementation rate per entity and framework', needsEntity: true },
-  { id: 'framework',  label: 'Framework Coverage',   icon: 'ph-chart-bar',               desc: 'Controls per framework: applicable / implemented / gap', needsEntity: false },
-  { id: 'gap',        label: 'Gap Analysis',          icon: 'ph-warning-circle',          desc: 'Controls without linked policy templates', needsEntity: true },
-  { id: 'templates',  label: 'Template Overview',     icon: 'ph-files',                   desc: 'All templates of an entity by status', needsEntity: true },
-  { id: 'reviews',    label: 'Due Reviews',           icon: 'ph-calendar-x',             desc: 'Templates with overdue or upcoming review date', needsEntity: false },
-  { id: 'matrix',     label: 'Compliance Matrix',     icon: 'ph-table',                  desc: 'Control × Entity traffic light overview', needsEntity: false },
-  { id: 'audit',      label: 'Audit Trail',            icon: 'ph-clock-counter-clockwise', desc: 'Status changes on templates in a given period', needsEntity: false },
-  { id: 'findings',   label: 'Audit Findings',         icon: 'ph-magnifying-glass',        desc: 'Audit findings with action plans (IST→SOLL→Risk→Recommendation)', needsEntity: false },
-  { id: 'risks',      label: 'Risk Register',          icon: 'ph-warning',                 desc: 'All approved risks incl. CVSS scores from scan imports', needsEntity: true },
+  { id: 'compliance', labelKey: 'reports_compliance', icon: 'ph-shield-check',            descKey: 'reports_descCompliance', needsEntity: true },
+  { id: 'framework',  labelKey: 'reports_fw',         icon: 'ph-chart-bar',               descKey: 'reports_descFramework', needsEntity: false },
+  { id: 'gap',        labelKey: 'reports_gap',        icon: 'ph-warning-circle',          descKey: 'reports_descGap', needsEntity: true },
+  { id: 'templates',  labelKey: 'reports_templates',  icon: 'ph-files',                   descKey: 'reports_descTemplates', needsEntity: true },
+  { id: 'reviews',    labelKey: 'reports_reviews',    icon: 'ph-calendar-x',              descKey: 'reports_descReviews', needsEntity: false },
+  { id: 'matrix',     labelKey: 'reports_matrix',     icon: 'ph-table',                   descKey: 'reports_descMatrix', needsEntity: false },
+  { id: 'audit',      labelKey: 'reports_audit',      icon: 'ph-clock-counter-clockwise',  descKey: 'reports_descAudit', needsEntity: false },
+  { id: 'findings',   labelKey: 'findings_title',     icon: 'ph-magnifying-glass',         descKey: 'reports_descFindings', needsEntity: false },
+  { id: 'risks',      labelKey: 'risk_register',      icon: 'ph-warning',                  descKey: 'reports_descRisks', needsEntity: true },
 ]
 
 let _reportEntities = []
@@ -972,14 +972,14 @@ async function renderReports() {
 
   container.innerHTML = `
     <div class="reports-header">
-      <h2 class="reports-title"><i class="ph ph-chart-line"></i> Reports &amp; Compliance</h2>
+      <h2 class="reports-title"><i class="ph ph-chart-line"></i> ${t('reports_title')}</h2>
     </div>
     <div class="training-tab-bar" style="margin-bottom:16px">
-      <button class="training-tab${_reportsMainTab==='reports'?' active':''}" onclick="switchReportsMainTab('reports')">
-        <i class="ph ph-chart-bar"></i> Berichte
+      <button class="training-tab${_reportsMainTab==='reports'?' active':''}" data-tab="reports" onclick="switchReportsMainTab('reports')">
+        <i class="ph ph-chart-bar"></i> ${t('reports_title')}
       </button>
-      <button class="training-tab${_reportsMainTab==='findings'?' active':''}" onclick="switchReportsMainTab('findings')">
-        <i class="ph ph-magnifying-glass"></i> Feststellungen
+      <button class="training-tab${_reportsMainTab==='findings'?' active':''}" data-tab="findings" onclick="switchReportsMainTab('findings')">
+        <i class="ph ph-magnifying-glass"></i> ${t('findings_title')}
       </button>
     </div>
     <div id="reportsMainContent"></div>
@@ -994,7 +994,7 @@ async function renderReports() {
 async function switchReportsMainTab(tab) {
   _reportsMainTab = tab
   document.querySelectorAll('#reportsContainer .training-tab').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(tab === 'reports' ? 'bericht' : 'feststellung'))
+    b.classList.toggle('active', b.dataset.tab === tab)
   )
   const content = dom('reportsMainContent')
   if (!content) return
@@ -1014,25 +1014,25 @@ function renderReportsTabContent(container) {
       ${REPORT_TYPES.map(rt => `
         <div class="report-card" data-report="${rt.id}">
           <i class="ph ${rt.icon} report-card-icon"></i>
-          <h3 class="report-card-title">${rt.label}</h3>
-          <p class="report-card-desc">${rt.desc}</p>
+          <h3 class="report-card-title">${t(rt.labelKey)}</h3>
+          <p class="report-card-desc">${t(rt.descKey)}</p>
           <button class="btn btn-primary btn-sm report-run-btn" data-report="${rt.id}">
-            Run <i class="ph ph-play"></i>
+            ${t('reports_run')} <i class="ph ph-play"></i>
           </button>
         </div>
       `).join('')}
     </div>
     <div id="reportFilters" class="report-filters" style="display:none;">
       <div id="reportEntityWrap">
-        <label class="form-label">Entity</label>
+        <label class="form-label">${t('reports_entity')}</label>
         <select id="reportEntitySel" class="select report-sel">
           <option value="">${t('filter_allEntities')}</option>
           ${_reportEntities.map(e => `<option value="${e.id}">${e.name} (${e.shortCode || e.id})</option>`).join('')}
         </select>
       </div>
-      <label class="form-label">Framework</label>
+      <label class="form-label">${t('reports_framework')}</label>
       <select id="reportFwSel" class="select report-sel">
-        <option value="">Alle Frameworks</option>
+        <option value="">${t('reports_allFw')}</option>
         <option value="ISO27001">ISO 27001:2022</option>
         <option value="BSI">BSI IT-Grundschutz</option>
         <option value="NIS2">EU NIS2</option>
@@ -1042,11 +1042,11 @@ function renderReportsTabContent(container) {
         <option value="ISO9001">ISO 9001:2015</option>
         <option value="CRA">EU Cyber Resilience Act</option>
       </select>
-      <label class="form-label">From</label>
+      <label class="form-label">${t('reports_from')}</label>
       <input type="date" id="reportFrom" class="form-input report-date" />
-      <label class="form-label">To</label>
+      <label class="form-label">${t('reports_to')}</label>
       <input type="date" id="reportTo" class="form-input report-date" />
-      <button id="reportRunBtn" class="btn btn-primary"><i class="ph ph-play"></i> Create Report</button>
+      <button id="reportRunBtn" class="btn btn-primary"><i class="ph ph-play"></i> ${t('reports_generate')}</button>
       <button class="btn btn-secondary" onclick="exportReportJson()"><i class="ph ph-download-simple"></i> JSON</button>
       <button class="btn btn-secondary" onclick="exportReportCsv()"><i class="ph ph-file-csv"></i> CSV</button>
       <button class="btn btn-secondary" onclick="exportReportPdf()"><i class="ph ph-file-pdf"></i> PDF</button>
@@ -1094,7 +1094,7 @@ async function runReport(type) {
   const to     = dom('reportTo')?.value || ''
   const resultEl = dom('reportResult')
   if (!resultEl) return
-  resultEl.innerHTML = '<p class="report-loading"><i class="ph ph-spinner"></i> Wird berechnet…</p>'
+  resultEl.innerHTML = `<p class="report-loading"><i class="ph ph-spinner"></i> ${t('reports_calculating')}</p>`
 
   let url = `/reports/${type}`
   const params = new URLSearchParams()
@@ -1110,23 +1110,23 @@ async function runReport(type) {
     _lastReportData = await res.json()
     renderReportResult(type, _lastReportData, resultEl)
   } catch (e) {
-    resultEl.innerHTML = `<p class="report-error">Netzwerkfehler: ${e.message}</p>`
+    resultEl.innerHTML = `<p class="report-error">${t('err_network')}: ${e.message}</p>`
   }
 }
 
 function renderReportResult(type, data, el) {
   if (type === 'compliance') {
-    el.innerHTML = `<h3 class="report-result-title">Compliance Overview</h3>` +
+    el.innerHTML = `<h3 class="report-result-title">${t('reports_compliance')}</h3>` +
       (Array.isArray(data) ? data : [data]).map(row => `
         <div class="report-compliance-card">
-          <h4>${row.entity?.name || 'All'} <span class="picker-id">${row.entity?.shortCode || ''}</span></h4>
+          <h4>${row.entity?.name || t('reports_allEntities')} <span class="picker-id">${row.entity?.shortCode || ''}</span></h4>
           <div class="report-kpi-row">
-            <div class="report-kpi"><span class="report-kpi-val">${row.totalApplicable}</span><span class="report-kpi-label">Applicable</span></div>
-            <div class="report-kpi"><span class="report-kpi-val">${row.totalImplemented}</span><span class="report-kpi-label">Implemented</span></div>
-            <div class="report-kpi"><span class="report-kpi-val ${row.implementationRate < 50 ? 'red' : row.implementationRate < 80 ? 'yellow' : 'green'}">${row.implementationRate}%</span><span class="report-kpi-label">Rate</span></div>
+            <div class="report-kpi"><span class="report-kpi-val">${row.totalApplicable}</span><span class="report-kpi-label">${t('soa_applicable')}</span></div>
+            <div class="report-kpi"><span class="report-kpi-val">${row.totalImplemented}</span><span class="report-kpi-label">${t('soa_implemented')}</span></div>
+            <div class="report-kpi"><span class="report-kpi-val ${row.implementationRate < 50 ? 'red' : row.implementationRate < 80 ? 'yellow' : 'green'}">${row.implementationRate}%</span><span class="report-kpi-label">${t('reports_rate')}</span></div>
           </div>
           <table class="report-table">
-            <thead><tr><th>Framework</th><th>Applicable</th><th>Implemented</th><th>Rate</th></tr></thead>
+            <thead><tr><th>${t('reports_framework')}</th><th>${t('soa_applicable')}</th><th>${t('soa_implemented')}</th><th>${t('reports_rate')}</th></tr></thead>
             <tbody>${Object.entries(row.byFramework || {}).map(([fw, v]) =>
               `<tr><td>${fw}</td><td>${v.applicable}</td><td>${v.implemented}</td>
                <td>${v.applicable > 0 ? Math.round(v.implemented/v.applicable*100) : 0}%</td></tr>`
@@ -1135,9 +1135,9 @@ function renderReportResult(type, data, el) {
         </div>
       `).join('')
   } else if (type === 'framework') {
-    el.innerHTML = `<h3 class="report-result-title">Framework Coverage</h3>
+    el.innerHTML = `<h3 class="report-result-title">${t('reports_fw')}</h3>
       <table class="report-table">
-        <thead><tr><th>Framework</th><th>Controls</th><th>Applicable</th><th>n/a</th><th>Implemented</th><th>Rate</th></tr></thead>
+        <thead><tr><th>${t('reports_framework')}</th><th>Controls</th><th>${t('soa_applicable')}</th><th>n/a</th><th>${t('soa_implemented')}</th><th>${t('reports_rate')}</th></tr></thead>
         <tbody>${(Array.isArray(data) ? data : [data]).map(fw => `
           <tr>
             <td><span class="fw-dot" style="background:${fw.color}"></span>${fw.label}</td>
@@ -1148,21 +1148,21 @@ function renderReportResult(type, data, el) {
         </tbody>
       </table>`
   } else if (type === 'gap') {
-    el.innerHTML = `<h3 class="report-result-title">Gap Analysis — ${data.totalGaps} Controls without Policy</h3>
+    el.innerHTML = `<h3 class="report-result-title">${t('reports_gap')} — ${data.totalGaps} ${t('reports_controlsWithoutPolicy')}</h3>
       <table class="report-table">
-        <thead><tr><th>Control ID</th><th>Framework</th><th>Title</th><th>Status</th><th>Owner</th></tr></thead>
+        <thead><tr><th>Control ID</th><th>${t('reports_framework')}</th><th>${t('col_title')}</th><th>${t('col_status')}</th><th>${t('col_owner')}</th></tr></thead>
         <tbody>${(data.gaps || []).map(g => `
           <tr><td class="picker-id">${g.id}</td><td>${g.framework}</td><td>${g.title}</td>
               <td>${g.status || '—'}</td><td>${g.owner || '—'}</td></tr>`).join('')}
         </tbody>
       </table>`
   } else if (type === 'templates') {
-    el.innerHTML = `<h3 class="report-result-title">Templates (${data.total})</h3>
+    el.innerHTML = `<h3 class="report-result-title">${t('dash_templates')} (${data.total})</h3>
       <div class="report-kpi-row">
         ${Object.entries(data.byStatus||{}).map(([s,n])=>`<div class="report-kpi"><span class="report-kpi-val">${n}</span><span class="report-kpi-label status-${s}">${s}</span></div>`).join('')}
       </div>
       <table class="report-table">
-        <thead><tr><th>Type</th><th>Title</th><th>Status</th><th>Version</th><th>Controls</th></tr></thead>
+        <thead><tr><th>${t('col_type')}</th><th>${t('col_title')}</th><th>${t('col_status')}</th><th>${t('col_version')}</th><th>Controls</th></tr></thead>
         <tbody>${(data.templates||[]).map(t=>`
           <tr><td>${t.type}</td><td>${t.title}</td>
               <td><span class="status-badge status-${t.status}">${t.status}</span></td>
@@ -1177,27 +1177,27 @@ function renderReportResult(type, data, el) {
        <td>${escHtml(t.owner||'—')}</td>
        <td>${t.daysUntil !== null ? (t.daysUntil < 0 ? `<span style="color:var(--color-danger)">${t.daysUntil} days</span>` : `${t.daysUntil} days`) : '—'}</td></tr>`
     el.innerHTML = `
-      <h3 class="report-result-title">Due Reviews</h3>
+      <h3 class="report-result-title">${t('reports_reviews')}</h3>
       <div class="report-kpi-row">
-        <div class="report-kpi"><span class="report-kpi-val red">${data.overdue?.length||0}</span><span class="report-kpi-label">Overdue</span></div>
-        <div class="report-kpi"><span class="report-kpi-val yellow">${data.upcoming?.length||0}</span><span class="report-kpi-label">In ${data.daysAhead} days</span></div>
-        <div class="report-kpi"><span class="report-kpi-val">${data.noReview?.length||0}</span><span class="report-kpi-label">No review date</span></div>
+        <div class="report-kpi"><span class="report-kpi-val red">${data.overdue?.length||0}</span><span class="report-kpi-label">${t('reports_overdue')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val yellow">${data.upcoming?.length||0}</span><span class="report-kpi-label">${t('reports_inDays', { days: data.daysAhead })}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val">${data.noReview?.length||0}</span><span class="report-kpi-label">${t('reports_noDate')}</span></div>
       </div>
-      ${data.overdue?.length ? `<h4 style="color:var(--color-danger);margin-top:1rem">Overdue</h4>
-      <table class="report-table"><thead><tr><th>Review Date</th><th>Type</th><th>Title</th><th>Status</th><th>Owner</th><th>Due</th></tr></thead>
+      ${data.overdue?.length ? `<h4 style="color:var(--color-danger);margin-top:1rem">${t('reports_overdue')}</h4>
+      <table class="report-table"><thead><tr><th>${t('reports_reviewDate')}</th><th>${t('col_type')}</th><th>${t('col_title')}</th><th>${t('col_status')}</th><th>${t('col_owner')}</th><th>${t('col_dueDate')}</th></tr></thead>
       <tbody>${data.overdue.map(t => reviewRow(t, 'review-overdue')).join('')}</tbody></table>` : ''}
-      ${data.upcoming?.length ? `<h4 style="color:var(--color-warning);margin-top:1rem">Due soon (${data.daysAhead} days)</h4>
-      <table class="report-table"><thead><tr><th>Review Date</th><th>Type</th><th>Title</th><th>Status</th><th>Owner</th><th>Due</th></tr></thead>
+      ${data.upcoming?.length ? `<h4 style="color:var(--color-warning);margin-top:1rem">${t('reports_dueSoon')} (${t('reports_daysCount', { days: data.daysAhead })})</h4>
+      <table class="report-table"><thead><tr><th>${t('reports_reviewDate')}</th><th>${t('col_type')}</th><th>${t('col_title')}</th><th>${t('col_status')}</th><th>${t('col_owner')}</th><th>${t('col_dueDate')}</th></tr></thead>
       <tbody>${data.upcoming.map(t => reviewRow(t, 'review-upcoming')).join('')}</tbody></table>` : ''}`
   } else if (type === 'matrix') {
     const statusColor = s => ({ implemented:'var(--color-success)', optimized:'var(--color-success)',
       partial:'var(--color-warning)', not_started:'var(--color-danger)', 'n/a':'var(--color-muted)' })[s] || '#888'
     const statusEmoji = s => ({ implemented:'✓', optimized:'★', partial:'◑', not_started:'✗', 'n/a':'—' })[s] || '?'
     el.innerHTML = `
-      <h3 class="report-result-title">Compliance Matrix — ${data.framework === 'all' ? 'All Frameworks' : data.framework}</h3>
+      <h3 class="report-result-title">${t('reports_matrix')} — ${data.framework === 'all' ? t('reports_allFw') : data.framework}</h3>
       <div style="overflow-x:auto">
       <table class="report-table matrix-table">
-        <thead><tr><th>Control</th><th>Framework</th><th>Title</th>${(data.entities||[]).map(e=>`<th title="${e.name}">${e.shortCode||e.name}</th>`).join('')}</tr></thead>
+        <thead><tr><th>${t('soa_control')}</th><th>${t('reports_framework')}</th><th>${t('col_title')}</th>${(data.entities||[]).map(e=>`<th title="${e.name}">${e.shortCode||e.name}</th>`).join('')}</tr></thead>
         <tbody>${(data.controls||[]).map(ctrl=>`
           <tr>
             <td class="picker-id">${ctrl.id}</td>
@@ -1210,11 +1210,11 @@ function renderReportResult(type, data, el) {
           </tr>`).join('')}
         </tbody>
       </table></div>
-      <p style="margin-top:.5rem;font-size:.8rem;color:var(--color-muted)">✓ implemented &nbsp; ★ optimized &nbsp; ◑ partial &nbsp; ✗ not started &nbsp; — not applicable</p>`
+      <p style="margin-top:.5rem;font-size:.8rem;color:var(--color-muted)">✓ ${t('soa_implemented')} &nbsp; ★ ${t('soa_optimized')} &nbsp; ◑ ${t('soa_partial')} &nbsp; ✗ ${t('soa_notStarted')} &nbsp; — ${t('soa_notApplicable')}</p>`
   } else if (type === 'audit') {
-    el.innerHTML = `<h3 class="report-result-title">Audit Trail (${data.total} entries)</h3>
+    el.innerHTML = `<h3 class="report-result-title">${t('reports_audit')} (${data.total} ${t('auditLog_total').toLowerCase()})</h3>
       <table class="report-table">
-        <thead><tr><th>Date</th><th>Template</th><th>Type</th><th>Status</th><th>Changed by</th></tr></thead>
+        <thead><tr><th>${t('col_date')}</th><th>Template</th><th>${t('col_type')}</th><th>${t('col_status')}</th><th>${t('reports_changedBy')}</th></tr></thead>
         <tbody>${(data.entries||[]).map(e=>`
           <tr><td>${new Date(e.changedAt).toLocaleString('en-GB')}</td>
               <td>${e.templateTitle}</td><td>${e.type}</td>
@@ -1226,19 +1226,19 @@ function renderReportResult(type, data, el) {
     const sevColor = { critical:'#f87171', high:'#fb923c', medium:'#fbbf24', low:'#4ade80', observation:'#60a5fa' }
     const stColor  = { open:'#f87171', in_progress:'#fbbf24', resolved:'#4ade80', accepted:'#60a5fa' }
     el.innerHTML = `
-      <h3 class="report-result-title">Audit Findings (${data.total})</h3>
+      <h3 class="report-result-title">${t('findings_title')} (${data.total})</h3>
       <div class="report-kpi-row" style="margin-bottom:16px">
-        <div class="report-kpi"><span class="report-kpi-val red">${data.byStatus?.open||0}</span><span class="report-kpi-label">Open</span></div>
-        <div class="report-kpi"><span class="report-kpi-val yellow">${data.byStatus?.in_progress||0}</span><span class="report-kpi-label">In Progress</span></div>
-        <div class="report-kpi"><span class="report-kpi-val green">${data.byStatus?.resolved||0}</span><span class="report-kpi-label">Resolved</span></div>
-        <div class="report-kpi"><span class="report-kpi-val">${data.byStatus?.accepted||0}</span><span class="report-kpi-label">Accepted</span></div>
-        <div class="report-kpi"><span class="report-kpi-val" style="color:#f87171">${data.bySeverity?.critical||0}</span><span class="report-kpi-label">Critical</span></div>
-        <div class="report-kpi"><span class="report-kpi-val" style="color:#fb923c">${data.bySeverity?.high||0}</span><span class="report-kpi-label">High</span></div>
-        <div class="report-kpi"><span class="report-kpi-val ${data.overdueActions>0?'red':''}">${data.openActions||0}</span><span class="report-kpi-label">Open Actions</span></div>
-        ${data.overdueActions > 0 ? `<div class="report-kpi"><span class="report-kpi-val red">${data.overdueActions}</span><span class="report-kpi-label">Overdue Actions</span></div>` : ''}
+        <div class="report-kpi"><span class="report-kpi-val red">${data.byStatus?.open||0}</span><span class="report-kpi-label">${t('findings_statusOpen')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val yellow">${data.byStatus?.in_progress||0}</span><span class="report-kpi-label">${t('findings_statusInProgress')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val green">${data.byStatus?.resolved||0}</span><span class="report-kpi-label">${t('findings_statusResolved')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val">${data.byStatus?.accepted||0}</span><span class="report-kpi-label">${t('findings_statusAccepted')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val" style="color:#f87171">${data.bySeverity?.critical||0}</span><span class="report-kpi-label">${t('findings_critical')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val" style="color:#fb923c">${data.bySeverity?.high||0}</span><span class="report-kpi-label">${t('findings_high')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val ${data.overdueActions>0?'red':''}">${data.openActions||0}</span><span class="report-kpi-label">${t('findings_openActions')}</span></div>
+        ${data.overdueActions > 0 ? `<div class="report-kpi"><span class="report-kpi-val red">${data.overdueActions}</span><span class="report-kpi-label">${t('findings_overdue')}</span></div>` : ''}
       </div>
       <table class="report-table">
-        <thead><tr><th>Ref</th><th>Title</th><th>Severity</th><th>Status</th><th>Auditor</th><th>Area</th><th>Observation</th><th>Requirement</th><th>Open Actions</th></tr></thead>
+        <thead><tr><th>Ref</th><th>${t('col_title')}</th><th>${t('findings_severity')}</th><th>${t('col_status')}</th><th>${t('findings_auditor')}</th><th>${t('findings_auditedArea')}</th><th>${t('findings_observation')}</th><th>${t('findings_requirement')}</th><th>${t('findings_openActions')}</th></tr></thead>
         <tbody>${(data.findings||[]).map(f => {
           const openActs = (f.actions||[]).filter(a => a.status !== 'done').length
           return `<tr>
@@ -1258,17 +1258,17 @@ function renderReportResult(type, data, el) {
   } else if (type === 'risks') {
     const lvColor = { critical:'#dc2626', high:'#ea580c', medium:'#ca8a04', low:'#16a34a', info:'#6b7280' }
     el.innerHTML = `
-      <h3 class="report-result-title">Risk Register (${data.total} freigegebene Risiken)</h3>
+      <h3 class="report-result-title">${t('risk_register')} (${data.total} ${t('risk_approved').toLowerCase()})</h3>
       <div class="report-kpi-row" style="margin-bottom:16px">
         <div class="report-kpi"><span class="report-kpi-val" style="color:#dc2626">${data.byLevel?.critical||0}</span><span class="report-kpi-label">Critical</span></div>
         <div class="report-kpi"><span class="report-kpi-val" style="color:#ea580c">${data.byLevel?.high||0}</span><span class="report-kpi-label">High</span></div>
         <div class="report-kpi"><span class="report-kpi-val" style="color:#ca8a04">${data.byLevel?.medium||0}</span><span class="report-kpi-label">Medium</span></div>
         <div class="report-kpi"><span class="report-kpi-val" style="color:#16a34a">${data.byLevel?.low||0}</span><span class="report-kpi-label">Low</span></div>
-        <div class="report-kpi"><span class="report-kpi-val">${data.bySource?.scan||0}</span><span class="report-kpi-label">aus Scan</span></div>
-        <div class="report-kpi"><span class="report-kpi-val">${data.bySource?.manual||0}</span><span class="report-kpi-label">Manuell</span></div>
+        <div class="report-kpi"><span class="report-kpi-val">${data.bySource?.scan||0}</span><span class="report-kpi-label">${t('reports_fromScan')}</span></div>
+        <div class="report-kpi"><span class="report-kpi-val">${data.bySource?.manual||0}</span><span class="report-kpi-label">${t('reports_manual')}</span></div>
       </div>
       <table class="report-table">
-        <thead><tr><th>Titel</th><th>Kategorie</th><th>Schweregrad</th><th>Status</th><th>CVSS</th><th>CVEs</th><th>Score</th><th>Owner</th><th>Quelle</th></tr></thead>
+        <thead><tr><th>${t('col_title')}</th><th>${t('col_category')}</th><th>${t('findings_severity')}</th><th>${t('col_status')}</th><th>CVSS</th><th>CVEs</th><th>Score</th><th>${t('col_owner')}</th><th>${t('reports_source')}</th></tr></thead>
         <tbody>${(data.risks||[]).map(r => {
           const cvssVal  = r.cvssScore != null ? r.cvssScore.toFixed(1) : null
           const cvssData = cvssVal ? cvssInfo(r.cvssScore) : null
@@ -1281,7 +1281,7 @@ function renderReportResult(type, data, el) {
             <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(r.cveIds||[]).join(', ')||'—'}</td>
             <td style="text-align:center">${r.score != null ? r.score : '—'}</td>
             <td>${escHtml(r.owner||'—')}</td>
-            <td>${r.source === 'greenbone-scan' ? '<span class="badge-review-pending" style="background:#3b82f6;color:#fff;font-size:.7rem">Scan</span>' : 'Manuell'}</td>
+            <td>${r.source === 'greenbone-scan' ? '<span class="badge-review-pending" style="background:#3b82f6;color:#fff;font-size:.7rem">Scan</span>' : t('reports_manual')}</td>
           </tr>`
         }).join('')}
         </tbody>
@@ -1325,7 +1325,7 @@ function exportReportPdf() {
   if (!resultEl || !_lastReportData) return alert('Please generate a report first.')
   const title = `ISMS Report — ${(_activeReportType||'').replace(/_/g,' ')} — ${new Date().toLocaleDateString('en-GB')}`
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blocked. Please allow pop-ups for this site.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${title}</title>
@@ -1380,34 +1380,34 @@ async function renderFindingsTab() {
   const sum      = sumRes.ok  ? await sumRes.json()  : {}
 
   const tabs = [
-    { id: 'list',     label: 'Alle',         icon: 'ph-list-bullets' },
-    { id: 'open',     label: 'Offen',        icon: 'ph-warning-circle' },
-    { id: 'resolved', label: 'Behoben',      icon: 'ph-check-circle' },
+    { id: 'list',     label: t('findings_tabList'),     icon: 'ph-list-bullets' },
+    { id: 'open',     label: t('findings_tabOpen'),     icon: 'ph-warning-circle' },
+    { id: 'resolved', label: t('findings_tabResolved'), icon: 'ph-check-circle' },
   ]
 
   content.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
       <h3 style="margin:0;font-size:15px;font-weight:700;color:var(--text-inv)">
-        <i class="ph ph-magnifying-glass"></i> Audit-Feststellungen
+        <i class="ph ph-magnifying-glass"></i> ${t('findings_title')}
       </h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsJson()"><i class="ph ph-download-simple"></i> JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsCsv()"><i class="ph ph-file-csv"></i> CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="exportFindingsPdf()"><i class="ph ph-file-pdf"></i> PDF</button>
         ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="openFindingForm()">
-          <i class="ph ph-plus"></i> Neue Feststellung
+          <i class="ph ph-plus"></i> ${t('findings_new')}
         </button>` : ''}
       </div>
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
       ${[
-        { label:'Gesamt',       value: sum.total || 0,           color:'var(--text-primary)' },
-        { label:'Kritisch',     value: sum.bySeverity?.critical||0, color: FINDING_SEVERITY_COLOR.critical },
-        { label:'Hoch',         value: sum.bySeverity?.high||0,     color: FINDING_SEVERITY_COLOR.high },
-        { label:'Offen',        value: sum.byStatus?.open||0,        color: FINDING_STATUS_COLOR.open },
-        { label:'Maßn. offen',  value: sum.openActions||0,           color: sum.openActions > 0 ? '#fbbf24':'#4ade80' },
-        { label:'Maßn. überfällig', value: sum.overdueActions||0,   color: sum.overdueActions > 0 ? FINDING_SEVERITY_COLOR.critical:'#4ade80' },
+        { label:t('common_total'), value: sum.total || 0,           color:'var(--text-primary)' },
+        { label:t('findings_critical'), value: sum.bySeverity?.critical||0, color: FINDING_SEVERITY_COLOR.critical },
+        { label:t('findings_high'), value: sum.bySeverity?.high||0,     color: FINDING_SEVERITY_COLOR.high },
+        { label:t('findings_open'), value: sum.byStatus?.open||0,        color: FINDING_STATUS_COLOR.open },
+        { label:t('findings_actionsOpenShort'), value: sum.openActions||0,           color: sum.openActions > 0 ? '#fbbf24':'#4ade80' },
+        { label:t('findings_actionsOverdueShort'), value: sum.overdueActions||0,   color: sum.overdueActions > 0 ? FINDING_SEVERITY_COLOR.critical:'#4ade80' },
       ].map(k => `
         <div class="dash-card kpi" style="flex:1;min-width:100px;padding:10px 14px;text-align:center">
           <div style="font-size:1.4rem;font-weight:700;color:${k.color}">${k.value}</div>
@@ -1417,7 +1417,7 @@ async function renderFindingsTab() {
     </div>
 
     <div class="training-tab-bar" style="margin-bottom:12px">
-      ${tabs.map(tb => `<button class="training-tab${_findingsTab===tb.id?' active':''}"
+      ${tabs.map(tb => `<button class="training-tab${_findingsTab===tb.id?' active':''}" data-tab="${tb.id}"
         onclick="_switchFindingsTab('${tb.id}')">
         <i class="ph ${tb.icon}"></i> ${tb.label}
       </button>`).join('')}
@@ -1431,7 +1431,7 @@ async function renderFindingsTab() {
 function _switchFindingsTab(tab) {
   _findingsTab = tab
   document.querySelectorAll('#reportsMainContent .training-tab').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === ({list:'Alle',open:'Offen',resolved:'Behoben'}[tab]||tab))
+    b.classList.toggle('active', b.dataset.tab === tab)
   )
   fetch('/findings', { headers: apiHeaders() })
     .then(r => r.ok ? r.json() : [])
@@ -1454,7 +1454,7 @@ function _renderFindingsList(all, list) {
   if (!list.length) {
     area.innerHTML = `<div class="report-empty" style="padding:32px;text-align:center;color:var(--text-subtle)">
       <i class="ph ph-magnifying-glass" style="font-size:32px;display:block;margin-bottom:8px"></i>
-      Keine Feststellungen
+      ${t('findings_none')}
     </div>`
     return
   }
@@ -1473,13 +1473,13 @@ function _renderFindingsList(all, list) {
           </div>
           <div style="font-weight:600;color:var(--text-inv);margin-bottom:2px">${escHtml(f.title)}</div>
           <div style="font-size:12px;color:var(--text-subtle)">${escHtml(f.auditedArea || '')}
-            ${f.auditor ? `· Auditor: ${escHtml(f.auditor)}` : ''}
+            ${f.auditor ? `· ${t('findings_auditor')}: ${escHtml(f.auditor)}` : ''}
             ${f.auditPeriodFrom ? `· ${f.auditPeriodFrom}${f.auditPeriodTo?' – '+f.auditPeriodTo:''}` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:11px;color:${actOpen>0?'#fbbf24':'var(--text-subtle)'}">
-            <i class="ph ph-checks"></i> ${actOpen}/${actTotal} offen
+            <i class="ph ph-checks"></i> ${actOpen}/${actTotal} ${t('findings_statusOpen').toLowerCase()}
           </span>
           ${canEdit ? `
           <button class="btn btn-sm" onclick="event.stopPropagation();openFindingForm('${f.id}')">
@@ -1492,7 +1492,7 @@ function _renderFindingsList(all, list) {
         </div>
       </div>
       ${f.observation ? `<div style="font-size:12px;color:var(--text-subtle);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
-        <b>IST:</b> ${escHtml(f.observation.slice(0,120))}${f.observation.length>120?'…':''}
+        <b>${t('findings_observation_field')}:</b> ${escHtml(f.observation.slice(0,120))}${f.observation.length>120?'…':''}
       </div>` : ''}
     </div>`
   }).join('')
@@ -1519,7 +1519,7 @@ async function openFindingDetail(id) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchReportsMainTab('findings')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h3 class="training-form-title">
           <i class="ph ph-magnifying-glass"></i>
@@ -1527,38 +1527,38 @@ async function openFindingDetail(id) {
           ${escHtml(f.title)}
         </h3>
         <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="printFindingDetail('${f.id}')">
-          <i class="ph ph-printer"></i> Drucken / PDF
+          <i class="ph ph-printer"></i> ${t('common_print')} / PDF
         </button>
       </div>
       <div class="training-form-body">
 
         <div class="training-form-section">
           <h4 class="training-form-section-title" style="display:flex;align-items:center;gap:8px">
-            Feststellung ${_findingSeverityBadge(f.severity)} ${_findingStatusBadge(f.status)}
+            ${t('findings_singular')} ${_findingSeverityBadge(f.severity)} ${_findingStatusBadge(f.status)}
           </h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-bottom:12px;font-size:13px">
-            <div><span style="color:var(--text-subtle)">Bereich:</span> ${escHtml(f.auditedArea||'—')}</div>
-            <div><span style="color:var(--text-subtle)">Auditor:</span> ${escHtml(f.auditor||'—')}</div>
-            <div><span style="color:var(--text-subtle)">Zeitraum:</span>
+            <div><span style="color:var(--text-subtle)">${t('findings_auditedArea')}:</span> ${escHtml(f.auditedArea||'—')}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_auditor')}:</span> ${escHtml(f.auditor||'—')}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_period')}:</span>
               ${f.auditPeriodFrom ? escHtml(f.auditPeriodFrom)+(f.auditPeriodTo?' – '+escHtml(f.auditPeriodTo):'') : '—'}
             </div>
-            <div><span style="color:var(--text-subtle)">Erstellt:</span> ${f.createdAt?.slice(0,10)||'—'}</div>
+            <div><span style="color:var(--text-subtle)">${t('findings_created')}:</span> ${f.createdAt?.slice(0,10)||'—'}</div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color:var(--warn)">📋 IST-Zustand (Beobachtung)</label>
+            <label class="form-label" style="color:var(--warn)">📋 ${t('findings_observationFull')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.observation||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#60a5fa">🎯 SOLL-Zustand (Anforderung)</label>
+            <label class="form-label" style="color:#60a5fa">🎯 ${t('findings_requirementFull')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.requirement||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ Risiko / Auswirkung</label>
+            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ ${t('findings_impact')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.impact||'—')}</div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#4ade80">💡 Empfehlung</label>
+            <label class="form-label" style="color:#4ade80">💡 ${t('findings_recommendation')}</label>
             <div style="background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:13px;white-space:pre-wrap">${escHtml(f.recommendation||'—')}</div>
           </div>
         </div>
@@ -1566,17 +1566,17 @@ async function openFindingDetail(id) {
         <div class="training-form-section" id="actionsSection">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
             <h4 class="training-form-section-title" style="margin:0">
-              <i class="ph ph-check-square"></i> Maßnahmenplan
+              <i class="ph ph-check-square"></i> ${t('findings_actions')}
             </h4>
             ${canAct ? `<button class="btn btn-primary btn-sm" onclick="openAddActionForm('${f.id}')">
-              <i class="ph ph-plus"></i> Maßnahme
+              <i class="ph ph-plus"></i> ${t('risk_measure')}
             </button>` : ''}
           </div>
           ${actTotal > 0 ? `
           <div style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-subtle);margin-bottom:4px">
-              <span>Fortschritt</span>
-              <span>${actDone} / ${actTotal} erledigt (${actPct} %)</span>
+              <span>${t('dash_progress')}</span>
+              <span>${actDone} / ${actTotal} ${t('findings_statusDone').toLowerCase()} (${actPct} %)</span>
             </div>
             <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
               <div style="height:100%;width:${actPct}%;background:${pbarColor};border-radius:4px;transition:width .3s ease"></div>
@@ -1590,7 +1590,7 @@ async function openFindingDetail(id) {
         ${canEdit ? `
         <div class="training-form-section">
           <button class="btn btn-primary" onclick="openFindingForm('${f.id}')">
-            <i class="ph ph-pencil-simple"></i> Feststellung bearbeiten
+            <i class="ph ph-pencil-simple"></i> ${t('findings_edit')}
           </button>
         </div>` : ''}
       </div>
@@ -1607,9 +1607,9 @@ async function printFindingDetail(findingId) {
   const done = actions.filter(a => a.status === 'done').length
   const pct  = actions.length ? Math.round(done / actions.length * 100) : 0
   const sevColor = { critical:'#c0392b', high:'#e67e22', medium:'#f39c12', low:'#27ae60', observation:'#2980b9' }
-  const actLabel = { open:'Offen', in_progress:'In Bearbeitung', done:'Erledigt' }
+  const actLabel = FINDING_ACT_STATUS_LABELS
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert. Bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${esc(f.ref)} — ${esc(f.title)}</title>
@@ -1636,26 +1636,26 @@ async function printFindingDetail(findingId) {
       <span class="badge" style="background:${sevColor[f.severity]||'#888'}">${esc(f.severity||'')}</span>
       <span class="badge" style="background:#555">${esc(f.status||'')}</span>
     </h1>
-    <div class="meta">Erstellt: ${(f.createdAt||'').slice(0,10)} · Auditor: ${esc(f.auditor)} · Bereich: ${esc(f.auditedArea)}</div>
+    <div class="meta">${t('findings_created')}: ${(f.createdAt||'').slice(0,10)} · ${t('findings_auditor')}: ${esc(f.auditor)} · ${t('findings_auditedArea')}: ${esc(f.auditedArea)}</div>
 
     <div class="section">
-      <h2>Feststellung</h2>
+      <h2>${t('findings_singular')}</h2>
       <div class="grid2">
-        <div><span style="color:#555">Zeitraum:</span> ${esc(f.auditPeriodFrom||'—')}${f.auditPeriodTo?' – '+esc(f.auditPeriodTo):''}</div>
-        <div><span style="color:#555">Verknüpfte Controls:</span> ${(f.linkedControls||[]).join(', ')||'—'}</div>
+        <div><span style="color:#555">${t('findings_period')}:</span> ${esc(f.auditPeriodFrom||'—')}${f.auditPeriodTo?' – '+esc(f.auditPeriodTo):''}</div>
+        <div><span style="color:#555">${t('findings_linkedControls')}:</span> ${(f.linkedControls||[]).join(', ')||'—'}</div>
       </div>
-      <div class="field"><div class="label">IST-Zustand (Beobachtung)</div><div class="value">${esc(f.observation)}</div></div>
-      <div class="field"><div class="label">SOLL-Zustand (Anforderung)</div><div class="value">${esc(f.requirement)}</div></div>
-      <div class="field"><div class="label">Risiko / Auswirkung</div><div class="value">${esc(f.impact)}</div></div>
-      <div class="field"><div class="label">Empfehlung</div><div class="value">${esc(f.recommendation)}</div></div>
+      <div class="field"><div class="label">${t('findings_observationFull')}</div><div class="value">${esc(f.observation)}</div></div>
+      <div class="field"><div class="label">${t('findings_requirementFull')}</div><div class="value">${esc(f.requirement)}</div></div>
+      <div class="field"><div class="label">${t('findings_impact')}</div><div class="value">${esc(f.impact)}</div></div>
+      <div class="field"><div class="label">${t('findings_recommendation')}</div><div class="value">${esc(f.recommendation)}</div></div>
     </div>
 
     <div class="section">
-      <h2>Maßnahmenplan — ${done} / ${actions.length} erledigt (${pct} %)</h2>
+      <h2>${t('findings_actions')} — ${done} / ${actions.length} ${t('findings_statusDone').toLowerCase()} (${pct} %)</h2>
       <div class="pbar-wrap"><div class="pbar"></div></div>
-      ${actions.length === 0 ? '<p style="color:#999;font-size:11px">Keine Maßnahmen eingetragen.</p>' : `
+      ${actions.length === 0 ? `<p style="color:#999;font-size:11px">${t('findings_noActions')}</p>` : `
       <table>
-        <thead><tr><th>Maßnahme</th><th>Verantwortlich</th><th>Fällig</th><th>Status</th></tr></thead>
+        <thead><tr><th>${t('risk_measure')}</th><th>${t('col_responsible')}</th><th>${t('col_dueDate')}</th><th>${t('col_status')}</th></tr></thead>
         <tbody>
           ${actions.map(a => `<tr>
             <td>${esc(a.description)}</td>
@@ -1703,10 +1703,10 @@ async function exportFindingsPdf() {
   const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
   const sevColor = { critical:'#c0392b', high:'#e67e22', medium:'#f39c12', low:'#27ae60', observation:'#2980b9' }
   const win  = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert. Bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
-    <title>Audit-Feststellungen — ${new Date().toLocaleDateString('de-DE')}</title>
+    <title>${t('findings_title')} — ${new Date().toLocaleDateString()}</title>
     <style>
       body  { font-family: Arial, sans-serif; font-size: 12px; color: #111; margin: 28px; }
       h1    { font-size: 15px; margin-bottom: 4px; }
@@ -1718,12 +1718,12 @@ async function exportFindingsPdf() {
       @media print { body { margin: 0; } }
     </style>
   </head><body>
-    <h1><i>Audit-Feststellungen</i></h1>
-    <div class="sub">Stand: ${new Date().toLocaleString('de-DE')} · ISMS Builder · ${list.length} Einträge</div>
+    <h1><i>${t('findings_title')}</i></h1>
+    <div class="sub">${t('dash_status')} ${new Date().toLocaleString()} · ISMS Builder · ${list.length} ${t('auditLog_total').toLowerCase()}</div>
     <table>
       <thead><tr>
-        <th>Ref</th><th>Titel</th><th>Schwere</th><th>Status</th>
-        <th>Bereich</th><th>Auditor</th><th>Zeitraum</th><th>Maßnahmen</th>
+        <th>Ref</th><th>${t('col_title')}</th><th>${t('findings_severity')}</th><th>${t('col_status')}</th>
+        <th>${t('findings_auditedArea')}</th><th>${t('findings_auditor')}</th><th>${t('findings_period')}</th><th>${t('findings_actions')}</th>
       </tr></thead>
       <tbody>
         ${list.map(f => {
@@ -1748,7 +1748,7 @@ async function exportFindingsPdf() {
 }
 
 function _renderActionsList(actions, findingId, canEdit) {
-  if (!actions.length) return `<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">Noch keine Maßnahmen eingetragen.</div>`
+  if (!actions.length) return `<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">${t('findings_noActions')}</div>`
   return actions.map(a => {
     const colAct = a.status === 'done' ? '#4ade80' : a.status === 'in_progress' ? '#fbbf24' : '#f87171'
     const overdue = a.status !== 'done' && a.dueDate && new Date(a.dueDate) < new Date()
@@ -1758,8 +1758,8 @@ function _renderActionsList(actions, findingId, canEdit) {
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px;margin-bottom:3px">${escHtml(a.description)}</div>
           <div style="font-size:12px;color:var(--text-subtle)">
-            Verantwortlich: <b>${escHtml(a.responsible||'—')}</b>
-            ${a.dueDate ? `· Fällig: <span style="color:${overdue?'#f87171':'inherit'}">${a.dueDate}${overdue?' ⚠':''}</span>` : ''}
+            ${t('col_responsible')}: <b>${escHtml(a.responsible||'—')}</b>
+            ${a.dueDate ? `· ${t('col_due')} <span style="color:${overdue?'#f87171':'inherit'}">${a.dueDate}${overdue?' ⚠':''}</span>` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -1768,7 +1768,7 @@ function _renderActionsList(actions, findingId, canEdit) {
             ${Object.entries(FINDING_ACT_STATUS_LABELS).map(([v,l]) =>
               `<option value="${v}"${a.status===v?' selected':''}>${l}</option>`).join('')}
           </select>
-          <button class="btn btn-sm" style="color:var(--danger)" title="Löschen"
+          <button class="btn btn-sm" style="color:var(--danger)" title="${t('delete')}"
             onclick="deleteAction('${findingId}','${a.id}')">
             <i class="ph ph-trash-simple"></i>
           </button>` : `<span style="color:${colAct};font-size:12px">${FINDING_ACT_STATUS_LABELS[a.status]||a.status}</span>`}
@@ -1788,22 +1788,22 @@ async function openAddActionForm(findingId) {
   el.style.cssText = 'background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px'
   el.innerHTML = `
     <div class="form-group">
-      <label class="form-label">Maßnahme <span class="form-required">*</span></label>
-      <textarea id="actDesc" class="form-input" rows="2" placeholder="Was wird konkret getan?"></textarea>
+      <label class="form-label">${t('risk_measure')} <span class="form-required">*</span></label>
+      <textarea id="actDesc" class="form-input" rows="2" placeholder="${t('findings_actionDescPlaceholder')}"></textarea>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Verantwortlich</label>
-        <input id="actResp" class="form-input" placeholder="Name / Rolle">
+        <label class="form-label">${t('col_responsible')}</label>
+        <input id="actResp" class="form-input" placeholder="${t('findings_responsiblePlaceholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Zieldatum</label>
+        <label class="form-label">${t('findings_targetDate')}</label>
         <input id="actDue" class="form-input" type="date">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-primary btn-sm" onclick="saveNewAction('${findingId}')">Speichern</button>
-      <button class="btn btn-secondary btn-sm" onclick="dom('${formId}').remove()">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" onclick="saveNewAction('${findingId}')">${t('save')}</button>
+      <button class="btn btn-secondary btn-sm" onclick="dom('${formId}').remove()">${t('cancel')}</button>
     </div>
   `
   area.prepend(el)
@@ -1820,7 +1820,7 @@ async function saveNewAction(findingId) {
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ description: desc, responsible: resp, dueDate: due })
   })
-  if (!r.ok) { showToast('Fehler beim Speichern', 'error'); return }
+  if (!r.ok) { showToast(t('err_saveFailed'), 'error'); return }
   openFindingDetail(findingId)
 }
 
@@ -1841,7 +1841,7 @@ async function updateActionStatus(findingId, actionId, status) {
 }
 
 async function deleteAction(findingId, actionId) {
-  if (!confirm('Maßnahme löschen?')) return
+  if (!confirm(t('findings_deleteActionConfirm'))) return
   await fetch(`/findings/${findingId}/actions/${actionId}`, { method: 'DELETE', headers: apiHeaders() })
   openFindingDetail(findingId)
 }
@@ -1860,31 +1860,31 @@ async function openFindingForm(id = null) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchReportsMainTab('findings')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h3 class="training-form-title">
           <i class="ph ph-magnifying-glass"></i>
-          ${isEdit ? `Feststellung bearbeiten <span style="font-family:monospace;font-size:12px;color:var(--text-subtle)">${escHtml(f?.ref||'')}</span>` : 'Neue Feststellung'}
+          ${isEdit ? `${t('findings_edit')} <span style="font-family:monospace;font-size:12px;color:var(--text-subtle)">${escHtml(f?.ref||'')}</span>` : t('findings_new')}
         </h3>
       </div>
       <div class="training-form-body">
 
         <div class="training-form-section">
-          <h4 class="training-form-section-title"><i class="ph ph-info"></i> Grunddaten</h4>
+          <h4 class="training-form-section-title"><i class="ph ph-info"></i> ${t('findings_basicData')}</h4>
           <div class="form-group">
-            <label class="form-label">Titel <span class="form-required">*</span></label>
-            <input id="fndTitle" class="form-input" value="${escHtml(f?.title||'')}" placeholder="Kurzer prägnanter Name der Feststellung">
+            <label class="form-label">${t('col_title')} <span class="form-required">*</span></label>
+            <input id="fndTitle" class="form-input" value="${escHtml(f?.title||'')}" placeholder="${t('findings_titlePlaceholder')}">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Schweregrad</label>
+              <label class="form-label">${t('findings_severity')}</label>
               <select id="fndSeverity" class="select">
                 ${Object.entries(FINDING_SEVERITY_LABELS).map(([v,l]) =>
                   `<option value="${v}"${(f?.severity||'medium')===v?' selected':''}>${l}</option>`).join('')}
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Status</label>
+              <label class="form-label">${t('col_status')}</label>
               <select id="fndStatus" class="select">
                 ${Object.entries(FINDING_STATUS_LABELS).map(([v,l]) =>
                   `<option value="${v}"${(f?.status||'open')===v?' selected':''}>${l}</option>`).join('')}
@@ -1893,58 +1893,58 @@ async function openFindingForm(id = null) {
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Geprüfter Bereich</label>
+              <label class="form-label">${t('findings_auditedArea')}</label>
               <input id="fndArea" class="form-input" value="${escHtml(f?.auditedArea||'')}" placeholder="z.B. IT-Operations / ISO A.8">
             </div>
             <div class="form-group">
-              <label class="form-label">Auditor</label>
-              <input id="fndAuditor" class="form-input" value="${escHtml(f?.auditor||'')}" placeholder="Name oder Kürzel">
+              <label class="form-label">${t('findings_auditor')}</label>
+              <input id="fndAuditor" class="form-input" value="${escHtml(f?.auditor||'')}" placeholder="${t('findings_auditorPlaceholder')}">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Audit-Zeitraum von</label>
+              <label class="form-label">${t('findings_periodFrom')}</label>
               <input id="fndPeriodFrom" class="form-input" type="date" value="${f?.auditPeriodFrom||''}">
             </div>
             <div class="form-group">
-              <label class="form-label">bis</label>
+              <label class="form-label">${t('reports_to')}</label>
               <input id="fndPeriodTo" class="form-input" type="date" value="${f?.auditPeriodTo||''}">
             </div>
           </div>
         </div>
 
         <div class="training-form-section">
-          <h4 class="training-form-section-title"><i class="ph ph-clipboard-text"></i> Feststellungsdetails</h4>
+          <h4 class="training-form-section-title"><i class="ph ph-clipboard-text"></i> ${t('findings_details')}</h4>
           <div class="form-group">
-            <label class="form-label" style="color:var(--warn)">📋 IST-Zustand (Beobachtung)</label>
+            <label class="form-label" style="color:var(--warn)">📋 ${t('findings_observationFull')}</label>
             <textarea id="fndObservation" class="form-input" rows="4"
-              placeholder="Was wurde gefunden? Stichprobengröße, konkrete Zahlen…">${escHtml(f?.observation||'')}</textarea>
+              placeholder="${t('findings_observationPlaceholder')}">${escHtml(f?.observation||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#60a5fa">🎯 SOLL-Zustand (Anforderung)</label>
+            <label class="form-label" style="color:#60a5fa">🎯 ${t('findings_requirementFull')}</label>
             <textarea id="fndRequirement" class="form-input" rows="3"
-              placeholder="Was verlangt die Norm oder die interne Richtlinie?">${escHtml(f?.requirement||'')}</textarea>
+              placeholder="${t('findings_requirementPlaceholder')}">${escHtml(f?.requirement||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ Risiko / Auswirkung</label>
+            <label class="form-label" style="color:${FINDING_SEVERITY_COLOR.high}">⚠ ${t('findings_impact')}</label>
             <textarea id="fndImpact" class="form-input" rows="3"
-              placeholder="Was kann passieren, wenn das nicht behoben wird?">${escHtml(f?.impact||'')}</textarea>
+              placeholder="${t('findings_impactPlaceholder')}">${escHtml(f?.impact||'')}</textarea>
           </div>
           <div class="form-group">
-            <label class="form-label" style="color:#4ade80">💡 Empfehlung</label>
+            <label class="form-label" style="color:#4ade80">💡 ${t('findings_recommendation')}</label>
             <textarea id="fndRecommendation" class="form-input" rows="3"
-              placeholder="Was sollte konkret getan werden?">${escHtml(f?.recommendation||'')}</textarea>
+              placeholder="${t('findings_recommendationPlaceholder')}">${escHtml(f?.recommendation||'')}</textarea>
           </div>
         </div>
 
         <div class="training-form-section">
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="saveFinding(${id ? `'${id}'` : 'null'})">
-              <i class="ph ph-floppy-disk"></i> ${isEdit ? 'Speichern' : 'Feststellung anlegen'}
+              <i class="ph ph-floppy-disk"></i> ${isEdit ? t('save') : t('findings_create')}
             </button>
-            <button class="btn btn-secondary" onclick="switchReportsMainTab('findings')">Abbrechen</button>
+            <button class="btn btn-secondary" onclick="switchReportsMainTab('findings')">${t('cancel')}</button>
             ${isEdit ? `<button class="btn btn-secondary" onclick="openFindingDetail('${id}')">
-              <i class="ph ph-eye"></i> Detail-Ansicht
+              <i class="ph ph-eye"></i> ${t('findings_detailView')}
             </button>` : ''}
           </div>
           <p id="findingSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
@@ -1957,7 +1957,7 @@ async function openFindingForm(id = null) {
 
 async function saveFinding(id) {
   const title = dom('fndTitle')?.value.trim()
-  if (!title) { dom('fndTitle')?.focus(); showToast('Titel ist Pflichtfeld', 'error'); return }
+  if (!title) { dom('fndTitle')?.focus(); showToast(t('findings_titleRequired'), 'error'); return }
   const payload = {
     title,
     severity:        dom('fndSeverity')?.value,
@@ -1979,19 +1979,19 @@ async function saveFinding(id) {
   const msg = dom('findingSaveMsg')
   if (r.ok) {
     const saved = await r.json()
-    if (msg) { msg.textContent = id ? 'Gespeichert.' : `Feststellung ${saved.ref} angelegt.`; msg.style.color = 'var(--success,#4ade80)'; msg.style.display = '' }
+    if (msg) { msg.textContent = id ? t('msg_saved') : t('findings_createdMessage', { ref: saved.ref }); msg.style.color = 'var(--success,#4ade80)'; msg.style.display = '' }
     setTimeout(() => { if (id) openFindingDetail(id); else switchReportsMainTab('findings') }, 1000)
   } else {
     const e = await r.json().catch(() => ({}))
-    if (msg) { msg.textContent = 'Fehler: ' + (e.error || r.status); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = '' }
+    if (msg) { msg.textContent = t('error') + ': ' + (e.error || r.status); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = '' }
   }
 }
 
 async function deleteFinding(id) {
-  if (!confirm('Feststellung in den Papierkorb verschieben?')) return
+  if (!confirm(t('findings_trashConfirm'))) return
   const r = await fetch(`/findings/${id}`, { method: 'DELETE', headers: apiHeaders() })
-  if (r.ok) { showToast('Feststellung gelöscht', 'success'); switchReportsMainTab('findings') }
-  else showToast('Fehler beim Löschen', 'error')
+  if (r.ok) { showToast(t('findings_deleted'), 'success'); switchReportsMainTab('findings') }
+  else showToast(t('err_delete'), 'error')
 }
 
 // ── Ende Findings UI ──────────────────────────────────────────────────────────
@@ -2143,28 +2143,28 @@ async function renderIncidentInbox() {
   container.innerHTML = `
     <div class="incident-inbox-page">
       <div class="incident-inbox-header">
-        <h2><i class="ph ph-siren"></i> Incident Inbox – CISO Processing</h2>
+        <h2><i class="ph ph-siren"></i> ${t('inc_inboxTitle')}</h2>
         <div style="display:flex;gap:8px;align-items:center;">
           <select class="select" id="incStatusFilter" onchange="loadIncidents()" style="font-size:.82rem">
             <option value="">${t('filter_allStatuses')}</option>
-            <option value="new">New</option>
-            <option value="in_review">Under Review</option>
-            <option value="assigned">Assigned</option>
-            <option value="closed">Closed</option>
+            <option value="new">${t('inc_statusNew')}</option>
+            <option value="in_review">${t('inc_statusReview')}</option>
+            <option value="assigned">${t('inc_statusAssigned')}</option>
+            <option value="closed">${t('inc_statusClosed')}</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadIncidents()">
-            <i class="ph ph-arrow-clockwise"></i> Refresh
+            <i class="ph ph-arrow-clockwise"></i> ${t('refresh')}
           </button>
         </div>
       </div>
       <div class="incident-inbox-body">
         <div class="incident-list-panel" id="incListPanel">
-          <p class="report-loading">Loading…</p>
+          <p class="report-loading">${t('loading')}</p>
         </div>
         <div class="incident-detail-panel" id="incDetailPanel">
           <div class="incident-detail-empty">
             <i class="ph ph-siren" style="font-size:40px;color:var(--text-disabled)"></i>
-            <p>Select an incident from the list</p>
+            <p>${t('inc_select')}</p>
           </div>
         </div>
       </div>
@@ -2177,21 +2177,21 @@ async function loadIncidents() {
   const status = document.getElementById('incStatusFilter')?.value || ''
   const panel  = document.getElementById('incListPanel')
   if (!panel) return
-  panel.innerHTML = '<p class="report-loading">Lädt…</p>'
+  panel.innerHTML = `<p class="report-loading">${t('loading')}</p>`
 
   const res  = await fetch('/public/incidents' + (status ? `?status=${status}` : ''), { headers: apiHeaders() })
   const list = res.ok ? await res.json() : []
 
   if (list.length === 0) {
-    panel.innerHTML = '<p class="gdpr-empty" style="padding:20px">No incidents found.</p>'
+    panel.innerHTML = `<p class="gdpr-empty" style="padding:20px">${t('inc_none')}</p>`
     return
   }
 
   panel.innerHTML = `
     <table class="incident-table">
       <thead><tr>
-        <th>Reference</th><th>Date</th><th>Company</th>
-        <th>Type</th><th>Status</th>
+        <th>${t('inc_reference')}</th><th>${t('col_date')}</th><th>${t('inc_company')}</th>
+        <th>${t('col_type')}</th><th>${t('col_status')}</th>
       </tr></thead>
       <tbody>
         ${list.map(i => `
@@ -2232,54 +2232,54 @@ async function openIncidentDetail(id) {
       </div>
 
       <div class="incident-detail-grid">
-        <div class="inc-field"><div class="inc-field-label">Reporter E-Mail</div><div>${escHtml(i.email)}</div></div>
-        <div class="inc-field"><div class="inc-field-label">Entity</div><div>${escHtml(i.entityName || '—')}</div></div>
-        <div class="inc-field"><div class="inc-field-label">Incident Type</div><div>${escHtml(INC_TYPE_LABELS[i.incidentType] || i.incidentType)}</div></div>
-        <div class="inc-field"><div class="inc-field-label">Resolved?</div><div>${escHtml(INC_CLEANED_LABELS[i.cleanedUp] || i.cleanedUp)}</div></div>
-        <div class="inc-field full"><div class="inc-field-label">Description</div><div class="inc-field-text">${escHtml(i.description)}</div></div>
-        <div class="inc-field full"><div class="inc-field-label">Measures Already Taken</div><div class="inc-field-text">${escHtml(i.measuresTaken || '—')}</div></div>
-        <div class="inc-field"><div class="inc-field-label">Local Contact</div><div>${escHtml(i.localContact || '—')}</div></div>
+        <div class="inc-field"><div class="inc-field-label">${t('inc_reporterEmail')}</div><div>${escHtml(i.email)}</div></div>
+        <div class="inc-field"><div class="inc-field-label">${t('reports_entity')}</div><div>${escHtml(i.entityName || '—')}</div></div>
+        <div class="inc-field"><div class="inc-field-label">${t('inc_typeLabel')}</div><div>${escHtml(INC_TYPE_LABELS[i.incidentType] || i.incidentType)}</div></div>
+        <div class="inc-field"><div class="inc-field-label">${t('inc_resolved')}</div><div>${escHtml(INC_CLEANED_LABELS[i.cleanedUp] || i.cleanedUp)}</div></div>
+        <div class="inc-field full"><div class="inc-field-label">${t('inc_description')}</div><div class="inc-field-text">${escHtml(i.description)}</div></div>
+        <div class="inc-field full"><div class="inc-field-label">${t('inc_measuresTaken')}</div><div class="inc-field-text">${escHtml(i.measuresTaken || '—')}</div></div>
+        <div class="inc-field"><div class="inc-field-label">${t('inc_localContact')}</div><div>${escHtml(i.localContact || '—')}</div></div>
       </div>
 
       <div class="incident-ciso-panel">
-        <h4><i class="ph ph-shield-check"></i> CISO Decision</h4>
+        <h4><i class="ph ph-shield-check"></i> ${t('inc_cisoDecision')}</h4>
         <div class="incident-ciso-grid">
           <div class="inc-field">
-            <div class="inc-field-label">Set Status</div>
+            <div class="inc-field-label">${t('inc_setStatus')}</div>
             <select class="select" id="incEditStatus" style="font-size:.82rem">
               ${Object.entries(INC_STATUS_LABELS).map(([v,l]) =>
                 `<option value="${v}" ${i.status === v ? 'selected' : ''}>${l}</option>`).join('')}
             </select>
           </div>
           <div class="inc-field">
-            <div class="inc-field-label">Assign To</div>
+            <div class="inc-field-label">${t('inc_assignTo')}</div>
             <select class="select" id="incAssignedTo" style="font-size:.82rem">
-              <option value="">— not yet assigned —</option>
-              <option value="it" ${i.assignedTo === 'it' ? 'selected' : ''}>IT Department</option>
-              <option value="datenschutz" ${i.assignedTo === 'datenschutz' ? 'selected' : ''}>Data Protection / GDPO</option>
+              <option value="">— ${t('inc_notAssigned')} —</option>
+              <option value="it" ${i.assignedTo === 'it' ? 'selected' : ''}>${t('inc_itDepartment')}</option>
+              <option value="datenschutz" ${i.assignedTo === 'datenschutz' ? 'selected' : ''}>${t('inc_dataProtection')}</option>
             </select>
           </div>
           <div class="inc-field">
-            <div class="inc-field-label">Reportable (GDPO)</div>
+            <div class="inc-field-label">${t('inc_reportable')}</div>
             <select class="select" id="incReportable" style="font-size:.82rem">
-              <option value="">— still open —</option>
-              <option value="tbd" ${i.reportable === 'tbd' ? 'selected' : ''}>Unclear – under review</option>
-              <option value="yes" ${i.reportable === 'yes' ? 'selected' : ''}>Yes – reportable</option>
-              <option value="no"  ${i.reportable === 'no'  ? 'selected' : ''}>No – not reportable</option>
+              <option value="">— ${t('inc_stillOpen')} —</option>
+              <option value="tbd" ${i.reportable === 'tbd' ? 'selected' : ''}>${t('inc_reportableTbd')}</option>
+              <option value="yes" ${i.reportable === 'yes' ? 'selected' : ''}>${t('inc_reportableYes')}</option>
+              <option value="no"  ${i.reportable === 'no'  ? 'selected' : ''}>${t('inc_reportableNo')}</option>
             </select>
           </div>
         </div>
         <div class="inc-field" style="margin-top:10px">
-          <div class="inc-field-label">CISO Notes</div>
+          <div class="inc-field-label">${t('inc_cisoNotes')}</div>
           <textarea class="form-textarea" id="incCisoNotes" rows="3" style="font-size:.82rem">${escHtml(i.cisoNotes || '')}</textarea>
         </div>
-        ${i.updatedAt ? `<p style="font-size:.75rem;color:var(--text-disabled);margin-top:6px">Last updated: ${new Date(i.updatedAt).toLocaleString('en-GB')} by ${escHtml(i.updatedBy || '—')}</p>` : ''}
+        ${i.updatedAt ? `<p style="font-size:.75rem;color:var(--text-disabled);margin-top:6px">${t('inc_lastUpdated')}: ${new Date(i.updatedAt).toLocaleString('en-GB')} ${t('dash_by')} ${escHtml(i.updatedBy || '—')}</p>` : ''}
         <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
           ${canAccess('admin') ? `<button class="btn btn-danger btn-sm" onclick="deleteIncident('${i.id}','${escHtml(i.refNumber)}')">
-            <i class="ph ph-trash"></i> Delete
+            <i class="ph ph-trash"></i> ${t('delete')}
           </button>` : ''}
           <button class="btn btn-primary btn-sm" onclick="saveIncidentDecision('${i.id}')">
-            <i class="ph ph-floppy-disk"></i> Save Decision
+            <i class="ph ph-floppy-disk"></i> ${t('inc_saveDecision')}
           </button>
         </div>
       </div>
@@ -2330,8 +2330,8 @@ function renderUnderConstruction(sectionId) {
       <div class="uc-icon"><i class="ph ${m.icon}"></i></div>
       <h2 class="uc-title">${m.label}</h2>
       <p class="uc-desc">${m.desc}</p>
-      <div class="uc-badge"><i class="ph ph-wrench"></i> Under Construction</div>
-      <p class="uc-hint">This module will be available in one of the next releases.</p>
+      <div class="uc-badge"><i class="ph ph-wrench"></i> ${t('underConstruction')}</div>
+      <p class="uc-hint">${t('underConstructionHint')}</p>
     </div>
   `
   editor.appendChild(div)
@@ -2427,21 +2427,21 @@ function renderSoaContent(container) {
 
   container.innerHTML = `
     <div class="soa-header">
-      <h2 class="soa-title">Statement of Applicability</h2>
+      <h2 class="soa-title">${t('soa_title')}</h2>
       <div class="soa-fw-tabs">${tabsHtml}</div>
       <div class="soa-summary-row">
         <span class="soa-kpi">${total} Controls</span>
-        <span class="soa-kpi soa-kpi-green">${applied} anwendbar</span>
-        <span class="soa-kpi soa-kpi-blue">${implRate}% umgesetzt</span>
-        <a class="btn btn-export" href="/soa/export" download="soa-export.json">Export JSON</a>
-        ${(ROLE_RANK[getCurrentRole()] || 0) >= ROLE_RANK['admin'] ? `<button class="btn btn-import-iso" onclick="openSoaIsoImport()" title="ISO 27001/9000/9001 Controls importieren">⬆ ISO Controls importieren</button>` : ''}
+        <span class="soa-kpi soa-kpi-green">${applied} ${t('soa_applicable')}}</span>
+        <span class="soa-kpi soa-kpi-blue">${implRate}% ${t('soa_implemented')}</span>
+        <a class="btn btn-export" href="/soa/export" download="soa-export.json">${t('export')} JSON</a>
+        ${(ROLE_RANK[getCurrentRole()] || 0) >= ROLE_RANK['admin'] ? `<button class="btn btn-import-iso" onclick="openSoaIsoImport()" title="${t('soa_importIsoControls')}">⬆ ${t('soa_importIsoControls')}</button>` : ''}
         ${soaActiveFramework === 'CUSTOM' && (ROLE_RANK[getCurrentRole()] || 0) >= ROLE_RANK['contentowner']
-          ? `<button class="btn btn-primary btn-sm" onclick="openCustomControlModal(null)"><i class="ph ph-plus"></i> New Control</button>`
+          ? `<button class="btn btn-primary btn-sm" onclick="openCustomControlModal(null)"><i class="ph ph-plus"></i> ${t('soa_newControl')}</button>`
           : ''}
       </div>
       <div class="soa-filters">
         <select id="soaFilterTheme" class="soa-select">
-          <option value="">Alle Themes</option>
+          <option value="">${t('soa_allThemes')}</option>
           ${themes.map(t => `<option value="${t}" ${soaFilters.theme===t?'selected':''}>${t}</option>`).join('')}
         </select>
         <select id="soaFilterStatus" class="soa-select">
@@ -2449,9 +2449,9 @@ function renderSoaContent(container) {
           ${Object.entries(STATUS_LABELS).map(([v,l]) => `<option value="${v}" ${soaFilters.status===v?'selected':''}>${l}</option>`).join('')}
         </select>
         <select id="soaFilterApplicable" class="soa-select">
-          <option value="">All</option>
-          <option value="yes" ${soaFilters.applicable==='yes'?'selected':''}>Applicable</option>
-          <option value="no"  ${soaFilters.applicable==='no'?'selected':''}>Not Applicable</option>
+          <option value="">${t('filter_allStatuses')}</option>
+          <option value="yes" ${soaFilters.applicable==='yes'?'selected':''}>${t('soa_applicable')}</option>
+          <option value="no"  ${soaFilters.applicable==='no'?'selected':''}>${t('soa_notApplicable')}</option>
         </select>
       </div>
     </div>
@@ -2461,12 +2461,12 @@ function renderSoaContent(container) {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Theme</th>
-            <th>Control</th>
-            <th>Applicable</th>
-            <th>Status</th>
-            <th>Responsible</th>
-            <th>Justification</th>
+            <th>${t('soa_theme')}</th>
+            <th>${t('soa_control')}</th>
+            <th>${t('soa_applicable')}</th>
+            <th>${t('col_status')}</th>
+            <th>${t('col_responsible')}</th>
+            <th>${t('soa_justification')}</th>
             ${canEdit ? '<th></th>' : ''}
           </tr>
         </thead>
@@ -2475,7 +2475,7 @@ function renderSoaContent(container) {
           ${filtered.map(c => soaRow(c, canEdit)).join('')}
         </tbody>
       </table>
-      ${filtered.length === 0 ? '<div class="soa-empty">No controls found.</div>' : ''}
+      ${filtered.length === 0 ? `<div class="soa-empty">${t('soa_noControls')}</div>` : ''}
     </div>
   `
 
@@ -2511,7 +2511,7 @@ function soaRow(c, canEdit) {
   return `
     <tr class="soa-row ${c.applicable ? '' : 'soa-row-na'}" data-id="${c.id}">
       <td class="soa-id">
-        <button class="soa-expand-btn" data-id="${c.id}" title="Details einblenden">&#9656;</button>
+        <button class="soa-expand-btn" data-id="${c.id}" title="${t('soa_showDetails')}">&#9656;</button>
         ${c.id}
       </td>
       <td><span class="soa-theme-badge" style="border-color:${color};color:${color}">${c.theme}</span></td>
@@ -2532,26 +2532,26 @@ function soaRow(c, canEdit) {
       </td>
       <td>
         ${canEdit
-          ? `<input class="soa-owner-input" data-id="${c.id}" value="${c.owner||''}" placeholder="Name…">`
+          ? `<input class="soa-owner-input" data-id="${c.id}" value="${c.owner||''}" placeholder="${t('col_name')}…">`
           : (c.owner || '—')}
       </td>
       <td>
         ${canEdit
-          ? `<input class="soa-just-input" data-id="${c.id}" value="${c.justification||''}" placeholder="Justification…">`
+          ? `<input class="soa-just-input" data-id="${c.id}" value="${c.justification||''}" placeholder="${t('soa_justification')}…">`
           : (c.justification || '')}
       </td>
       ${canEdit ? `<td style="white-space:nowrap">
-        <button class="btn-soa-save soa-save-btn" data-id="${c.id}">Save</button>
+        <button class="btn-soa-save soa-save-btn" data-id="${c.id}">${t('save')}</button>
         ${c.isCustom ? `
-          <button class="btn btn-secondary btn-xs" style="margin-left:4px" onclick="openCustomControlModal('${c.id}')" title="Edit control"><i class="ph ph-pencil"></i></button>
-          <button class="btn btn-danger btn-xs" style="margin-left:4px" onclick="deleteCustomControl('${c.id}','${escHtml(c.title)}')" title="Delete (only if no templates linked)"><i class="ph ph-trash"></i></button>
+          <button class="btn btn-secondary btn-xs" style="margin-left:4px" onclick="openCustomControlModal('${c.id}')" title="${t('soa_editControl')}"><i class="ph ph-pencil"></i></button>
+          <button class="btn btn-danger btn-xs" style="margin-left:4px" onclick="deleteCustomControl('${c.id}','${escHtml(c.title)}')" title="${t('soa_deleteControlTitle')}"><i class="ph ph-trash"></i></button>
         ` : ''}
       </td>` : ''}
     </tr>
     <tr class="soa-detail-row" data-for="${c.id}" style="display:none;">
       <td colspan="8" class="soa-detail-cell">
         <div class="soa-detail-content" id="soa-detail-${c.id}">
-          <div class="soa-detail-loading">Loading details…</div>
+          <div class="soa-detail-loading">${t('soa_loading')}</div>
         </div>
       </td>
     </tr>
@@ -2588,7 +2588,7 @@ async function toggleSoaDetail(id, container) {
     const allTemplates = tmplRes.ok ? await tmplRes.json() : []
     renderSoaDetail(detailEl, id, crossGroups, allTemplates, control, canEdit, container)
   } catch {
-    detailEl.innerHTML = '<span class="soa-detail-error">Error loading.</span>'
+    detailEl.innerHTML = `<span class="soa-detail-error">${t('err_load')}</span>`
   }
 }
 
@@ -2598,7 +2598,7 @@ function renderSoaDetail(el, id, crossGroups, allTemplates, control, canEdit, co
   // ── Cross-Mapping ──
   let crossHtml = ''
   if (crossGroups.length === 0) {
-    crossHtml = '<span class="soa-detail-none">No cross-mapping for this control.</span>'
+    crossHtml = `<span class="soa-detail-none">${t('soa_noCrossMapping')}</span>`
   } else {
     crossHtml = crossGroups.map(g => {
       const pills = g.related.map(cid =>
@@ -2623,16 +2623,16 @@ function renderSoaDetail(el, id, crossGroups, allTemplates, control, canEdit, co
           ? `<span class="soa-tmpl-tag">${label}<button class="soa-tmpl-remove" data-tid="${tid}" title="Remove">&times;</button></span>`
           : `<span class="soa-tmpl-tag">${label}</span>`
       }).join('')
-    : '<span class="soa-detail-none">No templates linked.</span>'
+    : `<span class="soa-detail-none">${t('soa_noTemplatesLinked')}</span>`
 
   // Template-Picker
   const unlinked = allTemplates.filter(t => !linked.includes(t.id))
   const pickerHtml = canEdit && unlinked.length > 0
     ? `<select id="soa-tmpl-picker-${id}" class="soa-tmpl-picker">
-        <option value="">Link template…</option>
+        <option value="">${t('soa_linkTemplate')}</option>
         ${unlinked.map(t => `<option value="${t.id}">${t.title} (${t.type})</option>`).join('')}
        </select>
-       <button class="soa-tmpl-add-btn" data-id="${id}">Link</button>`
+       <button class="soa-tmpl-add-btn" data-id="${id}">${t('soa_link')}</button>`
     : ''
 
   // ── Entity-Applicability ──
@@ -2641,22 +2641,22 @@ function renderSoaDetail(el, id, crossGroups, allTemplates, control, canEdit, co
     ? t('filter_allEntities')
     : applicableEnts.map(id => `<span class="tmpl-bar-pill">${id}</span>`).join('')
   const entEditorHtml = canEdit
-    ? `<button class="btn btn-secondary btn-sm soa-ent-edit" data-id="${id}" style="margin-left:6px;" title="Edit applicability"><i class="ph ph-pencil-simple"></i></button>`
+    ? `<button class="btn btn-secondary btn-sm soa-ent-edit" data-id="${id}" style="margin-left:6px;" title="${t('soa_editApplicability')}"><i class="ph ph-pencil-simple"></i></button>`
     : ''
 
   el.innerHTML = `
     <div class="soa-detail-grid">
       <section class="soa-detail-section">
-        <h4 class="soa-detail-heading">Cross-Mapping (related controls)</h4>
+        <h4 class="soa-detail-heading">${t('soa_crossMapping')}</h4>
         ${crossHtml}
       </section>
       <section class="soa-detail-section">
-        <h4 class="soa-detail-heading">Linked Templates / Policies</h4>
+        <h4 class="soa-detail-heading">${t('soa_linkedTemplates')}</h4>
         <div class="soa-tmpl-list" id="soa-tmpl-list-${id}">${linkedTmplHtml}</div>
         <div class="soa-tmpl-picker-row">${pickerHtml}</div>
       </section>
       <section class="soa-detail-section soa-detail-full">
-        <h4 class="soa-detail-heading"><i class="ph ph-buildings"></i> Applicable Entities${entEditorHtml}</h4>
+        <h4 class="soa-detail-heading"><i class="ph ph-buildings"></i> ${t('common_applicableEntities')}${entEditorHtml}</h4>
         <div class="soa-entity-bar">${applicableEnts.length === 0 ? `<span class="soa-detail-none">${t('filter_allEntities')}</span>` : entLabel}</div>
       </section>
     </div>
@@ -2754,10 +2754,10 @@ function openSoaIsoImport() {
       try {
         controls = JSON.parse(await file.text())
       } catch {
-        return showToast('Ungültige JSON-Datei.', 'error')
+        return showToast(t('err_invalidJson'), 'error')
       }
       if (!Array.isArray(controls) || controls.length === 0) {
-        return showToast('JSON muss ein Array von Controls enthalten.', 'error')
+        return showToast(t('soa_importArrayRequired'), 'error')
       }
       try {
         const res = await fetch('/soa/import-controls', {
@@ -2766,11 +2766,11 @@ function openSoaIsoImport() {
           body: JSON.stringify(controls)
         })
         const data = await res.json()
-        if (!res.ok) return showToast('Fehler: ' + (data.error || res.status), 'error')
-        showToast(`✓ ${data.imported} ISO-Controls importiert. Seite wird neu geladen…`, 'success')
+        if (!res.ok) return showToast(t('error') + ': ' + (data.error || res.status), 'error')
+        showToast(t('soa_importSuccess', { count: data.imported }), 'success')
         setTimeout(() => renderSoa(), 1200)
       } catch (e) {
-        showToast('Netzwerkfehler: ' + e.message, 'error')
+        showToast(t('err_network') + ': ' + e.message, 'error')
       }
     }
   }
@@ -2786,37 +2786,37 @@ function openCustomControlModal(id) {
     <div id="customCtrlModal" class="modal" style="visibility:visible">
       <div class="modal-content">
         <div class="modal-header">
-          <h3 class="modal-title"><i class="ph ph-sliders"></i> ${existing ? 'Edit' : 'New'} Custom Control</h3>
+          <h3 class="modal-title"><i class="ph ph-sliders"></i> ${existing ? t('edit') : t('create')} ${t('soa_customControl')}</h3>
           <button class="modal-close" onclick="document.getElementById('customCtrlModal').remove()"><i class="ph ph-x"></i></button>
         </div>
         <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
           <div>
-            <label class="form-label">Title <span class="form-required">*</span></label>
-            <input id="ccTitle" class="form-input" value="${escHtml(existing?.title||'')}" placeholder="Control title…">
+            <label class="form-label">${t('col_title')} <span class="form-required">*</span></label>
+            <input id="ccTitle" class="form-input" value="${escHtml(existing?.title||'')}" placeholder="${t('soa_controlTitlePlaceholder')}">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
-              <label class="form-label">Theme / Category</label>
-              <input id="ccTheme" class="form-input" value="${escHtml(existing?.theme||'')}" placeholder="e.g. Access Control">
+              <label class="form-label">${t('soa_themeCategory')}</label>
+              <input id="ccTheme" class="form-input" value="${escHtml(existing?.theme||'')}" placeholder="${t('soa_themePlaceholder')}">
             </div>
             <div>
-              <label class="form-label">Responsible</label>
-              <input id="ccOwner" class="form-input" value="${escHtml(existing?.owner||'')}" placeholder="Name or role">
+              <label class="form-label">${t('col_responsible')}</label>
+              <input id="ccOwner" class="form-input" value="${escHtml(existing?.owner||'')}" placeholder="${t('findings_responsiblePlaceholder')}">
             </div>
           </div>
           <div>
-            <label class="form-label">Description</label>
+            <label class="form-label">${t('inc_description')}</label>
             <textarea id="ccDesc" class="form-textarea" rows="2">${escHtml(existing?.description||'')}</textarea>
           </div>
           <div>
-            <label class="form-label">Justification</label>
-            <input id="ccJust" class="form-input" value="${escHtml(existing?.justification||'')}" placeholder="Why is this control needed?">
+            <label class="form-label">${t('soa_justification')}</label>
+            <input id="ccJust" class="form-input" value="${escHtml(existing?.justification||'')}" placeholder="${t('soa_justificationPlaceholder')}">
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="document.getElementById('customCtrlModal').remove()">Cancel</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('customCtrlModal').remove()">${t('cancel')}</button>
           <button class="btn btn-primary" onclick="submitCustomControlModal('${id||''}')">
-            <i class="ph ph-floppy-disk"></i> Save
+            <i class="ph ph-floppy-disk"></i> ${t('save')}
           </button>
         </div>
       </div>
@@ -2982,7 +2982,7 @@ async function renderDashboard() {
     if (findingsSummary?.overdueActions > 0)
       alerts.push({ color: '#f87171', icon: 'ph-magnifying-glass', text: `${findingsSummary.overdueActions} overdue action(s) in findings`, nav: 'reports' })
     if (reviewPending?.length > 0)
-      alerts.push({ color: '#f59e0b', icon: 'ph-shield-warning', text: `${reviewPending.length} Scan-Risiko(en) warten auf Freigabe`, nav: 'risk' })
+      alerts.push({ color: '#f59e0b', icon: 'ph-shield-warning', text: t('dash_scanRisksPending', { count: reviewPending.length }), nav: 'risk' })
     if (alerts.length === 0) return '<p class="dash-empty" style="color:var(--success-text)"><i class="ph ph-check-circle"></i> No critical issues</p>'
     return alerts.map(a => `<div class="dash-alert dash-link" data-nav="${a.nav}" style="border-left:3px solid ${a.color};padding:6px 10px;margin-bottom:6px;background:var(--surface);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px">
       <i class="ph ${a.icon}" style="color:${a.color};font-size:1rem"></i>
@@ -2992,169 +2992,169 @@ async function renderDashboard() {
 
   container.innerHTML = `
     <div class="dash-isms-header">
-      <h2 class="dashboard-title"><i class="ph ph-gauge"></i> ISMS Dashboard</h2>
-      <span class="dash-timestamp" style="font-size:.75rem;color:var(--text-subtle)">As of: ${new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+      <h2 class="dashboard-title"><i class="ph ph-gauge"></i> ${t('dash_title')}</h2>
+      <span class="dash-timestamp" style="font-size:.75rem;color:var(--text-subtle)">${t('dash_status')} ${new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
     </div>
 
     <!-- Alerts -->
     <div class="dash-section">
-      <div class="dash-section-title"><i class="ph ph-bell"></i> Action Required</div>
+      <div class="dash-section-title"><i class="ph ph-bell"></i> ${t('dash_actionRequired')}</div>
       ${alertsHtml}
     </div>
 
     <!-- KPI Row 1: Templates & Compliance -->
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-files"></i> Policies & Compliance</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-files"></i> ${t('dash_policies')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="policy" title="Open templates">
         <div class="kpi-value">${data.total}</div>
-        <div class="kpi-label">Templates</div>
+        <div class="kpi-label">${t('dash_templates')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="policy">
         <div class="kpi-value" style="color:var(--success-text)">${data.approvalRate}%</div>
-        <div class="kpi-label">Approved</div>
+        <div class="kpi-label">${t('dash_approved')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="policy">
         <div class="kpi-value" style="color:var(--warning-text)">${data.byStatus?.review || 0}</div>
-        <div class="kpi-label">In Review</div>
+        <div class="kpi-label">${t('dash_inReview')}</div>
       </div>
       ${MODULE_CONFIG.soa && soaSummary ? `<div class="dash-card kpi dash-link" data-nav="soa">
         <div class="kpi-value" style="color:var(--accent-text)">${Math.round(Object.values(soaSummary).reduce((s,fw)=>s+fw.implementationRate,0)/Object.values(soaSummary).length)}%</div>
-        <div class="kpi-label">Ø Framework Rate</div>
+        <div class="kpi-label">${t('dash_fwRate')}</div>
       </div>` : ''}
     </div>
 
     <!-- KPI Row 2: Risiken -->
     ${MODULE_CONFIG.risk ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-chart-bar"></i> Risk Management</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-chart-bar"></i> ${t('dash_risks')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="risk">
         <div class="kpi-value">${riskSummary?.total || 0}</div>
-        <div class="kpi-label">Total Risks</div>
+        <div class="kpi-label">${t('dash_totalRisks')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="risk">
         <div class="kpi-value" style="color:#f87171">${riskSummary?.byLevel?.critical || 0}</div>
-        <div class="kpi-label">Critical</div>
+        <div class="kpi-label">${t('dash_critical')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="risk">
         <div class="kpi-value" style="color:#fb923c">${riskSummary?.byLevel?.high || 0}</div>
-        <div class="kpi-label">High</div>
+        <div class="kpi-label">${t('dash_high')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="risk">
         <div class="kpi-value" style="color:var(--warning-text)">${riskSummary?.openTreatments || 0}</div>
-        <div class="kpi-label">Open Treatments</div>
+        <div class="kpi-label">${t('risk_openTreatments')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row 3: GDPR -->
     ${MODULE_CONFIG.gdpr ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-shield-check"></i> Data Protection (GDPR)</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-shield-check"></i> ${t('dash_gdpr')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="gdpr">
         <div class="kpi-value">${gdprDash?.vvt?.total || 0}</div>
-        <div class="kpi-label">RoPA Entries</div>
+        <div class="kpi-label">${t('dash_vvt')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="gdpr">
         <div class="kpi-value" style="color:${(gdprDash?.incidents?.open||0)>0?'#f87171':'var(--success-text)'}">${gdprDash?.incidents?.open || 0}</div>
-        <div class="kpi-label">Open Data Breaches</div>
+        <div class="kpi-label">${t('dash_breaches')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="gdpr">
         <div class="kpi-value" style="color:var(--warning-text)">${gdprDash?.dsar?.open || 0}</div>
-        <div class="kpi-label">Open DSARs</div>
+        <div class="kpi-label">${t('dash_dsars')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="gdpr">
         <div class="kpi-value">${gdprDash?.toms?.implemented || 0}</div>
-        <div class="kpi-label">TOMs Implemented</div>
+        <div class="kpi-label">${t('dash_toms')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row 3b: Sicherheitsziele -->
     ${MODULE_CONFIG.goals && goalsSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-target"></i> Security Goals (ISO 27001 Cl. 6.2)</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-target"></i> ${t('nav_goals')} (${t('dash_goals')})</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="goals">
         <div class="kpi-value">${goalsSummary.active||0}</div>
-        <div class="kpi-label">Active Goals</div>
+        <div class="kpi-label">${t('dash_activeGoals')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="goals">
         <div class="kpi-value" style="color:#4ade80">${goalsSummary.achieved||0}</div>
-        <div class="kpi-label">Achieved</div>
+        <div class="kpi-label">${t('dash_achieved')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="goals">
         <div class="kpi-value" style="color:${(goalsSummary.overdue||0)>0?'#f87171':'var(--success-text)'}">${goalsSummary.overdue||0}</div>
-        <div class="kpi-label">Overdue</div>
+        <div class="kpi-label">${t('dash_overdue')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="goals">
         <div class="kpi-value" style="color:#60a5fa">${goalsSummary.avgProgress||0}%</div>
-        <div class="kpi-label">Ø Progress</div>
+        <div class="kpi-label">${t('dash_progress')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row 3c: Asset Management -->
     ${MODULE_CONFIG.assets && assetSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-buildings"></i> Asset Management</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-buildings"></i> ${t('nav_assets')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="assets">
         <div class="kpi-value">${assetSummary.total || 0}</div>
-        <div class="kpi-label">Total Assets</div>
+        <div class="kpi-label">${t('dash_assets')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="assets">
         <div class="kpi-value" style="color:#f87171">${assetSummary.byCriticality?.critical || 0}</div>
-        <div class="kpi-label">Critical</div>
+        <div class="kpi-label">${t('dash_critical')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="assets">
         <div class="kpi-value" style="color:#fb923c">${assetSummary.criticalUnclassified || 0}</div>
-        <div class="kpi-label">Unclassified crit.</div>
+        <div class="kpi-label">${t('dash_unclassifiedCritical')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="assets">
         <div class="kpi-value" style="color:#f0b429">${assetSummary.endOfLifeSoon || 0}</div>
-        <div class="kpi-label">EoL in 90 days</div>
+        <div class="kpi-label">${t('dash_eol')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row 3d: Governance -->
     ${MODULE_CONFIG.governance && govSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-chalkboard-teacher"></i> Governance</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-chalkboard-teacher"></i> ${t('dash_governance')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="governance">
         <div class="kpi-value">${govSummary.reviews?.total || 0}</div>
-        <div class="kpi-label">Management Reviews</div>
+        <div class="kpi-label">${t('dash_governance')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="governance">
         <div class="kpi-value" style="color:${(govSummary.actions?.overdue||0)>0?'#f87171':'var(--success-text)'}">
           ${govSummary.actions?.overdue || 0}
         </div>
-        <div class="kpi-label">Actions Overdue</div>
+        <div class="kpi-label">${t('findings_overdue')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="governance">
         <div class="kpi-value" style="color:var(--warning-text)">${govSummary.actions?.open || 0}</div>
-        <div class="kpi-label">Open Actions</div>
+        <div class="kpi-label">${t('dash_openActions')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="governance">
         <div class="kpi-value">${govSummary.meetings?.total || 0}</div>
-        <div class="kpi-label">Meetings</div>
+        <div class="kpi-label">${t('gov_meetings')}</div>
       </div>
     </div>` : ''}
 
     ${MODULE_CONFIG.bcm && bcmSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-heartbeat"></i> Business Continuity (BCM)</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-heartbeat"></i> ${t('nav_bcm')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="bcm">
         <div class="kpi-value">${bcmSummary.plans?.total || 0}</div>
-        <div class="kpi-label">Continuity Plans</div>
+        <div class="kpi-label">${t('dash_bcm')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="bcm">
         <div class="kpi-value" style="color:var(--success-text)">${bcmSummary.plans?.tested || 0}</div>
-        <div class="kpi-label">Tested Plans</div>
+        <div class="kpi-label">${t('dash_testedPlans')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="bcm">
         <div class="kpi-value" style="color:#f87171">${bcmSummary.bia?.critical || 0}</div>
-        <div class="kpi-label">Critical Processes</div>
+        <div class="kpi-label">${t('dash_criticalProcesses')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="bcm">
         <div class="kpi-value" style="color:${(bcmSummary.plans?.overdueTest||0)>0?'#f87171':'var(--success-text)'}">
           ${bcmSummary.plans?.overdueTest || 0}
         </div>
-        <div class="kpi-label">Tests Overdue</div>
+        <div class="kpi-label">${t('dash_testsOverdue')}</div>
       </div>
     </div>` : ''}
 
@@ -3167,95 +3167,95 @@ async function renderDashboard() {
       </div>
       <div class="dash-card kpi dash-link" data-nav="suppliers">
         <div class="kpi-value" style="color:#f87171">${supplierSummary.critical || 0}</div>
-        <div class="kpi-label">Critical Suppliers</div>
+        <div class="kpi-label">${t('dash_critSuppliers')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="suppliers">
         <div class="kpi-value" style="color:${(supplierSummary.overdueAudits||0)>0?'#f87171':'var(--success-text)'}">
           ${supplierSummary.overdueAudits || 0}
         </div>
-        <div class="kpi-label">Audits Overdue</div>
+        <div class="kpi-label">${t('dash_auditsOverdue')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="suppliers">
         <div class="kpi-value" style="color:var(--warning-text)">${supplierSummary.withDataAccess || 0}</div>
-        <div class="kpi-label">With Data Access</div>
+        <div class="kpi-label">${t('dash_withDataAccess')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row: Audit-Feststellungen -->
     ${findingsSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-magnifying-glass"></i> Audit Findings</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-magnifying-glass"></i> ${t('findings_title')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="reports">
         <div class="kpi-value">${findingsSummary.total || 0}</div>
-        <div class="kpi-label">Total Findings</div>
+        <div class="kpi-label">${t('findings_total')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="reports">
         <div class="kpi-value" style="color:${(findingsSummary.byStatus?.open||0)>0?'#fb923c':'var(--success-text)'}">
           ${findingsSummary.byStatus?.open || 0}
         </div>
-        <div class="kpi-label">Open</div>
+        <div class="kpi-label">${t('findings_open')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="reports">
         <div class="kpi-value" style="color:${(findingsSummary.bySeverity?.critical||0)>0?'#f87171':(findingsSummary.bySeverity?.high||0)>0?'#fb923c':'var(--success-text)'}">
           ${(findingsSummary.bySeverity?.critical||0) + (findingsSummary.bySeverity?.high||0)}
         </div>
-        <div class="kpi-label">Critical/High</div>
+        <div class="kpi-label">${t('dash_criticalHigh')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="reports">
         <div class="kpi-value" style="color:${(findingsSummary.overdueActions||0)>0?'#f87171':'var(--success-text)'}">
           ${findingsSummary.overdueActions || 0}
         </div>
-        <div class="kpi-label">Actions Overdue</div>
+        <div class="kpi-label">${t('findings_overdue')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row: Policy Acknowledgements -->
     ${ackSummary ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-check-circle"></i> Richtlinien-Bestätigungen</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-check-circle"></i> ${t('nav_policyAcks')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       <div class="dash-card kpi dash-link" data-nav="policy-acks">
         <div class="kpi-value">${ackSummary.activeDistributions || 0}</div>
-        <div class="kpi-label">Aktive Verteilrunden</div>
+        <div class="kpi-label">${t('ack_activeDistributions')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="policy-acks">
         <div class="kpi-value" style="color:${(ackSummary.pendingAcks||0)>0?'#fbbf24':'var(--success-text)'}">
           ${ackSummary.pendingAcks || 0}
         </div>
-        <div class="kpi-label">Ausstehende Bestätigungen</div>
+        <div class="kpi-label">${t('ack_pendingAcknowledgements')}</div>
       </div>
     </div>` : ''}
 
     <!-- KPI Row 4: Legal & Training -->
     ${(MODULE_CONFIG.legal || MODULE_CONFIG.training) ? `
-    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-briefcase"></i> Legal & Training</div>
+    <div class="dash-section-title" style="margin:16px 0 8px"><i class="ph ph-briefcase"></i> ${t('dash_legal')}</div>
     <div class="dashboard-grid" style="margin-bottom:0">
       ${MODULE_CONFIG.legal ? `
       <div class="dash-card kpi dash-link" data-nav="legal">
         <div class="kpi-value">${legalSummary?.contracts?.active || 0}</div>
-        <div class="kpi-label">Active Contracts</div>
+        <div class="kpi-label">${t('dash_contracts')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="legal">
         <div class="kpi-value" style="color:${(legalSummary?.contracts?.expiring||0)>0?'#fb923c':'var(--success-text)'}">${legalSummary?.contracts?.expiring || 0}</div>
-        <div class="kpi-label">Contracts Expiring</div>
+        <div class="kpi-label">${t('dash_expiring')}</div>
       </div>` : ''}
       ${MODULE_CONFIG.training ? `
       <div class="dash-card kpi dash-link" data-nav="training">
         <div class="kpi-value">${trainSummary?.completionRate || 0}%</div>
-        <div class="kpi-label">Training Rate</div>
+        <div class="kpi-label">${t('dash_training')}</div>
       </div>
       <div class="dash-card kpi dash-link" data-nav="training">
         <div class="kpi-value" style="color:${(trainSummary?.overdue||0)>0?'#f87171':'var(--success-text)'}">${trainSummary?.overdue || 0}</div>
-        <div class="kpi-label">Overdue Trainings</div>
+        <div class="kpi-label">${t('dash_overdueTraining')}</div>
       </div>` : ''}
     </div>` : ''}
 
     <!-- Framework-Compliance -->
     ${MODULE_CONFIG.soa && soaSummary ? `
     <div class="dash-section" style="margin-top:16px">
-      <div class="dash-section-title"><i class="ph ph-check-square"></i> Framework-Compliance</div>
+      <div class="dash-section-title"><i class="ph ph-check-square"></i> ${t('dash_fwCompliance')}</div>
       <div class="fw-summary-grid">
         ${Object.values(soaSummary).map(fw => `
-          <div class="fw-summary-item dash-link" data-nav="soa" data-fw="${fw.framework}" title="Open ${fw.label}" style="cursor:pointer">
+          <div class="fw-summary-item dash-link" data-nav="soa" data-fw="${fw.framework}" title="${t('risk_openBtn')} ${fw.label}" style="cursor:pointer">
             <span class="fw-label" style="color:${fw.color}">${fw.label}</span>
             <div class="fw-bar-track">
               <div class="fw-bar-fill" style="width:${fw.implementationRate}%; background:${fw.color}"></div>
@@ -3271,7 +3271,7 @@ async function renderDashboard() {
     <div style="display:grid;grid-template-columns:${MODULE_CONFIG.risk && MODULE_CONFIG.calendar ? '1fr 1fr' : '1fr'};gap:12px;margin-top:16px">
       ${MODULE_CONFIG.risk ? `
       <div class="dash-card">
-        <div class="dash-card-title"><i class="ph ph-chart-bar"></i> Top-5 Risiken</div>
+        <div class="dash-card-title"><i class="ph ph-chart-bar"></i> ${t('dash_top5')}</div>
         ${riskSummary?.top5?.length ? `
         <table style="width:100%;font-size:.8rem;border-collapse:collapse">
           ${riskSummary.top5.map(r => `
@@ -3281,12 +3281,12 @@ async function renderDashboard() {
                 <span style="color:${riskColors[r.riskLevel]};font-weight:600">${r.score}</span>
               </td>
             </tr>`).join('')}
-        </table>` : '<p class="dash-empty">No risks found</p>'}
+        </table>` : `<p class="dash-empty">${t('risk_noRisks')}</p>`}
       </div>` : ''}
 
       ${MODULE_CONFIG.calendar ? `
       <div class="dash-card">
-        <div class="dash-card-title"><i class="ph ph-calendar-check"></i> Next 14 Days</div>
+        <div class="dash-card-title"><i class="ph ph-calendar-check"></i> ${t('dash_next14')}</div>
         ${upcoming.length ? `
         <ul style="list-style:none;padding:0;margin:0;font-size:.8rem">
           ${upcoming.map(ev => `
@@ -3295,15 +3295,15 @@ async function renderDashboard() {
               <span>${escHtml(ev.title)}</span>
               <span style="margin-left:auto;color:var(--text-subtle)">${new Date(ev.date).toLocaleDateString('en-GB')}</span>
             </li>`).join('')}
-        </ul>` : '<p class="dash-empty">No upcoming events</p>'}
+        </ul>` : `<p class="dash-empty">${t('cal_noUpcoming')}</p>`}
       </div>` : ''}
     </div>` : ''}
 
     <!-- Recent Activity -->
     <div class="dash-card" style="margin-top:12px">
-      <div class="dash-card-title"><i class="ph ph-activity"></i> Recent Activity</div>
+      <div class="dash-card-title"><i class="ph ph-activity"></i> ${t('dash_activity')}</div>
       ${data.recentActivity.length === 0
-        ? '<p class="dash-empty">No activity yet.</p>'
+        ? `<p class="dash-empty">${t('dash_noActivity')}</p>`
         : `<ul class="activity-list">
             ${data.recentActivity.map(a => `
               <li class="dash-link" data-nav-type="${a.type}" data-tmpl-id="${a.templateId}" data-tmpl-type="${a.type}" style="cursor:pointer">
@@ -3357,37 +3357,37 @@ function renderAdminPanel(){
     dom('editor').appendChild(panel)
   }
   panel.innerHTML = `
-    <div class="admin-fullpage">
-      <div class="admin-fullpage-header">
-        <h2><i class="ph ph-wrench"></i> Administration</h2>
+      <div class="admin-fullpage">
+        <div class="admin-fullpage-header">
+        <h2><i class="ph ph-wrench"></i> ${t('admin_title')}</h2>
       </div>
       <div class="admin-tab-bar">
         <button class="admin-tab active" id="adminTabUsers" onclick="adminShowTab('users')">
-          <i class="ph ph-users"></i> Users
+          <i class="ph ph-users"></i> ${t('admin_users')}
         </button>
         <button class="admin-tab" id="adminTabEntities" onclick="adminShowTab('entities')">
-          <i class="ph ph-buildings"></i> Entities
+          <i class="ph ph-buildings"></i> ${t('admin_entities')}
         </button>
         <button class="admin-tab" id="adminTabTemplates" onclick="adminShowTab('templates')">
-          <i class="ph ph-files"></i> Templates
+          <i class="ph ph-files"></i> ${t('admin_templates')}
         </button>
         <button class="admin-tab" id="adminTabLists" onclick="adminShowTab('lists')">
-          <i class="ph ph-list-bullets"></i> Lists
+          <i class="ph ph-list-bullets"></i> ${t('admin_lists')}
         </button>
         <button class="admin-tab" id="adminTabOrg" onclick="adminShowTab('org')">
-          <i class="ph ph-buildings"></i> Organisation
+          <i class="ph ph-buildings"></i> ${t('admin_org')}
         </button>
         <button class="admin-tab" id="adminTabAudit" onclick="adminShowTab('audit')">
-          <i class="ph ph-scroll"></i> Audit Log
+          <i class="ph ph-scroll"></i> ${t('admin_auditLog')}
         </button>
         <button class="admin-tab" id="adminTabMaintenance" onclick="adminShowTab('maintenance')">
-          <i class="ph ph-hard-drives"></i> Maintenance
+          <i class="ph ph-hard-drives"></i> ${t('admin_maintenance')}
         </button>
         <button class="admin-tab" id="adminTabTrash" onclick="adminShowTab('trash')">
-          <i class="ph ph-trash-simple"></i> Trash
+          <i class="ph ph-trash-simple"></i> ${t('admin_trash')}
         </button>
         <button class="admin-tab" id="adminTabModules" onclick="adminShowTab('modules')">
-          <i class="ph ph-sliders"></i> System Configuration
+          <i class="ph ph-sliders"></i> ${t('admin_sysConfig')}
         </button>
       </div>
       <div class="admin-tab-content">
@@ -3430,12 +3430,12 @@ function adminShowTab(tab) {
 async function renderAdminTemplatesTab() {
   const container = document.getElementById('adminTabPanelTemplates')
   if (!container) return
-  container.innerHTML = '<p class="report-loading">Loading…</p>'
+  container.innerHTML = `<p class="report-loading">${t('loading')}</p>`
   const res = await fetch('/templates', { headers: apiHeaders('reader') })
-  if (!res.ok) { container.innerHTML = '<p class="report-error">Error loading</p>'; return }
+  if (!res.ok) { container.innerHTML = `<p class="report-error">${t('err_load')}</p>`; return }
   const templates = await res.json()
   if (templates.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-subtle);padding:12px;">No templates found.</p>'
+    container.innerHTML = `<p style="color:var(--text-subtle);padding:12px;">${t('admin_noTemplates')}</p>`
     return
   }
   const STATUS_CLS = { draft: 'status-draft', review: 'status-review', approved: 'status-approved', archived: 'status-archived' }
@@ -3443,12 +3443,12 @@ async function renderAdminTemplatesTab() {
     <table class="admin-user-table" style="margin-top:12px;">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Language</th>
-          <th>Version</th>
-          <th>Modified</th>
+          <th>${t('col_title')}</th>
+          <th>${t('col_type')}</th>
+          <th>${t('col_status')}</th>
+          <th>${t('settings_lang')}</th>
+          <th>${t('col_version')}</th>
+          <th>${t('col_modified')}</th>
           <th style="width:50px;"></th>
         </tr>
       </thead>
@@ -3462,7 +3462,7 @@ async function renderAdminTemplatesTab() {
             <td>${t.version || 1}</td>
             <td style="color:var(--text-subtle);font-size:12px;">${t.updatedAt ? new Date(t.updatedAt).toLocaleDateString('en-GB') : '—'}</td>
             <td>
-              <button class="btn btn-sm" style="color:var(--danger-text);" title="Delete"
+              <button class="btn btn-sm" style="color:var(--danger-text);" title="${t('delete')}"
                 onclick="adminDeleteTemplate('${escHtml(t.type)}','${escHtml(t.id)}','${escHtml(t.title || '')}')">
                 <i class="ph ph-trash"></i>
               </button>
@@ -3474,11 +3474,11 @@ async function renderAdminTemplatesTab() {
 }
 
 async function adminDeleteTemplate(type, id, title) {
-  if (!confirm(`Delete template "${title}"?`)) return
+  if (!confirm(t('tmpl_trashConfirm').replace('{title}', title))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: apiHeaders('admin')
   })
-  if (!res.ok) { const e = await res.json(); alert(e.error || 'Error deleting'); return }
+  if (!res.ok) { const e = await res.json(); alert(e.error || t('err_delete')); return }
   renderAdminTemplatesTab()
 }
 
@@ -3499,10 +3499,10 @@ let _adminActiveList  = LIST_META[0].id
 async function renderAdminListsTab() {
   const container = document.getElementById('adminTabPanelLists')
   if (!container) return
-  container.innerHTML = '<p class="report-loading">Loading…</p>'
+  container.innerHTML = `<p class="report-loading">${t('loading')}</p>`
 
   const res = await fetch('/admin/lists', { headers: apiHeaders() })
-  if (!res.ok) { container.innerHTML = '<p class="report-empty">Error loading.</p>'; return }
+  if (!res.ok) { container.innerHTML = `<p class="report-empty">${t('err_load')}</p>`; return }
   _adminListsData = await res.json()
 
   _renderAdminListsUI(container)
@@ -3539,15 +3539,15 @@ function _renderListPanel() {
     panel.innerHTML = `
       <div class="admin-lists-panel-header">
         <span class="admin-panel-title">${escHtml(meta.label)}</span>
-        <button class="btn btn-sm" onclick="_adminListReset('${meta.id}')" title="Restore defaults">
-          <i class="ph ph-arrow-counter-clockwise"></i> Reset
+        <button class="btn btn-sm" onclick="_adminListReset('${meta.id}')" title="${t('admin_restoreDefaults')}">
+          <i class="ph ph-arrow-counter-clockwise"></i> ${t('reset')}
         </button>
       </div>
       <div class="admin-lists-add-row">
-        <input class="input" id="adminListNewVal" placeholder="New entry…" style="flex:1"
+        <input class="input" id="adminListNewVal" placeholder="${t('admin_newEntry')}" style="flex:1"
                onkeydown="if(event.key==='Enter')_adminListAddString()">
         <button class="btn btn-primary btn-sm" onclick="_adminListAddString()">
-          <i class="ph ph-plus"></i> Add
+          <i class="ph ph-plus"></i> ${t('add')}
         </button>
       </div>
       <div class="admin-lists-items">
@@ -3556,23 +3556,23 @@ function _renderListPanel() {
             <input class="input admin-lists-item-input" value="${escHtml(val)}"
                    onchange="_adminListUpdateString(${idx}, this.value)">
             <button class="btn btn-sm" style="color:var(--danger-text)" onclick="_adminListRemoveItem(${idx})"
-                    title="Remove"><i class="ph ph-trash"></i></button>
+                    title="${t('remove')}"><i class="ph ph-trash"></i></button>
           </div>`).join('')}
       </div>`
   } else {
     panel.innerHTML = `
       <div class="admin-lists-panel-header">
         <span class="admin-panel-title">${escHtml(meta.label)}</span>
-        <button class="btn btn-sm" onclick="_adminListReset('${meta.id}')" title="Restore defaults">
-          <i class="ph ph-arrow-counter-clockwise"></i> Reset
+        <button class="btn btn-sm" onclick="_adminListReset('${meta.id}')" title="${t('admin_restoreDefaults')}">
+          <i class="ph ph-arrow-counter-clockwise"></i> ${t('reset')}
         </button>
       </div>
       <div class="admin-lists-add-row" style="gap:6px">
         <input class="input" id="adminListNewId"    placeholder="ID (e.g. my_cat)"  style="width:160px">
-        <input class="input" id="adminListNewLabel" placeholder="Label…"             style="flex:1"
+        <input class="input" id="adminListNewLabel" placeholder="${t('admin_labelPlaceholder')}"             style="flex:1"
                onkeydown="if(event.key==='Enter')_adminListAddObject()">
         <button class="btn btn-primary btn-sm" onclick="_adminListAddObject()">
-          <i class="ph ph-plus"></i> Add
+          <i class="ph ph-plus"></i> ${t('add')}
         </button>
       </div>
       <div class="admin-lists-items">
@@ -3582,10 +3582,10 @@ function _renderListPanel() {
                    placeholder="ID" style="width:160px"
                    onchange="_adminListUpdateObjectField(${idx},'id',this.value)">
             <input class="input admin-lists-item-input" value="${escHtml(item.label || '')}"
-                   placeholder="Label" style="flex:1"
+                   placeholder="${t('col_label')}" style="flex:1"
                    onchange="_adminListUpdateObjectField(${idx},'label',this.value)">
             <button class="btn btn-sm" style="color:var(--danger-text)" onclick="_adminListRemoveItem(${idx})"
-                    title="Remove"><i class="ph ph-trash"></i></button>
+                    title="${t('remove')}"><i class="ph ph-trash"></i></button>
           </div>`).join('')}
       </div>`
   }
@@ -3609,7 +3609,7 @@ function _adminListUpdateString(idx, val) {
 function _adminListAddObject() {
   const id    = document.getElementById('adminListNewId')?.value?.trim().replace(/\s+/g, '_')
   const label = document.getElementById('adminListNewLabel')?.value?.trim()
-  if (!id || !label) { alert('ID and label are required.'); return }
+  if (!id || !label) { alert(t('admin_idLabelRequired')); return }
   _adminListsData[_adminActiveList] = [...(_adminListsData[_adminActiveList] || []), { id, label }]
   _adminListSave()
   document.getElementById('adminListNewId').value    = ''
@@ -3636,15 +3636,15 @@ async function _adminListSave() {
     headers: { ...apiHeaders('admin'), 'Content-Type': 'application/json' },
     body: JSON.stringify(items),
   })
-  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Save failed') }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || t('err_saveFailed')) }
 }
 
 async function _adminListReset(listId) {
-  if (!confirm('Reset list to default values?')) return
+  if (!confirm(t('admin_resetListConfirm'))) return
   const res = await fetch(`/admin/list/${encodeURIComponent(listId)}/reset`, {
     method: 'POST', headers: apiHeaders('admin'),
   })
-  if (!res.ok) { alert('Error resetting'); return }
+  if (!res.ok) { alert(t('admin_resetError')); return }
   _adminListsData[listId] = await res.json()
   _renderListPanel()
 }
@@ -3656,13 +3656,13 @@ async function _adminListReset(listId) {
 async function renderAdminOrgTab() {
   const container = document.getElementById('adminTabPanelOrg')
   if (!container) return
-  container.innerHTML = '<p class="report-loading">Loading…</p>'
+  container.innerHTML = `<p class="report-loading">${t('loading')}</p>`
   const [orgRes, secRes, ouRes] = await Promise.all([
     fetch('/admin/org-settings', { headers: apiHeaders() }),
     fetch('/admin/security',     { headers: apiHeaders() }),
     fetch('/org-units',          { headers: apiHeaders() }),
   ])
-  if (!orgRes.ok) { container.innerHTML = '<p class="report-empty">Error loading.</p>'; return }
+  if (!orgRes.ok) { container.innerHTML = `<p class="report-empty">${t('err_load')}</p>`; return }
   const s    = await orgRes.json()
   const sec  = secRes.ok ? await secRes.json() : { require2FA: false }
   const units = ouRes.ok ? await ouRes.json() : []
@@ -3675,71 +3675,68 @@ async function renderAdminOrgTab() {
   container.innerHTML = `
     <div class="org-settings-panel">
       <div class="admin-lists-panel-header" style="margin-bottom:16px">
-        <span class="admin-panel-title"><i class="ph ph-buildings"></i> Organisation Data & Configuration</span>
-        <button class="btn btn-primary btn-sm" onclick="saveOrgSettings()"><i class="ph ph-floppy-disk"></i> Save</button>
+        <span class="admin-panel-title"><i class="ph ph-buildings"></i> ${t('org_dataConfiguration')}</span>
+        <button class="btn btn-primary btn-sm" onclick="saveOrgSettings()"><i class="ph ph-floppy-disk"></i> ${t('save')}</button>
       </div>
 
       <div class="org-section">
-        <h4 class="org-section-title">General Information</h4>
+        <h4 class="org-section-title">${t('org_general')}</h4>
         <div class="org-grid">
-          <label class="org-label">Organisation Name</label>
+          <label class="org-label">${t('org_name')}</label>
           <input class="input" id="orgName" value="${escHtml(s.orgName||'')}" placeholder="Example Ltd">
-          <label class="org-label">Short Name</label>
+          <label class="org-label">${t('org_short')}</label>
           <input class="input" id="orgShort" value="${escHtml(s.orgShort||'')}" placeholder="EL">
-          <label class="org-label">Logo Text / Abbreviation</label>
+          <label class="org-label">${t('org_logoText')}</label>
           <input class="input" id="orgLogoText" value="${escHtml(s.logoText||'')}" placeholder="ISMS">
-          <label class="org-label">ISMS Scope</label>
+          <label class="org-label">${t('org_scope')}</label>
           <textarea class="input" id="orgScope" rows="3" style="resize:vertical">${escHtml(s.ismsScope||'')}</textarea>
         </div>
       </div>
 
       <div class="org-section">
-        <h4 class="org-section-title">Responsibilities</h4>
+        <h4 class="org-section-title">${t('org_responsibilities')}</h4>
         <div class="org-grid">
-          <label class="org-label">CISO / ISB Name</label>
+          <label class="org-label">${t('org_ciso')}</label>
           <input class="input" id="orgCisoName" value="${escHtml(s.cisoName||'')}">
-          <label class="org-label">CISO / ISB E-Mail</label>
+          <label class="org-label">${t('org_cisoEmail')}</label>
           <input class="input" id="orgCisoEmail" value="${escHtml(s.cisoEmail||'')}" type="email">
-          <label class="org-label">DPO / GDPO Name</label>
+          <label class="org-label">${t('org_dso')}</label>
           <input class="input" id="orgGdpoName" value="${escHtml(s.gdpoName||'')}">
-          <label class="org-label">DPO / GDPO E-Mail</label>
+          <label class="org-label">${t('org_dsoEmail')}</label>
           <input class="input" id="orgGdpoEmail" value="${escHtml(s.gdpoEmail||'')}" type="email">
-          <label class="org-label">ICS Contact</label>
+          <label class="org-label">${t('org_icsContact')}</label>
           <input class="input" id="orgIcsContact" value="${escHtml(s.icsContact||'')}">
         </div>
       </div>
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-        <h4 class="org-section-title"><i class="ph ph-shield-check"></i> Security Policies</h4>
+        <h4 class="org-section-title"><i class="ph ph-shield-check"></i> ${t('org_securityPolicies')}</h4>
         <div style="display:flex;align-items:flex-start;gap:14px;padding:12px 0">
           <label class="module-toggle" style="margin-top:2px;flex-shrink:0">
             <input type="checkbox" id="org2FAEnforce" ${sec.require2FA ? 'checked' : ''}>
             <span class="module-toggle-slider"></span>
           </label>
           <div>
-            <div style="font-weight:600;font-size:.9rem">Enforce two-factor authentication (2FA) system-wide</div>
+            <div style="font-weight:600;font-size:.9rem">${t('org_2fa')}</div>
             <div style="font-size:.8rem;color:var(--text-subtle);margin-top:3px">
-              When enabled, users <strong>cannot log in without 2FA configured</strong>.
-              Login will be rejected with an explanatory message.
+              ${t('org_2faDesc')}
             </div>
             <div class="settings-notice" style="margin-top:8px;font-size:.78rem">
               <i class="ph ph-warning"></i>
-              <strong>Warning:</strong> Only enable if <em>all</em> user accounts already have 2FA set up.
-              Otherwise affected accounts will be locked out immediately.
+              <strong>${t('warning')}:</strong> ${t('org_2faWarning')}
             </div>
           </div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="saveSecuritySettings()">
-          <i class="ph ph-floppy-disk"></i> Save security settings
+          <i class="ph ph-floppy-disk"></i> ${t('org_saveSecurity')}
         </button>
         <p id="secSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-        <h4 class="org-section-title"><i class="ph ph-translate"></i> Language Configuration</h4>
+        <h4 class="org-section-title"><i class="ph ph-translate"></i> ${t('admin_langConfig')}</h4>
         <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">
-          Enable or disable languages system-wide. The default language is shown on the login page
-          for users without a stored preference.
+          ${t('admin_langConfigDesc')}
         </p>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
           ${[{code:'de',label:'🇩🇪 Deutsch'},{code:'en',label:'🇬🇧 English'},{code:'fr',label:'🇫🇷 Français'},{code:'nl',label:'🇳🇱 Nederlands'}].map(l => `
@@ -3749,7 +3746,7 @@ async function renderAdminOrgTab() {
             </label>`).join('')}
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <label style="font-size:.85rem;color:var(--text-muted);flex-shrink:0">Default language:</label>
+          <label style="font-size:.85rem;color:var(--text-muted);flex-shrink:0">${t('admin_langDefault')}:</label>
           <select id="langDefault" style="padding:5px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.85rem">
             ${[{code:'de',label:'Deutsch'},{code:'en',label:'English'},{code:'fr',label:'Français'},{code:'nl',label:'Nederlands'}].map(l =>
               `<option value="${l.code}" ${(_langConfig?.default||'en')===l.code?'selected':''}>${l.label}</option>`
@@ -3757,17 +3754,16 @@ async function renderAdminOrgTab() {
           </select>
         </div>
         <button class="btn btn-primary btn-sm" onclick="saveLangConfig()">
-          <i class="ph ph-floppy-disk"></i> Save language settings
+          <i class="ph ph-floppy-disk"></i> ${t('admin_langSave')}
         </button>
         <p id="langConfigMsg" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-        <h4 class="org-section-title"><i class="ph ph-envelope"></i> E-Mail Notifications</h4>
+        <h4 class="org-section-title"><i class="ph ph-envelope"></i> ${t('org_emailNotifications')}</h4>
         <div class="settings-notice" style="margin-bottom:12px">
           <i class="ph ph-info"></i>
-          SMTP credentials are configured in the <code>.env</code> file (<code>SMTP_HOST</code>, <code>SMTP_USER</code> etc.).
-          Only notification types are controlled here.
+          ${t('org_smtpEnvNotice')}
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
           <label class="module-toggle" style="flex-shrink:0">
@@ -3775,24 +3771,24 @@ async function renderAdminOrgTab() {
             <span class="module-toggle-slider"></span>
           </label>
           <div>
-            <div style="font-weight:600;font-size:.9rem">Enable daily digest e-mails</div>
-            <div style="font-size:.8rem;color:var(--text-subtle)">Sends a daily summary to CISO, GDPO and admin e-mail once per day.</div>
+            <div style="font-weight:600;font-size:.9rem">${t('org_enableDigest')}</div>
+            <div style="font-size:.8rem;color:var(--text-subtle)">${t('org_digestDesc')}</div>
           </div>
         </div>
         <div class="org-grid">
-          <label class="org-label">Admin E-Mail</label>
+          <label class="org-label">${t('org_adminEmail')}</label>
           <input class="input" id="emailAdminEmail" value="${escHtml(en.adminEmail||'')}" type="email" placeholder="admin@example.com">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
           ${[
-            ['emailRisks',          en.risks,          'High/critical risks',                  '→ CISO e-mail'],
-            ['emailBcm',            en.bcm,            'BCM tests due (≤ 14 days)',             '→ CISO e-mail'],
-            ['emailSupplierAudits', en.supplierAudits, 'Supplier audits due (≤ 14 days)',       '→ CISO e-mail'],
-            ['emailDsar',           en.dsar,           'DSAR deadlines (≤ 3 days)',             '→ GDPO e-mail'],
-            ['emailGdprIncidents',  en.gdprIncidents,  'GDPR incidents > 48h open',             '→ GDPO e-mail'],
-            ['emailDeletionLog',    en.deletionLog,    'Deletion log Art. 17 GDPR',             '→ GDPO e-mail'],
-            ['emailContracts',      en.contracts,      'Expiring contracts (≤ 30 days)',        '→ Admin e-mail'],
-            ['emailTemplateReview', en.templateReview, 'Template review due (≤ 14 days)',       '→ Admin e-mail'],
+            ['emailRisks',          en.risks,          t('org_emailHighRisks'),                 t('org_toCiso')],
+            ['emailBcm',            en.bcm,            t('org_emailBcmDue'),                    t('org_toCiso')],
+            ['emailSupplierAudits', en.supplierAudits, t('org_emailSupplierAudits'),            t('org_toCiso')],
+            ['emailDsar',           en.dsar,           t('org_emailDsar'),                      t('org_toGdpo')],
+            ['emailGdprIncidents',  en.gdprIncidents,  t('org_emailGdprIncidents'),             t('org_toGdpo')],
+            ['emailDeletionLog',    en.deletionLog,    t('org_emailDeletionLog'),               t('org_toGdpo')],
+            ['emailContracts',      en.contracts,      t('org_emailContracts'),                 t('org_toAdmin')],
+            ['emailTemplateReview', en.templateReview, t('org_emailTemplateReview'),            t('org_toAdmin')],
           ].map(([id, checked, label, dest]) => `
             <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg-card);border-radius:6px;cursor:pointer">
               <input type="checkbox" id="${id}" ${checked !== false ? 'checked' : ''} style="width:16px;height:16px;flex-shrink:0">
@@ -3803,27 +3799,26 @@ async function renderAdminOrgTab() {
             </label>`).join('')}
         </div>
         <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="saveEmailSettings()">
-          <i class="ph ph-floppy-disk"></i> Save e-mail settings
+          <i class="ph ph-floppy-disk"></i> ${t('org_saveEmail')}
         </button>
         <p id="emailSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-        <h4 class="org-section-title"><i class="ph ph-paper-plane-tilt"></i> SMTP Configuration</h4>
+        <h4 class="org-section-title"><i class="ph ph-paper-plane-tilt"></i> ${t('org_smtpConfig')}</h4>
         <div class="settings-notice" style="margin-bottom:12px">
           <i class="ph ph-warning"></i>
-          <strong>Security notice:</strong> The SMTP password is stored in <code>org-settings.json</code> (plaintext).
-          For higher security, use environment variables (<code>SMTP_HOST</code> etc.) in <code>.env</code> — these always take precedence.
+          <strong>${t('org_securityNotice')}:</strong> ${t('org_smtpSecurityNotice')}
         </div>
         <div id="smtpEnvBanner" style="display:none;padding:8px 12px;border-radius:6px;background:var(--bg-info,#1e3a5f);color:var(--info,#93c5fd);font-size:.82rem;margin-bottom:12px">
-          <i class="ph ph-info"></i> SMTP is configured via <code>.env</code> variables — UI settings are ignored.
+          <i class="ph ph-info"></i> ${t('org_smtpEnvOverride')}
         </div>
         <div class="org-grid">
-          <label class="org-label">SMTP Host</label>
+          <label class="org-label">${t('org_smtpHost')}</label>
           <input class="input" id="smtpHost" value="${escHtml(smtp.host||'')}" placeholder="smtp.example.com">
-          <label class="org-label">Port</label>
+          <label class="org-label">${t('org_smtpPort')}</label>
           <input class="input" id="smtpPort" value="${smtp.port||587}" type="number" style="max-width:120px">
-          <label class="org-label">TLS / Encryption</label>
+          <label class="org-label">${t('org_smtpEncryption')}</label>
           <div style="display:flex;align-items:center;gap:16px;padding:4px 0">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
               <input type="radio" name="smtpSecure" id="smtpSecureOff" value="false" ${!smtp.secure ? 'checked' : ''}>
@@ -3834,42 +3829,40 @@ async function renderAdminOrgTab() {
               <span style="font-size:.85rem">TLS (Port 465)</span>
             </label>
           </div>
-          <label class="org-label">Username</label>
+          <label class="org-label">${t('org_smtpUsername')}</label>
           <input class="input" id="smtpUser" value="${escHtml(smtp.user||'')}" placeholder="isms@example.com" autocomplete="off">
-          <label class="org-label">Password</label>
+          <label class="org-label">${t('org_smtpPassword')}</label>
           <input class="input" id="smtpPass" type="password" value="${escHtml(smtp.pass||'')}" placeholder="••••••••" autocomplete="new-password">
-          <label class="org-label">Sender (From)</label>
+          <label class="org-label">${t('org_smtpSender')}</label>
           <input class="input" id="smtpFrom" value="${escHtml(smtp.from||'')}" placeholder="ISMS Builder <isms@example.com>">
         </div>
         <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
           <button class="btn btn-primary btn-sm" onclick="saveSmtpSettings()">
-            <i class="ph ph-floppy-disk"></i> Save SMTP
+            <i class="ph ph-floppy-disk"></i> ${t('org_saveSmtp')}
           </button>
           <button class="btn btn-secondary btn-sm" onclick="sendTestMail()">
-            <i class="ph ph-paper-plane-tilt"></i> Send test mail
+            <i class="ph ph-paper-plane-tilt"></i> ${t('org_sendTestMail')}
           </button>
           <span id="smtpSaveMsg" style="font-size:13px;display:none"></span>
         </div>
         <div style="margin-top:10px;font-size:.8rem;color:var(--text-subtle)">
-          Test mail will be sent to the CISO e-mail (${escHtml(s.cisoEmail || '–')}).
-          Please enter a CISO e-mail under Responsibilities first.
+          ${t('org_testMailDesc').replace('{email}', escHtml(s.cisoEmail || '-'))}
         </div>
       </div>
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-        <h4 class="org-section-title"><i class="ph ph-list-numbers"></i> Menu Order</h4>
+        <h4 class="org-section-title"><i class="ph ph-list-numbers"></i> ${t('org_menuOrder')}</h4>
         <p style="font-size:.82rem;color:var(--text-subtle);margin:0 0 12px">
-          Drag entries with <i class="ph ph-dots-six-vertical"></i> or use ↑/↓ to adjust the sidebar order.
-          Dashboard, Admin and Settings are always shown.
+          ${t('org_menuOrderDesc')}
         </p>
         <div id="navOrderList" style="display:flex;flex-direction:column;gap:4px;max-width:380px">
           ${_renderNavOrderItems(nav)}
         </div>
         <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="saveNavOrder()">
-          <i class="ph ph-floppy-disk"></i> Save order
+          <i class="ph ph-floppy-disk"></i> ${t('org_saveOrder')}
         </button>
         <button class="btn btn-secondary btn-sm" style="margin-top:12px;margin-left:8px" onclick="resetNavOrder()">
-          <i class="ph ph-arrow-counter-clockwise"></i> Default
+          <i class="ph ph-arrow-counter-clockwise"></i> ${t('default')}
         </button>
         <p id="navOrderSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
@@ -3878,22 +3871,21 @@ async function renderAdminOrgTab() {
 
       <div class="org-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <h4 class="org-section-title" style="margin:0"><i class="ph ph-tree-structure"></i> Organisational Units</h4>
+          <h4 class="org-section-title" style="margin:0"><i class="ph ph-tree-structure"></i> ${t('org_units')}</h4>
           <button class="btn btn-primary btn-sm" onclick="openOrgUnitModal(null)">
-            <i class="ph ph-plus"></i> New Unit
+            <i class="ph ph-plus"></i> ${t('org_newUnit')}
           </button>
         </div>
         <p style="font-size:.82rem;color:var(--text-subtle);margin:0 0 12px">
-          Defines the IT org structure (CIO → GroupIT / GroupApp → Local IT).
-          Used for ownership assignment across all modules (Risks, Assets, Suppliers, BCM, Goals, Findings).
+          ${t('org_unitsDesc')}
         </p>
         <table class="risk-table" style="width:100%;font-size:.85rem">
           <thead>
-            <tr><th>Name</th><th>Type</th><th>Parent</th><th>Head</th><th>Description</th><th></th></tr>
+            <tr><th>${t('col_name')}</th><th>${t('col_type')}</th><th>${t('org_parent')}</th><th>${t('org_head')}</th><th>${t('inc_description')}</th><th></th></tr>
           </thead>
           <tbody>
             ${units.length === 0
-              ? '<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);padding:12px">No units defined.</td></tr>'
+              ? `<tr><td colspan="6" style="text-align:center;color:var(--text-subtle);padding:12px">${t('org_noUnits')}</td></tr>`
               : units.map(u => {
                   const parent = units.find(p => p.id === u.parentId)
                   const typeBadge = u.type === 'cio' ? 'approved' : u.type === 'group' ? 'review' : u.type === 'local' ? 'draft' : 'archived'
@@ -3945,11 +3937,11 @@ async function saveOrgSettings() {
   })
   const msg = document.getElementById('orgSaveMsg')
   if (res.ok) {
-    msg.textContent = 'Saved.'; msg.style.color = 'var(--success,#4ade80)'; msg.style.display = ''
+    msg.textContent = t('msg_saved'); msg.style.color = 'var(--success,#4ade80)'; msg.style.display = ''
     setTimeout(() => { msg.style.display = 'none' }, 3000)
   } else {
     const e = await res.json().catch(() => ({}))
-    msg.textContent = e.error || 'Error saving'; msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = ''
+    msg.textContent = e.error || t('err_saveFailed'); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = ''
   }
 }
 
@@ -3957,7 +3949,7 @@ async function saveLangConfig() {
   const available = ['de','en','fr','nl'].filter(c => document.getElementById('langAvail_'+c)?.checked)
   if (available.length === 0) {
     const msg = document.getElementById('langConfigMsg')
-    msg.textContent = 'At least one language must be enabled.'; msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = ''
+    msg.textContent = t('admin_langMinOne'); msg.style.color = 'var(--danger-text,#f87171)'; msg.style.display = ''
     setTimeout(() => { msg.style.display = 'none' }, 3000)
     return
   }
@@ -3972,9 +3964,9 @@ async function saveLangConfig() {
   msg.style.display = ''
   if (res.ok) {
     _langConfig = { available, default: defaultLang }
-    msg.textContent = 'Language settings saved.'; msg.style.color = 'var(--success,#4ade80)'
+    msg.textContent = t('admin_langSaved'); msg.style.color = 'var(--success,#4ade80)'
   } else {
-    msg.textContent = 'Error saving.'; msg.style.color = 'var(--danger-text,#f87171)'
+    msg.textContent = t('err_saveFailed'); msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 3000)
 }
@@ -3989,10 +3981,10 @@ async function saveSecuritySettings() {
   const msg = document.getElementById('secSaveMsg')
   msg.style.display = ''
   if (res.ok) {
-    msg.textContent = `2FA enforcement ${require2FA ? 'enabled' : 'disabled'}.`
+    msg.textContent = require2FA ? t('org_2faEnabled') : t('org_2faDisabled')
     msg.style.color = 'var(--success,#4ade80)'
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 3000)
@@ -4009,10 +4001,10 @@ async function saveSplashSettings() {
   const msg = document.getElementById('splashSaveMsg')
   msg.style.display = ''
   if (res.ok) {
-    msg.textContent = 'Splash screen settings saved.'
+    msg.textContent = t('org_splashSaved')
     msg.style.color = 'var(--success,#4ade80)'
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 3000)
@@ -4034,8 +4026,8 @@ function _renderNavOrderItems(order) {
             <i class="ph ph-dots-six-vertical" style="color:var(--text-subtle);font-size:1.1rem;cursor:grab"></i>
             <i class="ph ${escHtml(icon)}" style="width:18px;text-align:center"></i>
             <span style="flex:1;font-size:.88rem">${escHtml(label)}</span>
-            <button onclick="navOrderMove('${escHtml(sid)}',-1)" class="btn-icon-sm" title="Nach oben"><i class="ph ph-arrow-up"></i></button>
-            <button onclick="navOrderMove('${escHtml(sid)}',1)"  class="btn-icon-sm" title="Nach unten"><i class="ph ph-arrow-down"></i></button>
+            <button onclick="navOrderMove('${escHtml(sid)}',-1)" class="btn-icon-sm" title="${t('moveUp')}"><i class="ph ph-arrow-up"></i></button>
+            <button onclick="navOrderMove('${escHtml(sid)}',1)"  class="btn-icon-sm" title="${t('moveDown')}"><i class="ph ph-arrow-down"></i></button>
           </div>`
   }).join('')
 }
@@ -4093,12 +4085,12 @@ async function saveNavOrder() {
   const msg = document.getElementById('navOrderSaveMsg')
   msg.style.display = ''
   if (res.ok) {
-    msg.textContent = 'Order saved. Reload the page for the change to take effect.'
+    msg.textContent = t('org_orderSaved')
     msg.style.color = 'var(--success,#4ade80)'
     // live update nav
     populateSectionNav()
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 4000)
@@ -4140,10 +4132,10 @@ async function saveSmtpSettings() {
   const msg = document.getElementById('smtpSaveMsg')
   msg.style.display = ''
   if (res.ok) {
-    msg.textContent = 'SMTP saved.'
+    msg.textContent = t('org_smtpSaved')
     msg.style.color = 'var(--success,#4ade80)'
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 3000)
@@ -4152,13 +4144,13 @@ async function saveSmtpSettings() {
 async function sendTestMail() {
   const msg = document.getElementById('smtpSaveMsg')
   msg.style.display = ''
-  msg.textContent = 'Sending test mail…'
+  msg.textContent = t('org_sendingTestMail')
   msg.style.color = 'var(--text-subtle)'
 
   // Recipient: CISO e-mail from the form (if currently open) or org settings
   const to = document.getElementById('orgCisoEmail')?.value.trim()
   if (!to) {
-    msg.textContent = 'CISO email missing — please enter it first and save org settings.'
+    msg.textContent = t('org_cisoEmailMissing')
     msg.style.color = 'var(--danger-text,#f87171)'
     return
   }
@@ -4168,11 +4160,11 @@ async function sendTestMail() {
     body: JSON.stringify({ to }),
   })
   if (res.ok) {
-    msg.textContent = `Test mail sent to ${to}.`
+    msg.textContent = t('org_testMailSent').replace('{email}', to)
     msg.style.color = 'var(--success,#4ade80)'
   } else {
     const e = await res.json().catch(() => ({}))
-    msg.textContent = `Error: ${e.error || 'SMTP connection failed'}`
+    msg.textContent = `${t('error')}: ${e.error || t('org_smtpConnectionFailed')}`
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 5000)
@@ -4201,10 +4193,10 @@ async function saveEmailSettings() {
   const msg = document.getElementById('emailSaveMsg')
   msg.style.display = ''
   if (res.ok) {
-    msg.textContent = 'E-mail settings saved.'
+    msg.textContent = t('org_emailSaved')
     msg.style.color = 'var(--success,#4ade80)'
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text,#f87171)'
   }
   setTimeout(() => { msg.style.display = 'none' }, 3000)
@@ -4213,12 +4205,12 @@ async function saveEmailSettings() {
 // ── Admin: Audit-Log ──────────────────────────────────────────────────────────
 
 const AUDIT_ACTION_LABELS = {
-  create:'Created', update:'Updated', delete:'Deleted',
-  login:'Login', logout:'Logout', export:'Export', settings:'Settings',
+  create: t('audit_actionCreated'), update: t('audit_actionUpdated'), delete: t('audit_actionDeleted'),
+  login: t('audit_actionLogin'), logout: t('audit_actionLogout'), export: t('audit_actionExport'), settings: t('audit_actionSettings'),
 }
 const AUDIT_RESOURCE_LABELS = {
-  template:'Template', risk:'Risk', user:'User', incident:'Incident',
-  org:'Organisation', gdpr:'GDPR', soa:'SoA', list:'List', entity:'Entity', audit:'Audit Log',
+  template: t('template'), risk: t('risk_title'), user: t('audit_resourceUser'), incident: t('incident_title'),
+  org: t('admin_org'), gdpr: t('gdpr_title'), soa: t('soa_title'), list: t('admin_lists'), entity: t('reports_entity'), audit: t('admin_auditLog'),
 }
 let _auditOffset = 0
 const _AUDIT_LIMIT = 50
@@ -4230,24 +4222,24 @@ async function renderAdminAuditTab() {
   container.innerHTML = `
     <div class="audit-panel">
       <div class="admin-lists-panel-header" style="margin-bottom:12px">
-        <span class="admin-panel-title"><i class="ph ph-scroll"></i> Audit Log</span>
+        <span class="admin-panel-title"><i class="ph ph-scroll"></i> ${t('admin_auditLog')}</span>
         <button class="btn btn-sm" style="color:var(--danger-text)" onclick="clearAuditLog()">
-          <i class="ph ph-trash"></i> Clear log
+          <i class="ph ph-trash"></i> ${t('auditLog_clear')}
         </button>
       </div>
       <div class="audit-filter-bar">
-        <input class="input" id="auditFilterUser" placeholder="User…" style="width:180px"
+        <input class="input" id="auditFilterUser" placeholder="${t('audit_userPlaceholder')}" style="width:180px"
                oninput="loadAuditLog()">
         <select class="select" id="auditFilterAction" onchange="loadAuditLog()" style="width:140px">
-          <option value="">All actions</option>
+          <option value="">${t('auditLog_allActions')}</option>
           ${Object.entries(AUDIT_ACTION_LABELS).map(([v,l]) => `<option value="${v}">${l}</option>`).join('')}
         </select>
         <select class="select" id="auditFilterResource" onchange="loadAuditLog()" style="width:140px">
-          <option value="">All resources</option>
+          <option value="">${t('auditLog_allRes')}</option>
           ${Object.entries(AUDIT_RESOURCE_LABELS).map(([v,l]) => `<option value="${v}">${l}</option>`).join('')}
         </select>
-        <input class="input" id="auditFilterFrom" type="date" title="From" onchange="loadAuditLog()" style="width:140px">
-        <input class="input" id="auditFilterTo"   type="date" title="To" onchange="loadAuditLog()" style="width:140px">
+        <input class="input" id="auditFilterFrom" type="date" title="${t('reports_from')}" onchange="loadAuditLog()" style="width:140px">
+        <input class="input" id="auditFilterTo"   type="date" title="${t('reports_to')}" onchange="loadAuditLog()" style="width:140px">
       </div>
       <div id="auditLogTable"></div>
       <div id="auditPager" style="padding:10px 0;display:flex;gap:8px;align-items:center"></div>
@@ -4258,7 +4250,7 @@ async function renderAdminAuditTab() {
 async function loadAuditLog() {
   const container = document.getElementById('auditLogTable')
   if (!container) return
-  container.innerHTML = '<p class="report-loading">Loading…</p>'
+  container.innerHTML = `<p class="report-loading">${t('loading')}</p>`
 
   const params = new URLSearchParams({
     limit:  _AUDIT_LIMIT,
@@ -4276,20 +4268,20 @@ async function loadAuditLog() {
   if (to)       params.set('to', to + 'T23:59:59Z')
 
   const res = await fetch('/admin/audit-log?' + params, { headers: apiHeaders('admin') })
-  if (!res.ok) { container.innerHTML = '<p class="report-empty">Error loading.</p>'; return }
+  if (!res.ok) { container.innerHTML = `<p class="report-empty">${t('err_load')}</p>`; return }
   const { total, entries } = await res.json()
 
   if (!entries.length) {
-    container.innerHTML = '<p class="report-empty">No entries.</p>'
+    container.innerHTML = `<p class="report-empty">${t('auditLog_noEntries')}</p>`
   } else {
     container.innerHTML = `
       <table class="admin-user-table audit-table">
         <thead><tr>
-          <th style="width:150px">Timestamp</th>
-          <th style="width:180px">User</th>
-          <th style="width:100px">Action</th>
-          <th style="width:110px">Resource</th>
-          <th>Detail</th>
+          <th style="width:150px">${t('auditLog_time')}</th>
+          <th style="width:180px">${t('audit_resourceUser')}</th>
+          <th style="width:100px">${t('auditLog_action')}</th>
+          <th style="width:110px">${t('auditLog_resource')}</th>
+          <th>${t('auditLog_detail')}</th>
         </tr></thead>
         <tbody>
           ${entries.map(e => `
@@ -4311,7 +4303,7 @@ async function loadAuditLog() {
     const curPage  = Math.floor(_auditOffset / _AUDIT_LIMIT) + 1
     const totPages = Math.max(1, Math.ceil(total / _AUDIT_LIMIT))
     pager.innerHTML = `
-      <span style="font-size:12px;color:var(--text-subtle)">${total} entries total</span>
+      <span style="font-size:12px;color:var(--text-subtle)">${total} ${t('auditLog_total')}</span>
       <button class="btn btn-sm" onclick="_auditOffset=Math.max(0,_auditOffset-${_AUDIT_LIMIT});loadAuditLog()"
               ${_auditOffset === 0 ? 'disabled' : ''}><i class="ph ph-caret-left"></i></button>
       <span style="font-size:12px">${curPage} / ${totPages}</span>
@@ -4321,10 +4313,10 @@ async function loadAuditLog() {
 }
 
 async function clearAuditLog() {
-  if (!confirm('Really clear the audit log? This action cannot be undone.')) return
+  if (!confirm(t('auditLog_confirm'))) return
   const res = await fetch('/admin/audit-log', { method: 'DELETE', headers: apiHeaders('admin') })
   if (res.ok) loadAuditLog()
-  else alert('Error clearing the log.')
+  else alert(t('auditLog_clearError'))
 }
 
 // ── Admin: Daten & Wartung ────────────────────────────────────────────────────
@@ -4339,19 +4331,17 @@ async function renderAdminMaintenanceTab() {
   container.innerHTML = `
     <div class="maintenance-panel">
       <div class="admin-lists-panel-header" style="margin-bottom:16px">
-        <span class="admin-panel-title"><i class="ph ph-hard-drives"></i> Data & Maintenance</span>
+        <span class="admin-panel-title"><i class="ph ph-hard-drives"></i> ${t('maint_dataMaintenance')}</span>
       </div>
 
       <!-- ── Production transition notice ── -->
       <div id="productionHintBox" style="display:none;margin-bottom:20px;padding:16px 20px;border-radius:8px;border:2px solid #f59e0b;background:rgba(245,158,11,.08);">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
           <i class="ph ph-warning" style="color:#f59e0b;font-size:20px;flex-shrink:0"></i>
-          <strong style="color:#f59e0b;font-size:15px;">Transition to production — server restart required</strong>
+          <strong style="color:#f59e0b;font-size:15px;">${t('maint_productionRestartTitle')}</strong>
         </div>
         <p style="margin:0 0 10px;font-size:13px;color:var(--text);">
-          The demo reset has set <code>STORAGE_BACKEND=sqlite</code> in <code>.env</code>.
-          The change will take effect after a server restart.
-          Until then the server is still running with the old backend.
+          ${t('maint_productionRestartDesc')}
         </p>
         <div style="background:var(--bg);border-radius:6px;padding:10px 14px;font-size:12px;font-family:monospace;color:var(--text);">
           # Restart (direct):<br>
@@ -4360,85 +4350,78 @@ async function renderAdminMaintenanceTab() {
           docker compose restart
         </div>
         <p style="margin:10px 0 0;font-size:12px;color:var(--text-subtle);">
-          After restart, the system stores all data in <code>data/isms.db</code> (SQLite, WAL mode).
-          JSON files are retained as a fallback backup.
+          ${t('maint_productionRestartAfter')}
         </p>
       </div>
 
       <div class="maintenance-section">
-        <h4 class="org-section-title"><i class="ph ph-database"></i> Storage Backend</h4>
+        <h4 class="org-section-title"><i class="ph ph-database"></i> ${t('maint_backend')}</h4>
         <div id="storageBackendInfo" style="font-size:13px;padding:10px 14px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border);margin-bottom:6px;">
-          Loading…
+          ${t('loading')}
         </div>
         <p class="settings-desc">
-          <strong>JSON</strong> — for demo and development only.
-          <strong>SQLite</strong> — required for production (ACID-compliant, WAL mode, no data loss on crash).
-          The demo reset automatically sets <code>STORAGE_BACKEND=sqlite</code> in <code>.env</code> and
-          requires a server restart afterwards.
+          ${t('maint_backendDesc')}
         </p>
       </div>
 
       <div class="maintenance-section">
-        <h4 class="org-section-title">Backup & Export</h4>
+        <h4 class="org-section-title">${t('maint_backup')}</h4>
         <p class="settings-desc">
-          Exports all data (templates, SoA, risks, GDPR, users, settings) as a single JSON file.
-          Attachments (PDF/DOCX) are not included.
+          ${t('maint_backupDesc')}
         </p>
         <button class="btn btn-primary" onclick="triggerExport()">
-          <i class="ph ph-download-simple"></i> Download full export
+          <i class="ph ph-download-simple"></i> ${t('maint_download')}
         </button>
       </div>
 
       <div class="maintenance-section" style="margin-top:20px">
-        <h4 class="org-section-title">Clean up orphaned attachments</h4>
+        <h4 class="org-section-title">${t('maint_cleanupOrphans')}</h4>
         <p class="settings-desc">
-          Removes files from the upload directory that are no longer associated with any template.
+          ${t('maint_cleanupOrphansDesc')}
         </p>
         <button class="btn" onclick="runCleanup()" id="btnCleanup">
-          <i class="ph ph-broom"></i> Start cleanup
+          <i class="ph ph-broom"></i> ${t('maint_cleanup')}
         </button>
         <p id="cleanupResult" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="maintenance-section" id="aiSettingsSection" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
-        <h4 class="org-section-title"><i class="ph ph-robot"></i> AI Integration (Ollama)</h4>
+        <h4 class="org-section-title"><i class="ph ph-robot"></i> ${t('maint_aiIntegration')}</h4>
         <p class="settings-desc">
-          Controls semantic search and future AI features. Ollama must be installed and running locally.
-          If Ollama is unavailable, features can be disabled here —
-          the topbar search will then fall back to "unavailable".
+          ${t('maint_aiDesc')}
         </p>
 
         <div id="aiStatusBadge" style="margin-bottom:14px"></div>
 
         <div class="settings-group" style="margin-bottom:14px">
-          <label class="settings-label">Enable AI search</label>
+          <label class="settings-label">${t('maint_enableAiSearch')}</label>
           <label class="toggle-switch" style="margin-top:4px">
             <input type="checkbox" id="aiEnabledToggle" onchange="saveAiSettings()" />
             <span class="toggle-slider"></span>
           </label>
           <p class="settings-desc" style="margin-top:4px">
-            Global switch — disables all AI features system-wide.
+            ${t('maint_aiGlobalSwitch')}
           </p>
         </div>
 
         <div id="aiAdvancedSettings">
           <div class="settings-group" style="margin-bottom:10px">
-            <label class="settings-label" for="aiOllamaUrlInput">Ollama URL</label>
+            <label class="settings-label" for="aiOllamaUrlInput">${t('maint_ollamaUrl')}</label>
             <input class="form-input" id="aiOllamaUrlInput" placeholder="http://localhost:11434 (default)"
                    style="max-width:320px" onblur="saveAiSettings()" />
           </div>
           <div class="settings-group" style="margin-bottom:14px">
-            <label class="settings-label" for="aiEmbedModelInput">Embedding model</label>
+            <label class="settings-label" for="aiEmbedModelInput">${t('maint_embeddingModel')}</label>
             <input class="form-input" id="aiEmbedModelInput" placeholder="nomic-embed-text (default)"
                    style="max-width:220px" onblur="saveAiSettings()" />
           </div>
 
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="triggerReindex()" id="btnReindex">
-              <i class="ph ph-arrows-clockwise"></i> Rebuild index
+              <i class="ph ph-arrows-clockwise"></i> ${t('maint_rebuildIndex')}
             </button>
             <button class="btn" onclick="refreshAiStatus()">
-              <i class="ph ph-plugs-connected"></i> Check status
+              <i class="ph ph-plugs-connected"></i> ${t('maint_checkStatus')}
             </button>
           </div>
           <p id="reindexResult" style="margin-top:8px;font-size:13px;display:none"></p>
@@ -4448,10 +4431,8 @@ async function renderAdminMaintenanceTab() {
       <div class="maintenance-section" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
         <h4 class="org-section-title"><i class="ph ph-shield-warning"></i> Greenbone Scan-Import</h4>
         <p class="settings-desc">
-          Importiert einen Greenbone-Sicherheitsbericht (XML oder PDF) als Risiko-Entwürfe.
-          Alle importierten Risiken erhalten den Status <strong>needsReview = true</strong> und
-          müssen von einem Auditor oder CISO geprüft und freigegeben werden,
-          bevor sie im Risikomanagement aktiv sind.
+          ${t('scanImport_descPrefix')}
+          ${t('scanImport_descSuffix')}
         </p>
         <form onsubmit="event.preventDefault();scanImportUpload(this)">
           <div style="display:flex;flex-direction:column;gap:10px;max-width:520px">
@@ -4460,20 +4441,20 @@ async function renderAdminMaintenanceTab() {
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:1;min-width:160px">
-                <label class="form-label" style="font-size:12px">Gesellschaft (optional)</label>
+                <label class="form-label" style="font-size:12px">${t('reports_entity')} (${t('ack_optional')})</label>
                 <select id="scanImportEntity" class="select" style="width:100%">
-                  <option value="">— keine Zuordnung —</option>
+                  <option value="">— ${t('scanImport_noAssignment')} —</option>
                   ${entityOpts}
                 </select>
               </div>
               <div style="flex:1;min-width:160px">
-                <label class="form-label" style="font-size:12px">Scan-Referenz (optional)</label>
-                <input type="text" id="scanImportRef" class="form-input" placeholder="z.B. Scan-2026-03" style="width:100%" />
+                <label class="form-label" style="font-size:12px">${t('scanImport_reference')} (${t('ack_optional')})</label>
+                <input type="text" id="scanImportRef" class="form-input" placeholder="${t('scanImport_referencePlaceholder')}" style="width:100%" />
               </div>
             </div>
             <div style="display:flex;gap:10px">
               <button type="submit" id="scanImportBtn" class="btn btn-primary">
-                <i class="ph ph-upload-simple"></i> Importieren
+                <i class="ph ph-upload-simple"></i> ${t('import_action')}
               </button>
             </div>
           </div>
@@ -4483,41 +4464,36 @@ async function renderAdminMaintenanceTab() {
       </div>
 
       <div class="maintenance-section" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
-        <h4 class="org-section-title" style="color:#e74c3c"><i class="ph ph-arrow-counter-clockwise"></i> Demo Reset</h4>
+        <h4 class="org-section-title" style="color:#e74c3c"><i class="ph ph-arrow-counter-clockwise"></i> ${t('maint_demoResetTitle')}</h4>
         <p class="settings-desc">
-          Exports all current demo data, then deletes all module data and users (except admin)
-          and resets the admin account to <code>adminpass</code> without 2FA.
-          The exported JSON file is automatically downloaded.
-          After the reset, a notice for the administrator will appear on the login page.
+          ${t('maint_demoResetDesc')}
         </p>
         <button class="btn" style="background:rgba(231,76,60,.15);border-color:#e74c3c;color:#e74c3c"
                 onclick="triggerDemoReset()" id="btnDemoReset">
-          <i class="ph ph-trash"></i> Perform demo reset
+          <i class="ph ph-trash"></i> ${t('maint_demoReset')}
         </button>
         <p id="demoResetResult" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="maintenance-section" style="margin-top:20px">
-        <h4 class="org-section-title" style="color:#d98c00"><i class="ph ph-upload-simple"></i> Import demo data</h4>
+        <h4 class="org-section-title" style="color:#d98c00"><i class="ph ph-upload-simple"></i> ${t('maint_demoImport')}</h4>
         <p class="settings-desc">
-          Restores a previously exported demo dataset. All module data will be overwritten.
-          Users alice and bob will be restored with original passwords and without 2FA.
-          The admin account remains unchanged.
+          ${t('maint_demoImportDesc')}
         </p>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <input type="file" id="demoImportFile" accept=".json" style="display:none" onchange="triggerDemoImport(this)" />
           <button class="btn" style="background:rgba(217,140,0,.12);border-color:#d98c00;color:#d98c00"
                   onclick="document.getElementById('demoImportFile').click()">
-            <i class="ph ph-upload-simple"></i> Select JSON file &amp; import
+            <i class="ph ph-upload-simple"></i> ${t('maint_selectJsonImport')}
           </button>
         </div>
         <p id="demoImportResult" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
 
       <div class="maintenance-section" id="splashScreenSection" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px">
-        <h4 class="org-section-title"><i class="ph ph-image"></i> Login Splash Screen</h4>
+        <h4 class="org-section-title"><i class="ph ph-image"></i> ${t('maint_splashScreen')}</h4>
         <p class="settings-desc">
-          After login, show the ISMS Builder banner image for a few seconds before the dashboard opens.
+          ${t('maint_splashDesc')}
         </p>
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
           <label class="module-toggle" style="flex-shrink:0">
@@ -4525,16 +4501,16 @@ async function renderAdminMaintenanceTab() {
             <span class="module-toggle-slider"></span>
           </label>
           <div>
-            <div style="font-size:13px;color:var(--text)">Enable splash screen</div>
-            <div style="font-size:12px;color:var(--text-subtle)">Show banner image after successful login</div>
+            <div style="font-size:13px;color:var(--text)">${t('maint_enableSplash')}</div>
+            <div style="font-size:12px;color:var(--text-subtle)">${t('maint_showSplash')}</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <label style="white-space:nowrap;font-size:13px;color:var(--text-subtle)">Duration (seconds)</label>
+          <label style="white-space:nowrap;font-size:13px;color:var(--text-subtle)">${t('maint_durationSeconds')}</label>
           <input class="input" id="splashDuration" type="number" min="1" max="30" style="width:80px" value="7">
         </div>
         <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="saveSplashSettings()">
-          <i class="ph ph-floppy-disk"></i> Save
+          <i class="ph ph-floppy-disk"></i> ${t('save')}
         </button>
         <p id="splashSaveMsg" style="margin-top:8px;font-size:13px;display:none"></p>
       </div>
@@ -4783,13 +4759,13 @@ async function renderAdminTrashTab() {
   container.innerHTML = '<p class="report-loading">Loading trash…</p>'
   const res = await fetch('/trash', { headers: apiHeaders('admin') })
   if (!res.ok) {
-    container.innerHTML = '<p class="report-error" style="padding:20px">Error loading trash.</p>'
+    container.innerHTML = `<p class="report-error" style="padding:20px">${t('trash_loadError')}</p>`
     return
   }
   const items = await res.json()
 
   if (items.length === 0) {
-    container.innerHTML = '<p class="gdpr-empty" style="padding:20px">The trash is empty.</p>'
+    container.innerHTML = `<p class="gdpr-empty" style="padding:20px">${t('trash_empty')}</p>`
     return
   }
 
@@ -4802,14 +4778,14 @@ async function renderAdminTrashTab() {
 
   container.innerHTML = `
     <div class="trash-info">
-      <i class="ph ph-info"></i> Entries are automatically permanently deleted after 30 days.
-      <strong>${items.length} entries</strong> in trash.
+      <i class="ph ph-info"></i> ${t('trash_autoDelete')}
+      <strong>${items.length} ${t('trash_entries')}</strong> ${t('trash_inTrash')}.
     </div>
     ${Object.entries(groups).map(([label, group]) => `
       <div class="trash-group">
         <h4 class="trash-group-title">${escHtml(label)} (${group.length})</h4>
         <table class="gdpr-table">
-          <thead><tr><th>Title</th><th>Deleted By</th><th>Deleted At</th><th>Expires</th><th>Actions</th></tr></thead>
+          <thead><tr><th>${t('col_title')}</th><th>${t('trash_deletedBy')}</th><th>${t('trash_deletedAt')}</th><th>${t('trash_expires')}</th><th>${t('col_actions')}</th></tr></thead>
           <tbody>
             ${group.map(item => {
               const daysLeft = Math.max(0, Math.ceil((new Date(item.expiresAt) - Date.now()) / 86400000))
@@ -4817,13 +4793,13 @@ async function renderAdminTrashTab() {
                 <td><strong>${escHtml(item.title || item.id)}</strong></td>
                 <td>${escHtml(item.deletedBy || '—')}</td>
                 <td style="white-space:nowrap">${new Date(item.deletedAt).toLocaleDateString('en-GB')}</td>
-                <td style="color:${daysLeft < 7 ? '#f87171' : 'inherit'}">${daysLeft} days</td>
+                <td style="color:${daysLeft < 7 ? '#f87171' : 'inherit'}">${daysLeft} ${t('reports_days')}</td>
                 <td style="display:flex;gap:6px">
                   <button class="btn btn-secondary btn-sm" onclick="restoreTrashItem('${escHtml(item.module)}','${escHtml(item.id)}',${JSON.stringify(item.meta||{})})">
-                    <i class="ph ph-arrow-counter-clockwise"></i> Restore
+                    <i class="ph ph-arrow-counter-clockwise"></i> ${t('restore')}
                   </button>
                   <button class="btn btn-danger btn-sm" onclick="permanentDeleteTrashItem('${escHtml(item.module)}','${escHtml(item.id)}',${JSON.stringify(item.meta||{})})">
-                    <i class="ph ph-trash"></i> Delete permanently
+                    <i class="ph ph-trash"></i> ${t('trash_deletePermanent')}
                   </button>
                 </td>
               </tr>`
@@ -4836,7 +4812,7 @@ async function renderAdminTrashTab() {
 }
 
 async function restoreTrashItem(module, id, meta) {
-  if (!confirm('Restore item?')) return
+  if (!confirm(t('trash_restoreItemConfirm'))) return
   let url
   if (module === 'template') url = `/template/${meta.type}/${id}/restore`
   else if (module === 'risk') url = `/risks/${id}/restore`
@@ -4854,15 +4830,15 @@ async function restoreTrashItem(module, id, meta) {
   else if (module === 'gdpr_toms') url = `/gdpr/toms/${id}/restore`
   else if (module === 'public_incident') url = `/public/incident/${id}/restore`
   else if (module === 'finding') url = `/findings/${id}/restore`
-  else { alert('Unknown module'); return }
+  else { alert(t('trash_unknownModule')); return }
 
   const res = await fetch(url, { method: 'POST', headers: apiHeaders('admin') })
-  if (!res.ok) { alert('Restore failed'); return }
+  if (!res.ok) { alert(t('trash_restoreFailed')); return }
   renderAdminTrashTab()
 }
 
 async function permanentDeleteTrashItem(module, id, meta) {
-  if (!confirm('Permanently delete? This action CANNOT be undone!')) return
+  if (!confirm(t('trash_permanentDeleteConfirm'))) return
   let url
   if (module === 'template') url = `/template/${meta.type}/${id}/permanent`
   else if (module === 'risk') url = `/risks/${id}/permanent`
@@ -4880,10 +4856,10 @@ async function permanentDeleteTrashItem(module, id, meta) {
   else if (module === 'gdpr_toms') url = `/gdpr/toms/${id}/permanent`
   else if (module === 'public_incident') url = `/public/incident/${id}/permanent`
   else if (module === 'finding') url = `/findings/${id}/permanent`
-  else { alert('Unknown module'); return }
+  else { alert(t('trash_unknownModule')); return }
 
   const res = await fetch(url, { method: 'DELETE', headers: apiHeaders('admin') })
-  if (!res.ok) { alert('Delete failed'); return }
+  if (!res.ok) { alert(t('trash_deleteFailed')); return }
   renderAdminTrashTab()
 }
 
@@ -4976,7 +4952,7 @@ const SOA_FW_META = [
 async function renderAdminModulesTab() {
   const container = document.getElementById('adminTabPanelModules')
   if (!container) return
-  container.innerHTML = '<p class="report-loading">Loading…</p>'
+  container.innerHTML = `<p class="report-loading">${t('loading')}</p>`
 
   let cfg = { ...MODULE_CONFIG }
   let fwCfg = { ...SOA_FW_CONFIG }
@@ -4992,11 +4968,9 @@ async function renderAdminModulesTab() {
   container.innerHTML = `
     <div class="admin-modules-wrap">
       <div class="admin-modules-header">
-        <h3 class="admin-panel-title"><i class="ph ph-sliders"></i> System Configuration – Module Management</h3>
+        <h3 class="admin-panel-title"><i class="ph ph-sliders"></i> ${t('modules_title')}</h3>
         <p class="admin-modules-desc">
-          Enable or disable modules according to your organisation structure and applicable standards.
-          Disabled modules are hidden system-wide — for all users.
-          <strong>Dashboard, Admin and Settings</strong> are always active.
+          ${t('modules_desc')}
         </p>
       </div>
       <div class="admin-modules-grid">
@@ -5016,7 +4990,7 @@ async function renderAdminModulesTab() {
             ${m.norms.length ? `<div class="module-card-norms">${m.norms.map(n => `<span class="module-norm-badge">${n}</span>`).join('')}</div>` : ''}
             <div class="module-card-status">
               <span class="module-status-dot ${enabled ? 'active' : 'inactive'}"></span>
-              ${enabled ? 'Active' : 'Disabled'}
+              ${enabled ? t('modules_active') : t('modules_disabled')}
             </div>
           </div>`
         }).join('')}
@@ -5024,16 +4998,13 @@ async function renderAdminModulesTab() {
 
       <!-- SoA Framework selection -->
       <div class="admin-modules-header" style="margin-top:28px;border-top:1px solid var(--border);padding-top:20px">
-        <h3 class="admin-panel-title"><i class="ph ph-shield-check"></i> SoA – Active Compliance Frameworks</h3>
+        <h3 class="admin-panel-title"><i class="ph ph-shield-check"></i> ${t('modules_soaFrameworks')}</h3>
         <p class="admin-modules-desc">
-          Select the frameworks relevant to your organisation. Disabled frameworks are hidden in SoA,
-          Dashboard and Reports.
+          ${t('modules_soaFrameworksDesc')}
         </p>
         <div class="settings-notice">
           <i class="ph ph-warning"></i>
-          <strong>Note:</strong> At least one framework must remain active —
-          an ISMS without a compliance framework would not make sense.
-          The system prevents disabling the last active framework.
+          <strong>${t('note')}:</strong> ${t('modules_soaFrameworksNote')}
         </div>
       </div>
       <div class="admin-modules-grid">
@@ -5053,7 +5024,7 @@ async function renderAdminModulesTab() {
             <div class="module-card-norms">${fw.norms.map(n => `<span class="module-norm-badge" style="border-color:${fw.color};color:${fw.color}">${n}</span>`).join('')}</div>
             <div class="module-card-status">
               <span class="module-status-dot ${enabled ? 'active' : 'inactive'}"></span>
-              ${enabled ? 'Active' : 'Disabled'}
+              ${enabled ? t('modules_active') : t('modules_disabled')}
             </div>
           </div>`
         }).join('')}
@@ -5061,7 +5032,7 @@ async function renderAdminModulesTab() {
 
       <div class="admin-modules-footer">
         <button class="btn btn-primary" onclick="saveModuleConfig()">
-          <i class="ph ph-floppy-disk"></i> Save &amp; apply configuration
+          <i class="ph ph-floppy-disk"></i> ${t('modules_saveApply')}
         </button>
         <p id="modulesSaveMsg" style="font-size:13px;margin-top:8px;display:none"></p>
       </div>
@@ -5076,7 +5047,7 @@ function fwToggleChange(checkbox) {
     checkbox.checked = true  // Rückgängig machen
     const msg = document.getElementById('modulesSaveMsg')
     if (msg) {
-      msg.textContent = 'At least one framework must remain active — the last active framework cannot be disabled.'
+      msg.textContent = t('modules_lastFrameworkWarning')
       msg.style.color = 'var(--warning-text, #f0b429)'
       msg.style.display = ''
       clearTimeout(msg._fwTimer)
@@ -5088,7 +5059,7 @@ function fwToggleChange(checkbox) {
   const enabled = checkbox.checked
   card.className = `module-card ${enabled ? 'module-card-active' : 'module-card-inactive'}`
   card.querySelector('.module-status-dot').className = `module-status-dot ${enabled ? 'active' : 'inactive'}`
-  card.querySelector('.module-card-status').lastChild.textContent = ` ${enabled ? 'Active' : 'Disabled'}`
+  card.querySelector('.module-card-status').lastChild.textContent = ` ${enabled ? t('modules_active') : t('modules_disabled')}`
 }
 
 function moduleToggleChange(checkbox) {
@@ -5096,7 +5067,7 @@ function moduleToggleChange(checkbox) {
   const enabled = checkbox.checked
   card.className = `module-card ${enabled ? 'module-card-active' : 'module-card-inactive'}`
   card.querySelector('.module-status-dot').className = `module-status-dot ${enabled ? 'active' : 'inactive'}`
-  card.querySelector('.module-card-status').lastChild.textContent = ` ${enabled ? 'Active' : 'Disabled'}`
+  card.querySelector('.module-card-status').lastChild.textContent = ` ${enabled ? t('modules_active') : t('modules_disabled')}`
 }
 
 async function saveModuleConfig() {
@@ -5123,11 +5094,11 @@ async function saveModuleConfig() {
   if (modRes.ok && fwRes.ok) {
     MODULE_CONFIG    = { ...MODULE_CONFIG, ...modCfg }
     SOA_FW_CONFIG    = { ...SOA_FW_CONFIG,  ...fwCfg }
-    msg.textContent = 'Saved. Sidebar and SoA are being updated…'
+    msg.textContent = t('modules_savedUpdating')
     msg.style.color = 'var(--success,#4ade80)'
     setTimeout(() => { populateSectionNav(); msg.style.display = 'none' }, 1200)
   } else {
-    msg.textContent = 'Error saving.'
+    msg.textContent = t('err_saveFailed')
     msg.style.color = 'var(--danger-text)'
     setTimeout(() => { msg.style.display = 'none' }, 3000)
   }
@@ -5162,48 +5133,48 @@ async function openOrgUnitModal(id) {
     <div id="orgUnitModal" class="modal" style="visibility:visible">
       <div class="modal-content">
         <div class="modal-header">
-          <h3 class="modal-title"><i class="ph ph-tree-structure"></i> ${unit ? 'Edit' : 'New'} IT Organisational Unit</h3>
+          <h3 class="modal-title"><i class="ph ph-tree-structure"></i> ${unit ? t('edit') : t('create')} ${t('org_itUnit')}</h3>
           <button class="modal-close" onclick="document.getElementById('orgUnitModal').remove()"><i class="ph ph-x"></i></button>
         </div>
         <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
-              <label class="form-label">Name *</label>
+              <label class="form-label">${t('col_name')} *</label>
               <input id="ouName" class="form-input" value="${escHtml(unit?.name||'')}" placeholder="GroupIT">
             </div>
             <div>
-              <label class="form-label">Type</label>
+              <label class="form-label">${t('col_type')}</label>
               <select id="ouType" class="select">
                 ${typeOpts.map(t => `<option value="${t.v}" ${unit?.type===t.v?'selected':''}>${t.l}</option>`).join('')}
               </select>
             </div>
           </div>
           <div>
-            <label class="form-label">Parent Unit</label>
+            <label class="form-label">${t('org_parentUnit')}</label>
             <select id="ouParent" class="select">
-              <option value="">— none (top level) —</option>
+              <option value="">— ${t('org_noParentTop')} —</option>
               ${parentOpts}
             </select>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
-              <label class="form-label">Head (Person)</label>
+              <label class="form-label">${t('org_headPerson')}</label>
               <input id="ouHead" class="form-input" value="${escHtml(unit?.head||'')}" placeholder="Name">
             </div>
             <div>
-              <label class="form-label">E-Mail</label>
+              <label class="form-label">${t('admin_email')}</label>
               <input id="ouEmail" class="form-input" type="email" value="${escHtml(unit?.email||'')}" placeholder="it@example.com">
             </div>
           </div>
           <div>
-            <label class="form-label">Description</label>
+            <label class="form-label">${t('inc_description')}</label>
             <textarea id="ouDesc" class="form-textarea" rows="2">${escHtml(unit?.description||'')}</textarea>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="document.getElementById('orgUnitModal').remove()">Cancel</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('orgUnitModal').remove()">${t('cancel')}</button>
           <button class="btn btn-primary" onclick="submitOrgUnitModal('${id||''}')">
-            <i class="ph ph-floppy-disk"></i> Save
+            <i class="ph ph-floppy-disk"></i> ${t('save')}
           </button>
         </div>
       </div>
@@ -5213,7 +5184,7 @@ async function openOrgUnitModal(id) {
 
 async function submitOrgUnitModal(id) {
   const name = document.getElementById('ouName')?.value.trim()
-  if (!name) { alert('Name is required'); return }
+  if (!name) { alert(t('err_nameRequired')); return }
   const body = {
     name,
     type:        document.getElementById('ouType')?.value  || 'group',
@@ -5226,16 +5197,16 @@ async function submitOrgUnitModal(id) {
   const url    = id ? `/org-units/${id}` : '/org-units'
   const method = id ? 'PUT' : 'POST'
   const res = await fetch(url, { method, headers: { ...apiHeaders('admin'), 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || t('error')); return }
   document.getElementById('orgUnitModal')?.remove()
   _ORG_UNITS = []
   await renderAdminOrgTab()
 }
 
 async function deleteOrgUnit(id, name) {
-  if (!confirm(`Delete unit "${name}"?`)) return
+  if (!confirm(t('org_deleteUnitConfirm').replace('{name}', name))) return
   const res = await fetch(`/org-units/${id}`, { method: 'DELETE', headers: apiHeaders('admin') })
-  if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || t('error')); return }
   _ORG_UNITS = []
   await renderAdminOrgTab()
 }
@@ -5244,7 +5215,7 @@ async function deleteOrgUnit(id, name) {
 async function getOrgUnitOptions(selectedId) {
   const units = _ORG_UNITS.length ? _ORG_UNITS : await loadOrgUnits()
   return [
-    `<option value="">— no unit assigned —</option>`,
+    `<option value="">— ${t('org_noUnitAssigned')} —</option>`,
     ...units.map(u => `<option value="${u.id}" ${selectedId===u.id?'selected':''}>${escHtml(u.name)}</option>`)
   ].join('')
 }
@@ -5284,9 +5255,9 @@ function renderAdminUsersTab() {
   container.innerHTML = `
     <div class="admin-users-panel">
       <div class="admin-users-toolbar">
-        <span class="admin-panel-title"><i class="ph ph-users"></i> User Management</span>
+        <span class="admin-panel-title"><i class="ph ph-users"></i> ${t('admin_userManagement')}</span>
         <button class="btn btn-primary btn-sm" onclick="openUserModal()">
-          <i class="ph ph-user-plus"></i> New User
+          <i class="ph ph-user-plus"></i> ${t('admin_newUser')}
         </button>
         <button class="btn btn-secondary btn-sm" onclick="adminLoadUsers()">
           <i class="ph ph-arrows-clockwise"></i>
@@ -5300,21 +5271,21 @@ function renderAdminUsersTab() {
 async function adminLoadUsers() {
   const tbody = document.getElementById('adminUserTable')
   if (!tbody) return
-  tbody.innerHTML = '<p class="report-loading">Loading…</p>'
+  tbody.innerHTML = `<p class="report-loading">${t('loading')}</p>`
   const res = await fetch('/admin/users', { headers: apiHeaders('admin') })
-  if (!res.ok) { tbody.innerHTML = '<p class="report-error">Error loading</p>'; return }
+  if (!res.ok) { tbody.innerHTML = `<p class="report-error">${t('err_load')}</p>`; return }
   const users = await res.json()
-  if (users.length === 0) { tbody.innerHTML = '<p style="color:var(--text-subtle);padding:12px;">No users found</p>'; return }
+  if (users.length === 0) { tbody.innerHTML = `<p style="color:var(--text-subtle);padding:12px;">${t('admin_noUsers')}</p>`; return }
 
   tbody.innerHTML = `
     <table class="admin-user-table">
       <thead>
         <tr>
-          <th>User</th>
-          <th>E-Mail</th>
-          <th>Role</th>
-          <th>Functions</th>
-          <th>Domain</th>
+          <th>${t('audit_resourceUser')}</th>
+          <th>${t('admin_email')}</th>
+          <th>${t('admin_role')}</th>
+          <th>${t('admin_functions')}</th>
+          <th>${t('admin_domain')}</th>
           <th style="width:80px;"></th>
         </tr>
       </thead>
@@ -5331,11 +5302,11 @@ async function adminLoadUsers() {
             <td style="max-width:220px;">${fns}</td>
             <td>${escHtml(u.domain || '—')}</td>
             <td class="admin-user-actions">
-              <button class="btn btn-secondary btn-sm" title="Edit"
+              <button class="btn btn-secondary btn-sm" title="${t('edit')}"
                 onclick='openUserModal(${JSON.stringify(u)})'>
                 <i class="ph ph-pencil"></i>
               </button>
-              <button class="btn btn-sm" style="color:var(--danger-text);" title="Delete"
+              <button class="btn btn-sm" style="color:var(--danger-text);" title="${t('delete')}"
                 onclick="adminDeleteUser('${escHtml(u.username)}')">
                 <i class="ph ph-trash"></i>
               </button>
@@ -5360,7 +5331,7 @@ function openUserModal(user) {
         <div class="modal-header">
           <h3 class="modal-title">
             <i class="ph ph-user-${isEdit ? 'gear' : 'plus'}"></i>
-            ${isEdit ? 'Edit User' : 'New User'}
+            ${isEdit ? t('admin_editUser') : t('admin_newUser')}
           </h3>
           <button class="modal-close" onclick="document.getElementById('userEditModal').remove()">
             <i class="ph ph-x"></i>
@@ -5369,29 +5340,29 @@ function openUserModal(user) {
         <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
-              <label class="form-label">Username *</label>
+              <label class="form-label">${t('admin_username')} *</label>
               <input id="uModalUsername" class="form-input" value="${escHtml(user?.username || '')}"
                 ${isEdit ? 'readonly style="opacity:.6;"' : 'placeholder="max.mustermann"'} />
             </div>
             <div>
-              <label class="form-label">E-Mail *</label>
+              <label class="form-label">${t('admin_email')} *</label>
               <input id="uModalEmail" class="form-input" type="email"
                 value="${escHtml(user?.email || '')}" placeholder="max@example.com" />
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
-              <label class="form-label">Role *</label>
+              <label class="form-label">${t('admin_role')} *</label>
               <select id="uModalRole" class="select">${roleOpts}</select>
             </div>
             <div>
-              <label class="form-label">Domain</label>
+              <label class="form-label">${t('admin_domain')}</label>
               <input id="uModalDomain" class="form-input"
                 value="${escHtml(user?.domain || 'Global')}" placeholder="Global" />
             </div>
           </div>
           <div>
-            <label class="form-label">Organisational Functions</label>
+            <label class="form-label">${t('admin_orgFunctions')}</label>
             <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--surface-raised,#1e2129);border-radius:4px;border:1px solid var(--border,#3c4257);">
               ${FUNCTIONS_LIST.map(f => `
                 <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:3px 8px;border-radius:3px;background:var(--surface,#161b27);">
@@ -5400,16 +5371,16 @@ function openUserModal(user) {
                   <i class="ph ${f.icon}" style="font-size:13px;"></i> ${escHtml(f.label)}
                 </label>`).join('')}
             </div>
-            <p style="font-size:11px;color:var(--text-subtle);margin:4px 0 0;">Multiple functions possible — independent of RBAC rank</p>
+            <p style="font-size:11px;color:var(--text-subtle);margin:4px 0 0;">${t('admin_functionsHint')}</p>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
-              <label class="form-label">${isEdit ? 'New Password' : 'Password *'}</label>
+              <label class="form-label">${isEdit ? t('settings_pwNew') : `${t('org_smtpPassword')} *`}</label>
               <input id="uModalPw" class="form-input" type="password"
                 placeholder="${isEdit ? 'Leave blank = unchanged' : 'At least 6 characters'}" />
             </div>
             <div>
-              <label class="form-label">${isEdit ? 'Confirm Password' : 'Repeat Password *'}</label>
+              <label class="form-label">${isEdit ? t('admin_confirmPassword') : `${t('settings_pwRepeat')} ${t('org_smtpPassword')} *`}</label>
               <input id="uModalPw2" class="form-input" type="password" placeholder="Repeat password" />
             </div>
           </div>
@@ -5417,9 +5388,9 @@ function openUserModal(user) {
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary"
-            onclick="document.getElementById('userEditModal').remove()">Cancel</button>
+            onclick="document.getElementById('userEditModal').remove()">${t('cancel')}</button>
           <button class="btn btn-primary" onclick="submitUserModal('${isEdit ? user.username : ''}')">
-            <i class="ph ph-floppy-disk"></i> Save
+            <i class="ph ph-floppy-disk"></i> ${t('save')}
           </button>
         </div>
       </div>
@@ -5439,10 +5410,10 @@ async function submitUserModal(existingUsername) {
   const pw2       = document.getElementById('uModalPw2')?.value
   const functions = [...document.querySelectorAll('.uModalFn:checked')].map(cb => cb.value)
 
-  if (!username || !email || !role) return show('Username, e-mail and role are required.')
-  if (pw !== pw2) return show('Passwords do not match.')
-  if (!existingUsername && (!pw || pw.length < 6)) return show('Password must be at least 6 characters.')
-  if (pw && pw.length < 6) return show('Password must be at least 6 characters.')
+  if (!username || !email || !role) return show(t('admin_userRequired'))
+  if (pw !== pw2) return show(t('admin_passwordMismatch'))
+  if (!existingUsername && (!pw || pw.length < 6)) return show(t('admin_passwordMin'))
+  if (pw && pw.length < 6) return show(t('admin_passwordMin'))
 
   const body = { email, role, domain, functions }
   if (pw) body.password = pw
@@ -5461,18 +5432,18 @@ async function submitUserModal(existingUsername) {
 
   if (!res.ok) {
     const err = await res.json()
-    return show(err.error || 'Error saving')
+    return show(err.error || t('err_saveFailed'))
   }
   document.getElementById('userEditModal')?.remove()
   adminLoadUsers()
 }
 
 async function adminDeleteUser(username) {
-  if (!confirm(`Delete user "${username}"?`)) return
+  if (!confirm(t('admin_deleteUser').replace('[NAME]', username))) return
   const res = await fetch(`/admin/users/${encodeURIComponent(username)}`, {
     method: 'DELETE', headers: apiHeaders('admin')
   })
-  if (!res.ok) { const e = await res.json(); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json(); alert(e.error || t('error')); return }
   adminLoadUsers()
 }
 
@@ -5481,10 +5452,10 @@ function renderAdminEntitiesTab() {
   if (!container) return
   container.innerHTML = `
     <div style="padding:12px 0;">
-      <h3 style="margin-bottom:8px;">Corporate Structure – Entities</h3>
+      <h3 style="margin-bottom:8px;">${t('admin_corporateEntities')}</h3>
       <div class="admin-entity-toolbar">
-        <button class="btn btn-primary btn-sm" onclick="adminAddEntity()"><i class="ph ph-plus"></i> New Entity</button>
-        <button class="btn btn-secondary btn-sm" onclick="adminLoadEntities()"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="adminAddEntity()"><i class="ph ph-plus"></i> ${t('admin_newEntity')}</button>
+        <button class="btn btn-secondary btn-sm" onclick="adminLoadEntities()"><i class="ph ph-arrows-clockwise"></i> ${t('refresh')}</button>
       </div>
       <div id="adminEntityTree" class="admin-entity-tree"></div>
     </div>`
@@ -5494,14 +5465,14 @@ function renderAdminEntitiesTab() {
 async function adminLoadEntities() {
   const tree = document.getElementById('adminEntityTree')
   if (!tree) return
-  tree.innerHTML = '<p class="report-loading">Loading…</p>'
+  tree.innerHTML = `<p class="report-loading">${t('loading')}</p>`
   try {
     const res = await fetch('/entities/tree', { headers: apiHeaders('reader') })
     const roots = await res.json()
     tree.innerHTML = ''
     roots.forEach(e => tree.appendChild(renderEntityNode(e)))
   } catch (err) {
-    tree.innerHTML = `<p class="report-error">Error: ${err.message}</p>`
+    tree.innerHTML = `<p class="report-error">${t('error')}: ${err.message}</p>`
   }
 }
 
@@ -5514,8 +5485,8 @@ function renderEntityNode(e) {
       <span class="admin-entity-name">${e.name}</span>
       <span class="admin-entity-code picker-id">${e.shortCode || ''}</span>
       <div class="admin-entity-actions">
-        <button class="btn btn-secondary btn-sm" onclick='adminEditEntity(${JSON.stringify(e)})' title="Edit"><i class="ph ph-pencil"></i></button>
-        ${e.type !== 'holding' ? `<button class="btn btn-sm" style="color:#ef4444;" onclick="adminDeleteEntity('${e.id}','${e.name}')" title="Delete"><i class="ph ph-trash"></i></button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick='adminEditEntity(${JSON.stringify(e)})' title="${t('edit')}"><i class="ph ph-pencil"></i></button>
+        ${e.type !== 'holding' ? `<button class="btn btn-sm" style="color:#ef4444;" onclick="adminDeleteEntity('${e.id}','${e.name}')" title="${t('delete')}"><i class="ph ph-trash"></i></button>` : ''}
       </div>
     </div>
     ${e.children && e.children.length > 0 ? `<div class="admin-entity-children">${e.children.map(c => renderEntityNode(c).outerHTML).join('')}</div>` : ''}
@@ -5536,7 +5507,7 @@ function openEntityModal(entity) {
         <div class="modal-header">
           <h3 class="modal-title">
             <i class="ph ph-buildings"></i>
-            ${isEdit ? 'Edit Entity' : 'New Entity'}
+            ${isEdit ? t('admin_editEntity') : t('admin_newEntity')}
           </h3>
           <button class="modal-close" onclick="document.getElementById('entityEditModal').remove()">
             <i class="ph ph-x"></i>
@@ -5544,21 +5515,21 @@ function openEntityModal(entity) {
         </div>
         <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
           <div>
-            <label class="form-label">Name *</label>
+            <label class="form-label">${t('col_name')} *</label>
             <input id="entModalName" class="form-input"
               value="${escHtml(entity?.name || '')}" placeholder="e.g. Alpha Ltd" />
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
-              <label class="form-label">Short Code</label>
+              <label class="form-label">${t('org_short')}</label>
               <input id="entModalCode" class="form-input"
                 value="${escHtml(entity?.shortCode || '')}" placeholder="ALP" maxlength="10" />
             </div>
             <div>
-              <label class="form-label">Type</label>
+              <label class="form-label">${t('col_type')}</label>
               <select id="entModalType" class="select" ${isEdit ? 'disabled style="opacity:.6;"' : ''}>
-                <option value="subsidiary" ${entity?.type !== 'holding' ? 'selected' : ''}>Subsidiary</option>
-                <option value="holding"    ${entity?.type === 'holding'  ? 'selected' : ''}>Holding</option>
+                <option value="subsidiary" ${entity?.type !== 'holding' ? 'selected' : ''}>${t('admin_entitySubsidiary')}</option>
+                <option value="holding"    ${entity?.type === 'holding'  ? 'selected' : ''}>${t('admin_entityHolding')}</option>
               </select>
             </div>
           </div>
@@ -5566,9 +5537,9 @@ function openEntityModal(entity) {
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary"
-            onclick="document.getElementById('entityEditModal').remove()">Cancel</button>
+            onclick="document.getElementById('entityEditModal').remove()">${t('cancel')}</button>
           <button class="btn btn-primary" onclick="submitEntityModal('${isEdit ? entity.id : ''}')">
-            <i class="ph ph-floppy-disk"></i> Save
+            <i class="ph ph-floppy-disk"></i> ${t('save')}
           </button>
         </div>
       </div>
@@ -5584,7 +5555,7 @@ async function submitEntityModal(existingId) {
   const shortCode = document.getElementById('entModalCode')?.value.trim()
   const type      = document.getElementById('entModalType')?.value || 'subsidiary'
 
-  if (!name) return show('Name is required.')
+  if (!name) return show(t('err_nameRequired'))
 
   let res
   if (existingId) {
@@ -5603,7 +5574,7 @@ async function submitEntityModal(existingId) {
 
   if (!res.ok) {
     const err = await res.json()
-    return show(err.error || 'Error saving')
+    return show(err.error || t('err_saveFailed'))
   }
   document.getElementById('entityEditModal')?.remove()
   _entityCache = []
@@ -5611,9 +5582,9 @@ async function submitEntityModal(existingId) {
 }
 
 async function adminDeleteEntity(id, name) {
-  if (!confirm(`Delete entity "${name}"?`)) return
+  if (!confirm(t('admin_deleteEntityConfirm').replace('{name}', name))) return
   const res = await fetch(`/entities/${id}`, { method: 'DELETE', headers: apiHeaders('admin') })
-  if (!res.ok) { const e = await res.json(); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json(); alert(e.error || t('error')); return }
   _entityCache = []
   adminLoadEntities()
 }
@@ -5623,26 +5594,26 @@ async function adminDeleteEntity(id, name) {
 // ════════════════════════════════════════════════════════════
 
 const GOAL_CATEGORIES = [
-  { id: 'confidentiality', label: 'Confidentiality' },
-  { id: 'integrity',       label: 'Integrity' },
-  { id: 'availability',    label: 'Availability' },
-  { id: 'compliance',      label: 'Compliance' },
-  { id: 'operational',     label: 'Operational' },
-  { id: 'technical',       label: 'Technisch' },
-  { id: 'organizational',  label: 'Organisatorisch' }
+  { id: 'confidentiality', label: t('goals_catConfidentiality') },
+  { id: 'integrity',       label: t('goals_catIntegrity') },
+  { id: 'availability',    label: t('goals_catAvailability') },
+  { id: 'compliance',      label: t('goals_catCompliance') },
+  { id: 'operational',     label: t('goals_catOperational') },
+  { id: 'technical',       label: t('goals_catTechnical') },
+  { id: 'organizational',  label: t('goals_catOrganizational') }
 ]
 const GOAL_STATUSES = [
-  { id: 'planned',   label: 'Planned',    color: '#888' },
-  { id: 'active',    label: 'Active',     color: '#60a5fa' },
-  { id: 'achieved',  label: 'Achieved',   color: '#4ade80' },
-  { id: 'missed',    label: 'Missed',     color: '#f87171' },
-  { id: 'cancelled', label: 'Cancelled',  color: '#555' }
+  { id: 'planned',   label: t('goals_statusPlanned'),   color: '#888' },
+  { id: 'active',    label: t('goals_statusActive'),    color: '#60a5fa' },
+  { id: 'achieved',  label: t('goals_statusAchieved'),  color: '#4ade80' },
+  { id: 'missed',    label: t('goals_statusMissed'),    color: '#f87171' },
+  { id: 'cancelled', label: t('goals_statusCancelled'), color: '#555' }
 ]
 const GOAL_PRIORITIES = [
-  { id: 'low',      label: 'Low',      color: '#888' },
-  { id: 'medium',   label: 'Medium',   color: '#f0b429' },
-  { id: 'high',     label: 'High',     color: '#fb923c' },
-  { id: 'critical', label: 'Critical', color: '#f87171' }
+  { id: 'low',      label: t('goals_priorityLow'),      color: '#888' },
+  { id: 'medium',   label: t('goals_priorityMedium'),   color: '#f0b429' },
+  { id: 'high',     label: t('goals_priorityHigh'),     color: '#fb923c' },
+  { id: 'critical', label: t('goals_priorityCritical'), color: '#f87171' }
 ]
 
 let _goalStatusFilter   = ''
@@ -5679,16 +5650,16 @@ async function renderGoals() {
   container.innerHTML = `
     <div class="admin-fullpage">
       <div class="admin-fullpage-header">
-        <h2><i class="ph ph-target"></i> Security Goals <small style="font-size:.7em;font-weight:400;color:var(--text-subtle)">ISO 27001 Kap. 6.2</small></h2>
+        <h2><i class="ph ph-target"></i> ${t('goals_title')} <small style="font-size:.7em;font-weight:400;color:var(--text-subtle)">${t('goals_isoClause')}</small></h2>
         ${goalCanEdit() ? `<button class="btn btn-primary btn-sm" onclick="openGoalForm()"><i class="ph ph-plus"></i> ${t('goals_new')}</button>` : ''}
       </div>
 
       <!-- KPI-Leiste -->
       <div class="goals-kpi-row">
-        <div class="goals-kpi"><span class="goals-kpi-val">${summary.total||0}</span><span class="goals-kpi-lbl">Total</span></div>
-        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#60a5fa">${summary.active||0}</span><span class="goals-kpi-lbl">Active</span></div>
-        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#4ade80">${summary.achieved||0}</span><span class="goals-kpi-lbl">Achieved</span></div>
-        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#f87171">${summary.overdue||0}</span><span class="goals-kpi-lbl">Overdue</span></div>
+        <div class="goals-kpi"><span class="goals-kpi-val">${summary.total||0}</span><span class="goals-kpi-lbl">${t('common_total')}</span></div>
+        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#60a5fa">${summary.active||0}</span><span class="goals-kpi-lbl">${t('goals_statusActive')}</span></div>
+        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#4ade80">${summary.achieved||0}</span><span class="goals-kpi-lbl">${t('goals_statusAchieved')}</span></div>
+        <div class="goals-kpi"><span class="goals-kpi-val" style="color:#f87171">${summary.overdue||0}</span><span class="goals-kpi-lbl">${t('reports_overdue')}</span></div>
         <div class="goals-kpi">
           <div class="goals-avg-wrap">
             <span class="goals-kpi-val">${summary.avgProgress||0}%</span>
@@ -5702,7 +5673,7 @@ async function renderGoals() {
       <div class="gdpr-filter-bar" style="margin-bottom:12px">
         <select class="select" style="font-size:.82rem" onchange="_goalStatusFilter=this.value;renderGoals()">${statusOpts}</select>
         <select class="select" style="font-size:.82rem" onchange="_goalCategoryFilter=this.value;renderGoals()">${catOpts}</select>
-        <span class="gdpr-filter-count">${list.length} Goal(s)</span>
+        <span class="gdpr-filter-count">${list.length} ${t('goals_countLabel')}</span>
       </div>
 
       <!-- Liste -->
@@ -5736,7 +5707,7 @@ async function renderGoals() {
               </div>
               <div class="goals-card-meta">
                 ${g.owner ? `<span><i class="ph ph-user"></i> ${escHtml(g.owner)}</span>` : ''}
-                ${g.targetDate ? `<span style="${isOverdue?'color:#f87171;font-weight:600':''}"><i class="ph ph-calendar-x"></i> ${new Date(g.targetDate).toLocaleDateString('en-GB')}${isOverdue?' (overdue)':''}</span>` : ''}
+                ${g.targetDate ? `<span style="${isOverdue?'color:#f87171;font-weight:600':''}"><i class="ph ph-calendar-x"></i> ${new Date(g.targetDate).toLocaleDateString('en-GB')}${isOverdue ? ` (${t('reports_overdue').toLowerCase()})` : ''}</span>` : ''}
                 ${g.kpis?.length ? `<span><i class="ph ph-chart-line-up"></i> ${g.kpis.length} KPI(s)</span>` : ''}
               </div>
             </div>
@@ -5753,10 +5724,10 @@ async function renderGoals() {
 
 function goalKpiRow(kpi = {}) {
   return `<div class="goal-kpi-row">
-    <input class="form-input" placeholder="Metric / KPI" style="flex:2" value="${escHtml(kpi.metric||'')}">
-    <input type="number" class="form-input" placeholder="Target" style="width:90px" value="${kpi.targetValue||''}">
-    <input type="number" class="form-input" placeholder="Current" style="width:90px" value="${kpi.currentValue||''}">
-    <input class="form-input" placeholder="Unit" style="width:80px" value="${escHtml(kpi.unit||'')}" title="e.g. %, days, items">
+    <input class="form-input" placeholder="${t('goals_metricKpi')}" style="flex:2" value="${escHtml(kpi.metric||'')}">
+    <input type="number" class="form-input" placeholder="${t('goals_target')}" style="width:90px" value="${kpi.targetValue||''}">
+    <input type="number" class="form-input" placeholder="${t('goals_current')}" style="width:90px" value="${kpi.currentValue||''}">
+    <input class="form-input" placeholder="${t('goals_unit')}" style="width:80px" value="${escHtml(kpi.unit||'')}" title="${t('goals_unitHint')}">
     <button class="btn btn-sm" style="color:var(--danger-text)" onclick="this.closest('.goal-kpi-row').remove();updateGoalProgress()"><i class="ph ph-trash"></i></button>
   </div>`
 }
@@ -5802,58 +5773,58 @@ async function openGoalForm(id = null) {
   container.innerHTML = `
     <div class="training-form-page">
       <div class="training-form-header">
-        <button class="btn btn-secondary btn-sm" onclick="renderGoals()"><i class="ph ph-arrow-left"></i> Back</button>
-        <h2>${id ? 'Edit Security Goal' : 'New Security Goal'}</h2>
+        <button class="btn btn-secondary btn-sm" onclick="renderGoals()"><i class="ph ph-arrow-left"></i> ${t('common_back')}</button>
+        <h2>${id ? t('goals_edit') : t('goals_new')}</h2>
       </div>
       <div class="training-form-body">
         <div class="form-row">
-          <div class="form-group" style="flex:3"><label class="form-label">Name *</label>
-            <input id="goalTitle" class="form-input" value="${escHtml(g.title||'')}" placeholder="e.g. Reduce critical vulnerabilities by 80%"></div>
-          <div class="form-group"><label class="form-label">Priority</label>
+          <div class="form-group" style="flex:3"><label class="form-label">${t('col_name')} *</label>
+            <input id="goalTitle" class="form-input" value="${escHtml(g.title||'')}" placeholder="${t('goals_titlePlaceholder')}"></div>
+          <div class="form-group"><label class="form-label">${t('goals_priority')}</label>
             <select id="goalPriority" class="select">${priOpts}</select></div>
         </div>
-        <div class="form-group"><label class="form-label">Description / Context</label>
-          <textarea id="goalDesc" class="form-input" rows="3" placeholder="What should be achieved and why?">${escHtml(g.description||'')}</textarea></div>
+        <div class="form-group"><label class="form-label">${t('goals_descriptionContext')}</label>
+          <textarea id="goalDesc" class="form-input" rows="3" placeholder="${t('goals_descPlaceholder')}">${escHtml(g.description||'')}</textarea></div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">Category</label>
+          <div class="form-group"><label class="form-label">${t('col_category')}</label>
             <select id="goalCategory" class="select">${catOpts}</select></div>
-          <div class="form-group"><label class="form-label">Status</label>
+          <div class="form-group"><label class="form-label">${t('col_status')}</label>
             <select id="goalStatus" class="select">${stOpts}</select></div>
-          <div class="form-group"><label class="form-label">Owner / Responsible</label>
+          <div class="form-group"><label class="form-label">${t('goals_ownerResponsible')}</label>
             <input id="goalOwner" class="form-input" value="${escHtml(g.owner||'')}"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">Target Date</label>
+          <div class="form-group"><label class="form-label">${t('goals_targetDate')}</label>
             <input id="goalTargetDate" type="date" class="form-input" value="${g.targetDate||''}"></div>
-          <div class="form-group"><label class="form-label">Review Date</label>
+          <div class="form-group"><label class="form-label">${t('goals_reviewDate')}</label>
             <input id="goalReviewDate" type="date" class="form-input" value="${g.reviewDate||''}"></div>
-          <div class="form-group"><label class="form-label">Manual Progress (%)</label>
-            <input id="goalProgress" type="number" class="form-input" min="0" max="100" value="${g.progress||0}" placeholder="0–100" title="Calculated from KPIs if available"></div>
+          <div class="form-group"><label class="form-label">${t('goals_manualProgress')}</label>
+            <input id="goalProgress" type="number" class="form-input" min="0" max="100" value="${g.progress||0}" placeholder="0-100" title="${t('goals_progressHint')}"></div>
         </div>
 
         <div class="legal-form-section">
-          <div class="legal-form-section-title"><i class="ph ph-chart-line-up"></i> KPIs (Metrics)</div>
-          <p style="font-size:.8rem;color:var(--text-subtle);margin-bottom:8px">Define measurable metrics — progress is automatically calculated from the KPIs.</p>
+          <div class="legal-form-section-title"><i class="ph ph-chart-line-up"></i> ${t('goals_kpisMetrics')}</div>
+          <p style="font-size:.8rem;color:var(--text-subtle);margin-bottom:8px">${t('goals_kpisDesc')}</p>
           <div class="goal-kpi-header">
-            <span style="flex:2">Metric / KPI</span>
-            <span style="width:90px">Target</span>
-            <span style="width:90px">Current</span>
-            <span style="width:80px">Unit</span>
+            <span style="flex:2">${t('goals_metricKpi')}</span>
+            <span style="width:90px">${t('goals_target')}</span>
+            <span style="width:90px">${t('goals_current')}</span>
+            <span style="width:80px">${t('goals_unit')}</span>
             <span style="width:32px"></span>
           </div>
           <div id="goalKpisContainer">${kpisHtml}</div>
           <button class="btn btn-secondary btn-sm" onclick="addGoalKpi()" style="margin-top:6px">
-            <i class="ph ph-plus"></i> Add KPI
+            <i class="ph ph-plus"></i> ${t('goals_addKpi')}
           </button>
         </div>
 
-        <div class="form-group"><label class="form-label">Notes</label>
+        <div class="form-group"><label class="form-label">${t('goals_notes')}</label>
           <textarea id="goalNotes" class="form-input" rows="2">${escHtml(g.notes||'')}</textarea></div>
         ${renderLinksBlock('goal', g.linkedControls||[], g.linkedPolicies||[])}
       </div>
       <div class="training-form-footer">
-        <button class="btn btn-secondary" onclick="renderGoals()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveGoal(${id?`'${id}'`:'null'})"><i class="ph ph-floppy-disk"></i> Save</button>
+        <button class="btn btn-secondary" onclick="renderGoals()">${t('cancel')}</button>
+        <button class="btn btn-primary" onclick="saveGoal(${id?`'${id}'`:'null'})"><i class="ph ph-floppy-disk"></i> ${t('save')}</button>
       </div>
     </div>
   `
@@ -5867,7 +5838,7 @@ async function openGoalForm(id = null) {
 
 async function saveGoal(id) {
   const title = document.getElementById('goalTitle')?.value?.trim()
-  if (!title) { alert('Name is required'); return }
+  if (!title) { alert(t('err_nameRequired')); return }
 
   const kpis = [...document.querySelectorAll('.goal-kpi-row')].map(row => {
     const inputs = row.querySelectorAll('input')
@@ -5900,14 +5871,14 @@ async function saveGoal(id) {
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
-  if (!res.ok) { const e = await res.json(); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json(); alert(e.error || t('error')); return }
   renderGoals()
 }
 
 async function deleteGoal(id) {
-  if (!confirm('Delete security goal?')) return
+  if (!confirm(t('goals_deleteConfirm'))) return
   const res = await fetch(`/goals/${id}`, { method: 'DELETE', headers: apiHeaders() })
-  if (!res.ok) { const e = await res.json(); alert(e.error || 'Error'); return }
+  if (!res.ok) { const e = await res.json(); alert(e.error || t('error')); return }
   renderGoals()
 }
 
@@ -6337,21 +6308,21 @@ async function tmplMgmtEdit(type, id) {
 }
 
 async function tmplMgmtSoftDelete(type, id, title) {
-  if (!confirm(`Template "${title}" in den Papierkorb verschieben?`)) return
+  if (!confirm(t('tmpl_trashConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, { method: 'DELETE', headers: apiHeaders('contentowner') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
 }
 
 async function tmplMgmtPermDelete(type, id, title) {
-  if (!confirm(`Template "${title}" endgültig löschen? Dies kann nicht rückgängig gemacht werden.`)) return
+  if (!confirm(t('tmpl_permanentDeleteConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}/permanent`, { method: 'DELETE', headers: apiHeaders('admin') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
 }
 
 async function tmplMgmtRestore(type, id, title) {
-  if (!confirm(`Template "${title}" wiederherstellen?`)) return
+  if (!confirm(t('tmpl_restoreConfirm', { title }))) return
   const res = await fetch(`/template/${encodeURIComponent(type)}/${encodeURIComponent(id)}/restore`, { method: 'POST', headers: apiHeaders('admin') })
   if (!res.ok) { const e = await res.json().catch(()=>({})); alert(e.error || 'Error'); return }
   loadTmplManagement()
@@ -7320,8 +7291,8 @@ async function renderGuidance() {
           <i class="ph ${c.icon}"></i> ${c.label}
         </button>
       `).join('')}
-      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="printGuidanceCategory()" title="Alle Dokumente dieser Kategorie als PDF drucken">
-        <i class="ph ph-printer"></i> Alle drucken
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="printGuidanceCategory()" title="${t('guidance_printCategoryTitle')}">
+        <i class="ph ph-printer"></i> ${t('guidance_printAll')}
       </button>
     </div>
     <div class="guidance-body">
@@ -7442,7 +7413,7 @@ function printGuidanceDoc(docId) {
 
 function printGuidanceCategory() {
   const docs = _guidanceDocs.filter(d => d.type === 'markdown' || d.type === 'html')
-  if (docs.length === 0) return alert('Keine druckbaren Dokumente in dieser Kategorie.')
+  if (docs.length === 0) return alert(t('guidance_noPrintableDocs'))
   _printGuidanceDocs(docs)
 }
 
@@ -7463,7 +7434,7 @@ function _printGuidanceDocs(docs) {
   }).join('<div class="page-break"></div>')
 
   const win = window.open('', '_blank')
-  if (!win) return alert('Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.')
+  if (!win) return alert(t('err_popupBlocked'))
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>${escHtml(title)}</title>
@@ -7525,7 +7496,7 @@ function renderGuidanceSearchResults(results, query) {
   const ul = dom('guidanceDocList')
   if (!ul) return
   if (results.length === 0) {
-    ul.innerHTML = `<li style="padding:12px;color:var(--text-subtle);font-size:13px;">Keine Treffer für „${escHtml(query)}"</li>`
+    ul.innerHTML = `<li style="padding:12px;color:var(--text-subtle);font-size:13px;">${t('search_noResultsFor', { query: escHtml(query) })}</li>`
     renderGuidanceEmpty()
     return
   }
@@ -8001,16 +7972,16 @@ function calNavToday() {
 // ════════════════════════════════════════════════════════════
 
 let RISK_CATS = [
-  { id:'technical',       label:'Technisch',        icon:'ph-cpu' },
-  { id:'organizational',  label:'Organisatorisch',   icon:'ph-users' },
-  { id:'physical',        label:'Physisch',          icon:'ph-building' },
-  { id:'legal',           label:'Rechtlich',         icon:'ph-scales' },
+  { id:'technical',       labelKey:'risk_catTechnical',      icon:'ph-cpu' },
+  { id:'organizational',  labelKey:'risk_catOrganizational', icon:'ph-users' },
+  { id:'physical',        labelKey:'risk_catPhysical',       icon:'ph-building' },
+  { id:'legal',           labelKey:'risk_catLegal',          icon:'ph-scales' },
 ]
 let RISK_TREATMENTS = [
-  { id:'reduce',   label:'Reduzieren' },
-  { id:'accept',   label:'Akzeptieren' },
-  { id:'avoid',    label:'Vermeiden' },
-  { id:'transfer', label:'Übertragen' },
+  { id:'reduce',   labelKey:'risk_treatmentReduce' },
+  { id:'accept',   labelKey:'risk_treatmentAccept' },
+  { id:'avoid',    labelKey:'risk_treatmentAvoid' },
+  { id:'transfer', labelKey:'risk_treatmentTransfer' },
 ]
 const RISK_STATUSES = [
   { id:'open',         label:'Open' },
@@ -8029,16 +8000,19 @@ const RISK_LEVEL_CFG = {
  * https://www.first.org/cvss/specification-document */
 const CVSS_BANDS = [
   { min: 9.0, max: 10.0, label: 'Critical', cls: 'cvss-critical', color: '#dc2626',
-    desc: 'Kritisch: Schwachstelle ermöglicht vollständige Systemkompromittierung, oft ohne Authentifizierung und Nutzerinteraktion (z.B. Remote Code Execution).' },
+    descKey: 'cvss_descCritical' },
   { min: 7.0, max:  8.9, label: 'High',     cls: 'cvss-high',     color: '#ea580c',
-    desc: 'Hoch: Erheblicher Schaden möglich. Angreifer können wichtige Ressourcen kontrollieren oder vertrauliche Daten auslesen.' },
+    descKey: 'cvss_descHigh' },
   { min: 4.0, max:  6.9, label: 'Medium',   cls: 'cvss-medium',   color: '#ca8a04',
-    desc: 'Mittel: Eingeschränkter Schaden oder Ausnutzung erfordert bestimmte Vorbedingungen (z.B. Netzwerkzugang, Benutzerinteraktion).' },
+    descKey: 'cvss_descMedium' },
   { min: 0.1, max:  3.9, label: 'Low',      cls: 'cvss-low',      color: '#16a34a',
-    desc: 'Niedrig: Minimaler Schaden, schwer ausnutzbar oder starke einschränkende Faktoren vorhanden.' },
+    descKey: 'cvss_descLow' },
   { min: 0.0, max:  0.0, label: 'None',     cls: 'cvss-none',     color: '#6b7280',
-    desc: 'Kein Risiko: Keine Auswirkung auf Vertraulichkeit, Integrität oder Verfügbarkeit.' },
+    descKey: 'cvss_descNone' },
 ]
+function riskCatLabel(cat) { return cat ? t(cat.labelKey) : '' }
+function riskTreatmentLabel(treatment) { return treatment ? t(treatment.labelKey) : '' }
+function cvssDesc(info) { return info?.descKey ? t(info.descKey) : '' }
 
 function cvssInfo(score) {
   if (score == null || isNaN(score)) return null
@@ -8050,7 +8024,7 @@ function cvssBadgeHtml(score) {
   if (score == null || isNaN(score)) return ''
   const info = cvssInfo(score)
   const pct  = Math.round((parseFloat(score) / 10) * 100)
-  return `<span class="cvss-badge ${info.cls}" title="${info.desc}">CVSS ${parseFloat(score).toFixed(1)} — ${info.label}</span>`
+  return `<span class="cvss-badge ${info.cls}" title="${cvssDesc(info)}">CVSS ${parseFloat(score).toFixed(1)} — ${info.label}</span>`
 }
 
 function cvssBarHtml(score) {
@@ -8130,7 +8104,7 @@ async function renderRiskRegister(el) {
   const risks = res.ok ? await res.json() : []
 
   const catOpts = [{ id:'', label:t('filter_allCats') }, ...RISK_CATS].map(c =>
-    `<option value="${c.id}" ${_riskFilterCat === c.id ? 'selected':''}>${c.label}</option>`).join('')
+    `<option value="${c.id}" ${_riskFilterCat === c.id ? 'selected':''}>${c.label || riskCatLabel(c)}</option>`).join('')
   const stOpts = [{ id:'', label:t('filter_allStatuses') }, ...RISK_STATUSES].map(s =>
     `<option value="${s.id}" ${_riskFilterStatus === s.id ? 'selected':''}>${s.label}</option>`).join('')
 
@@ -8157,10 +8131,10 @@ async function renderRiskRegister(el) {
               <span class="risk-badge ${lv.cls}">${lv.label}</span>
               ${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : ''}
             </td>
-            <td class="risk-title-cell">${escHtml(r.title)}${r.needsReview ? ' <span class="badge-review-pending" title="Freigabe erforderlich">&#9888; Review</span>' : ''}</td>
-            <td>${escHtml(cat?.label || r.category)}</td>
+            <td class="risk-title-cell">${escHtml(r.title)}${r.needsReview ? ` <span class="badge-review-pending" title="${t('risk_approvalRequired')}">&#9888; Review</span>` : ''}</td>
+            <td>${escHtml(riskCatLabel(cat) || r.category)}</td>
             <td class="risk-score-cell">${r.probability} × ${r.impact} = <strong>${r.score}</strong></td>
-            <td>${escHtml(tr?.label || r.treatmentOption)}</td>
+            <td>${escHtml(riskTreatmentLabel(tr) || r.treatmentOption)}</td>
             <td><span class="risk-status-badge risk-st-${r.status}">${st?.label || r.status}</span></td>
             <td>${escHtml(r.owner || '—')}</td>
             <td onclick="event.stopPropagation()" class="risk-actions">
@@ -8242,12 +8216,12 @@ async function renderRiskHeatmap(el) {
       <div class="heatmap-risk-list-body">${listRows}</div>
     </div>
     <div class="heatmap-legend">
-      <span class="hm-leg hm-low">Low (1–4)</span>
-      <span class="hm-leg hm-medium">Medium (5–9)</span>
-      <span class="hm-leg hm-high">High (10–14)</span>
-      <span class="hm-leg hm-critical">Critical (15–25)</span>
+      <span class="hm-leg hm-low">${t('risk_levelLow')}</span>
+      <span class="hm-leg hm-medium">${t('risk_levelMed')}</span>
+      <span class="hm-leg hm-high">${t('risk_levelHigh')}</span>
+      <span class="hm-leg hm-critical">${t('risk_levelCrit')}</span>
     </div>
-    <p class="heatmap-hint">Click a point to open risk details.</p>`
+    <p class="heatmap-hint">${t('risk_heatmapHint')}</p>`
 
   el.innerHTML = grid
 }
@@ -8272,28 +8246,28 @@ async function renderRiskTreatments(el) {
     return new Date(a.dueDate) - new Date(b.dueDate)
   })
 
-  const statusLabel = { open:'Offen', in_progress:'In Arbeit', completed:'Abgeschlossen' }
+  const statusLabel = { open:t('findings_statusOpen'), in_progress:t('findings_statusInProgress'), completed:t('risk_statusCompleted') }
   const today = new Date().toISOString().slice(0,10)
 
   const riskOpts = risks.map(r => `<option value="${escHtml(r.id)}">${escHtml(r.title)}</option>`).join('')
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <h4 style="margin:0;flex:1;">Alle Behandlungsmaßnahmen (${rows.length})</h4>
+      <h4 style="margin:0;flex:1;">${t('risk_allTreatments')} (${rows.length})</h4>
       ${canManageRisks() ? `
         <select id="tpRiskPicker" class="select" style="max-width:220px;">
-          <option value="">— Select risk —</option>
+          <option value="">— ${t('risk_select')} —</option>
           ${riskOpts}
         </select>
         <button class="btn btn-primary btn-sm" onclick="openTreatmentModalForRisk()">
-          <i class="ph ph-plus"></i> New Measure
+          <i class="ph ph-plus"></i> ${t('risk_newMeasure')}
         </button>` : ''}
     </div>
-    ${rows.length === 0 ? '<p class="risk-empty">No treatment measures recorded.</p>' : `
+    ${rows.length === 0 ? `<p class="risk-empty">${t('risk_noMeasures')}</p>` : `
     <table class="risk-table">
       <thead><tr>
-        <th>Measure</th><th>Risk</th><th>Responsible</th><th>Unit (OE)</th>
-        <th>Due Date</th><th>Status</th>
+        <th>${t('risk_measure')}</th><th>${t('risk_riskCol')}</th><th>${t('col_responsible')}</th><th>${t('risk_orgUnit')}</th>
+        <th>${t('col_dueDate')}</th><th>${t('col_status')}</th>
         ${canManageRisks() ? '<th style="width:90px;"></th>' : ''}
       </tr></thead>
       <tbody>
@@ -8326,7 +8300,7 @@ async function renderRiskTreatments(el) {
 function openTreatmentModalForRisk() {
   const sel = document.getElementById('tpRiskPicker')
   const riskId = sel?.value
-  if (!riskId) { alert('Please select a risk first.'); return }
+  if (!riskId) { alert(t('risk_selectFirst')); return }
   openTreatmentModal(riskId, null)
 }
 
@@ -8420,7 +8394,7 @@ async function renderRiskReports(el) {
         <h4>${t('risk_byCategory')}</h4>
         ${RISK_CATS.map(c => `
           <div class="risk-report-row">
-            <span style="width:130px;font-size:12px;">${c.label}</span>
+            <span style="width:130px;font-size:12px;">${riskCatLabel(c)}</span>
             ${bar(s.byCategory[c.id]||0, s.total, 'risk-cat-bar')}
           </div>`).join('')}
       </div>
@@ -8441,25 +8415,25 @@ async function renderRiskReports(el) {
       </div>
       ${pending.length > 0 ? `
       <div class="risk-report-card risk-report-full scan-review-banner" style="border-color:#f59e0b">
-        <h4><i class="ph ph-shield-warning" style="color:#f59e0b"></i> Freigabe ausstehend (${pending.length})</h4>
+        <h4><i class="ph ph-shield-warning" style="color:#f59e0b"></i> ${t('risk_approvalPending')} (${pending.length})</h4>
         <table class="risk-table">
-          <thead><tr><th>Titel</th><th>CVSS</th><th>Schweregrad</th><th>Host</th><th>CVEs</th><th>Aktion</th></tr></thead>
+          <thead><tr><th>${t('col_title')}</th><th>CVSS</th><th>${t('findings_severity')}</th><th>Host</th><th>CVEs</th><th>${t('common_action')}</th></tr></thead>
           <tbody>${pending.map(r => `<tr>
             <td>${escHtml(r.title)}</td>
             <td>${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : '—'}</td>
             <td><span class="risk-badge ${RISK_LEVEL_CFG[r.riskLevel]?.cls||''}">${RISK_LEVEL_CFG[r.riskLevel]?.label||r.riskLevel||'—'}</span></td>
             <td style="font-size:.8rem;color:var(--text-muted)">${escHtml(r.scanRef||'')}</td>
             <td style="font-size:.8rem">${(r.cveIds||[]).join(', ')||'—'}</td>
-            <td><button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check"></i> Freigeben</button></td>
+            <td><button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check"></i> ${t('risk_approve')}</button></td>
           </tr>`).join('')}
           </tbody>
         </table>
       </div>` : ''}
       ${scanRisks.length > 0 ? `
       <div class="risk-report-card risk-report-full">
-        <h4><i class="ph ph-scan" style="color:#3b82f6"></i> Scan-Importe (${scanRisks.length} freigegeben)</h4>
+        <h4><i class="ph ph-scan" style="color:#3b82f6"></i> ${t('risk_scanImports')} (${scanRisks.length} ${t('risk_approved').toLowerCase()})</h4>
         <table class="risk-table">
-          <thead><tr><th>Titel</th><th>CVSS</th><th>Schweregrad</th><th>CVEs</th><th>Score</th><th>Status</th><th>Genehmigt von</th></tr></thead>
+          <thead><tr><th>${t('col_title')}</th><th>CVSS</th><th>${t('findings_severity')}</th><th>CVEs</th><th>Score</th><th>${t('col_status')}</th><th>${t('risk_approvedBy')}</th></tr></thead>
           <tbody>${scanRisks.map(r => `<tr onclick="openRiskDetail('${r.id}')" style="cursor:pointer">
             <td>${escHtml(r.title)}</td>
             <td>${r.cvssScore != null ? cvssBadgeHtml(r.cvssScore) : '—'}</td>
@@ -8498,21 +8472,21 @@ async function openRiskDetail(id) {
     <div class="training-form-page">
       <div class="training-form-header">
         <button class="btn btn-secondary btn-sm" onclick="switchRiskTab('register')">
-          <i class="ph ph-arrow-left"></i> Zurück
+          <i class="ph ph-arrow-left"></i> ${t('common_back')}
         </button>
         <h2 style="margin:0;flex:1;font-size:1.1rem;display:flex;align-items:center;gap:8px;">
           <span class="risk-badge ${lv.cls}">${lv.label}</span>
           ${escHtml(r.title)}
         </h2>
         ${canEditRisk(r) ? `<button class="btn btn-secondary btn-sm" onclick="openRiskModal('${r.id}')">
-          <i class="ph ph-pencil"></i> Bearbeiten
+          <i class="ph ph-pencil"></i> ${t('edit')}
         </button>` : ''}
       </div>
 
       ${r.needsReview ? `<div class="scan-review-banner" style="margin-bottom:16px">
         <i class="ph ph-warning"></i>
-        <span><strong>Freigabe erforderlich</strong> — Dieses Risiko wurde automatisch durch einen Scan-Import erstellt und muss geprüft und freigegeben werden.</span>
-        ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check-circle"></i> Freigeben</button>` : ''}
+        <span><strong>${t('risk_approvalRequired')}</strong> — ${t('risk_scanReviewText')}</span>
+        ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="approveRisk('${r.id}')"><i class="ph ph-check-circle"></i> ${t('risk_approve')}</button>` : ''}
       </div>` : ''}
 
       ${r.source === 'greenbone-scan' ? (() => {
@@ -8529,12 +8503,12 @@ async function openRiskDetail(id) {
               ${cvssBarHtml(r.cvssScore)}
             ` : ''}
           </div>
-          ${ci ? `<p class="cvss-detail-desc">${ci.desc}</p>` : ''}
+          ${ci ? `<p class="cvss-detail-desc">${cvssDesc(ci)}</p>` : ''}
           ${r.cveIds?.length ? `<div class="cvss-cve-row">
             <span class="cvss-cve-label">CVEs:</span>
             ${r.cveIds.map(c => `<span class="cvss-cve-chip">${escHtml(c)}</span>`).join('')}
           </div>` : ''}
-          <p class="cvss-detail-source-note">Einstufung nach CVSS v3.1 — <a href="https://www.first.org/cvss/" target="_blank" rel="noopener" style="color:var(--accent)">FIRST.org</a></p>
+          <p class="cvss-detail-source-note">${t('cvss_sourceNote')} — <a href="https://www.first.org/cvss/" target="_blank" rel="noopener" style="color:var(--accent)">FIRST.org</a></p>
         </div>`
       })() : ''}
 
@@ -8551,23 +8525,23 @@ async function openRiskDetail(id) {
         </div>
         <div class="risk-detail-section">
           <h4>${t('risk_assessment')}</h4>
-          <div class="risk-detail-row"><label>Kategorie</label><span>${escHtml(cat?.label||r.category)}</span></div>
+          <div class="risk-detail-row"><label>${t('col_category')}</label><span>${escHtml(riskCatLabel(cat)||r.category)}</span></div>
           <div class="risk-detail-row"><label>${t('risk_probability')}</label><span>${r.probability} / 5</span></div>
           <div class="risk-detail-row"><label>${t('risk_impact')}</label><span>${r.impact} / 5</span></div>
           <div class="risk-detail-row"><label>Score</label><span><strong>${r.score}</strong> — <span class="risk-badge ${lv.cls}">${lv.label}</span></span></div>
-          <div class="risk-detail-row"><label>${t('risk_treatmentOpt')}</label><span>${escHtml(tr?.label||r.treatmentOption)}</span></div>
-          <div class="risk-detail-row"><label>Status</label><span class="risk-status-badge risk-st-${r.status}">${st?.label||r.status}</span></div>
+          <div class="risk-detail-row"><label>${t('risk_treatmentOpt')}</label><span>${escHtml(riskTreatmentLabel(tr)||r.treatmentOption)}</span></div>
+          <div class="risk-detail-row"><label>${t('col_status')}</label><span class="risk-status-badge risk-st-${r.status}">${st?.label||r.status}</span></div>
           <div class="risk-detail-row"><label>Owner</label><span>${escHtml(r.owner||'—')}</span></div>
-          <div class="risk-detail-row"><label>Fälligkeit</label><span>${r.dueDate ? new Date(r.dueDate).toLocaleDateString('de-DE') : '—'}</span></div>
+          <div class="risk-detail-row"><label>${t('col_dueDate')}</label><span>${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '—'}</span></div>
           <div class="risk-detail-row"><label>Review</label><span>${r.reviewDate ? new Date(r.reviewDate).toLocaleDateString('de-DE') : '—'}</span></div>
         </div>
       </div>
 
       <div class="risk-detail-section" style="margin-top:20px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <h4 style="margin:0;flex:1;">Behandlungsmaßnahmen (${(r.treatmentPlans||[]).length})</h4>
+          <h4 style="margin:0;flex:1;">${t('risk_treatmentsTab')} (${(r.treatmentPlans||[]).length})</h4>
           ${canManageRisks() ? `<button class="btn btn-primary btn-sm" onclick="openTreatmentModal('${r.id}',null)">
-            <i class="ph ph-plus"></i> Maßnahme
+            <i class="ph ph-plus"></i> ${t('risk_measure')}
           </button>` : ''}
         </div>
         <div id="riskDetailTps">
@@ -8596,14 +8570,14 @@ async function openRiskDetail(id) {
       </div>
 
       ${r.linkedControls?.length ? `<div class="risk-detail-section" style="margin-top:16px">
-        <h4>Verknüpfte SoA-Controls (${r.linkedControls.length})</h4>
+        <h4>${t('risk_linkedControls')} (${r.linkedControls.length})</h4>
         <div class="tmpl-controls-bar" style="display:flex;flex-wrap:wrap;gap:6px;">
           ${r.linkedControls.map(c => `<span class="tmpl-bar-pill">${escHtml(c)}</span>`).join('')}
         </div>
       </div>` : ''}
 
       ${r.applicableEntities?.length ? `<div class="risk-detail-section" style="margin-top:16px">
-        <h4>Gültig für Gesellschaften</h4>
+        <h4>${t('common_applicableEntities')}</h4>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${r.applicableEntities.map(e => `<span class="tmpl-bar-pill"><i class="ph ph-buildings"></i> ${escHtml(entityMap[e] || e)}</span>`).join('')}
         </div>
@@ -8613,7 +8587,7 @@ async function openRiskDetail(id) {
 
 async function approveRisk(id) {
   const res = await fetch(`/risks/${id}/approve`, { method: 'POST', headers: apiHeaders() })
-  if (!res.ok) return alert('Freigabe fehlgeschlagen')
+  if (!res.ok) return alert(t('risk_approvalFailed'))
   await openRiskDetail(id)
 }
 
@@ -8622,7 +8596,7 @@ async function scanImportUpload(formEl) {
   const file     = formEl.querySelector('#scanImportFile').files[0]
   const entityId = formEl.querySelector('#scanImportEntity')?.value || ''
   const scanRef  = formEl.querySelector('#scanImportRef')?.value || ''
-  if (!file) return alert('Bitte eine Datei auswählen')
+  if (!file) return alert(t('file_selectRequired'))
 
   const fd = new FormData()
   fd.append('file', file)
@@ -8631,27 +8605,27 @@ async function scanImportUpload(formEl) {
 
   const btn = formEl.querySelector('#scanImportBtn')
   btn.disabled = true
-  btn.textContent = 'Importiere…'
+  btn.textContent = t('importing')
 
   try {
     const res  = await fetch('/admin/scan-import/upload', { method: 'POST', headers: { Authorization: apiHeaders().Authorization }, body: fd })
     const data = await res.json()
-    if (!res.ok) { alert('Fehler: ' + (data.error || res.status)); return }
+    if (!res.ok) { alert(t('error') + ': ' + (data.error || res.status)); return }
     const resultEl = document.getElementById('scanImportResult')
     if (resultEl) resultEl.innerHTML = `
       <div class="scan-import-result ok">
-        <strong>Import erfolgreich</strong><br>
-        Gefundene Findings: ${data.findings} &nbsp;|&nbsp;
-        Geclusterte Risiken: ${data.clusters} &nbsp;|&nbsp;
-        Erstellt: <strong>${data.created}</strong> &nbsp;|&nbsp;
-        Übersprungen (Duplikat): ${data.skipped}
-        <br><small>Methode: ${data.parseMethod?.toUpperCase()}</small>
+        <strong>${t('import_success')}</strong><br>
+        ${t('import_findingsFound')}: ${data.findings} &nbsp;|&nbsp;
+        ${t('import_clusteredRisks')}: ${data.clusters} &nbsp;|&nbsp;
+        ${t('import_created')}: <strong>${data.created}</strong> &nbsp;|&nbsp;
+        ${t('import_skippedDuplicates')}: ${data.skipped}
+        <br><small>${t('import_method')}: ${data.parseMethod?.toUpperCase()}</small>
       </div>`
   } catch (e) {
-    alert('Netzwerkfehler: ' + e.message)
+    alert(t('err_network') + ': ' + e.message)
   } finally {
     btn.disabled = false
-    btn.textContent = 'Importieren'
+    btn.textContent = t('import_action')
   }
 }
 
@@ -10398,7 +10372,7 @@ async function switchTrainingTab(tab) {
     if (tab === 'plan')      await renderTrainingPlan(el)
     if (tab === 'evidence')  await renderTrainingEvidence(el)
   } catch(e) {
-    el.innerHTML = `<p style="color:var(--danger-text);padding:24px"><i class="ph ph-warning"></i> Error loading: ${e.message}. Bitte Server neu starten.</p>`
+    el.innerHTML = `<p style="color:var(--danger-text);padding:24px"><i class="ph ph-warning"></i> ${t('err_load')}: ${e.message}. ${t('err_restartServer')}</p>`
   }
 }
 
@@ -10522,7 +10496,7 @@ async function renderTrainingEvidence(el) {
           <div class="training-evidence-header">
             <strong>${escHtml(i.title)}</strong>
             <span class="training-cat-chip">${TRAINING_CAT_LABELS[i.category]||i.category}</span>
-            <span style="color:var(--text-subtle);font-size:.78rem">Abgeschlossen: ${i.completedDate||'—'}</span>
+            <span style="color:var(--text-subtle);font-size:.78rem">${t('ack_statusCompleted')}: ${i.completedDate||'—'}</span>
           </div>
           <div class="training-evidence-meta">
             <span><i class="ph ph-user"></i> ${escHtml(i.instructor||'—')}</span>
@@ -13440,24 +13414,24 @@ async function renderPolicyAcks() {
     mode = cfg.policyAckMode || 'manual'
   } catch {}
 
-  const modeLabels = { email_campaign: 'E-Mail-Kampagne', manual: 'Manuell / CSV', distribution_only: 'Nur Verteilung dokumentieren' }
+  const modeLabels = { email_campaign: t('ack_modeEmail'), manual: t('ack_modeManualShort'), distribution_only: t('ack_modeDistributionOnly') }
   const modeIcons  = { email_campaign: 'ph-envelope', manual: 'ph-pencil', distribution_only: 'ph-file-text' }
 
   container.innerHTML = `
     <div class="reports-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <h2 class="reports-title"><i class="ph ph-check-circle"></i> Richtlinien-Bestätigungen</h2>
+      <h2 class="reports-title"><i class="ph ph-check-circle"></i> ${t('nav_policyAcks')}</h2>
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)">
         <i class="ph ${modeIcons[mode]}"></i>
-        Modus: <strong>${modeLabels[mode] || mode}</strong>
-        ${getCurrentRole() === 'admin' ? `<button class="btn btn-secondary btn-sm" onclick="renderPolicyAckSettings()"><i class="ph ph-gear"></i> Modus ändern</button>` : ''}
+        ${t('ack_mode')}: <strong>${modeLabels[mode] || mode}</strong>
+        ${getCurrentRole() === 'admin' ? `<button class="btn btn-secondary btn-sm" onclick="renderPolicyAckSettings()"><i class="ph ph-gear"></i> ${t('ack_changeMode')}</button>` : ''}
       </div>
     </div>
     <div class="training-tab-bar" style="margin-bottom:16px">
       <button class="training-tab${_ackTab==='list'?' active':''}" onclick="_ackTab='list';renderPolicyAcks()">
-        <i class="ph ph-list-checks"></i> Verteilrunden
+        <i class="ph ph-list-checks"></i> ${t('ack_distributions')}
       </button>
       <button class="training-tab${_ackTab==='new'?' active':''}" onclick="_ackTab='new';renderPolicyAcks()">
-        <i class="ph ph-plus-circle"></i> Neue Verteilrunde
+        <i class="ph ph-plus-circle"></i> ${t('ack_newDistribution')}
       </button>
     </div>
     <div id="policyAcksContent"></div>
@@ -13477,17 +13451,17 @@ async function _renderDistributionList(container, mode) {
   try { dists = await fetch('/distributions', { headers: apiHeaders() }).then(r => r.json()) } catch {}
 
   if (!Array.isArray(dists) || dists.length === 0) {
-    container.innerHTML = `<div class="empty-state"><i class="ph ph-check-circle" style="font-size:48px;color:var(--text-muted)"></i><p>Noch keine Verteilrunden vorhanden.</p><button class="btn btn-primary" onclick="_ackTab='new';renderPolicyAcks()"><i class="ph ph-plus"></i> Erste Verteilrunde anlegen</button></div>`
+    container.innerHTML = `<div class="empty-state"><i class="ph ph-check-circle" style="font-size:48px;color:var(--text-muted)"></i><p>${t('ack_noDistributions')}</p><button class="btn btn-primary" onclick="_ackTab='new';renderPolicyAcks()"><i class="ph ph-plus"></i> ${t('ack_createFirst')}</button></div>`
     return
   }
 
-  const statusLabel  = { active: 'Aktiv', completed: 'Abgeschlossen', expired: 'Abgelaufen' }
+  const statusLabel  = { active: t('ack_statusActive'), completed: t('ack_statusCompleted'), expired: t('ack_statusExpired') }
   const statusColor  = { active: '#4ade80', completed: '#60a5fa', expired: '#f87171' }
 
   container.innerHTML = `
     <table class="data-table" style="width:100%">
       <thead><tr>
-        <th>Richtlinie</th><th>Zielgruppe</th><th>Frist</th><th>Fortschritt</th><th>Status</th><th>Erstellt</th><th></th>
+        <th>${t('ack_policy')}</th><th>${t('ack_targetGroup')}</th><th>${t('ack_deadline')}</th><th>${t('dash_progress')}</th><th>${t('col_status')}</th><th>${t('findings_created')}</th><th></th>
       </tr></thead>
       <tbody>
         ${dists.map(d => {
@@ -13509,7 +13483,7 @@ async function _renderDistributionList(container, mode) {
             <td style="font-size:12px;color:var(--text-muted)">${new Date(d.createdAt).toLocaleDateString('de-DE')}</td>
             <td style="white-space:nowrap">
               <button class="btn btn-secondary btn-sm" onclick="openDistributionDetail('${d.id}')"><i class="ph ph-eye"></i></button>
-              ${d.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" title="Erinnerung senden" onclick="sendAckReminder('${d.id}')"><i class="ph ph-envelope"></i></button>` : ''}
+              ${d.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" title="${t('ack_sendReminder')}" onclick="sendAckReminder('${d.id}')"><i class="ph ph-envelope"></i></button>` : ''}
               <a href="/distributions/${d.id}/export/csv" class="btn btn-secondary btn-sm" title="CSV-Export"><i class="ph ph-download-simple"></i></a>
               ${getCurrentRole() === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteDistribution('${d.id}')"><i class="ph ph-trash"></i></button>` : ''}
             </td>
@@ -13522,43 +13496,43 @@ async function _renderDistributionList(container, mode) {
 
 function _renderNewDistributionForm(container, mode) {
   const modeInfo = {
-    email_campaign:    'E-Mails mit Token-Link werden verschickt. Mitarbeiter bestätigen ohne Login.',
-    manual:            'Bestätigungen werden manuell eingetragen oder per CSV importiert.',
-    distribution_only: 'Es werden keine Einzelbestätigungen erfasst — nur die Verteilung dokumentiert.',
+    email_campaign:    t('ack_modeEmailDesc'),
+    manual:            t('ack_modeManualDesc'),
+    distribution_only: t('ack_modeDistributionOnlyDesc'),
   }
 
   container.innerHTML = `
     <div class="training-form-page">
-      <div class="form-section-header"><h3><i class="ph ph-plus-circle"></i> Neue Verteilrunde anlegen</h3></div>
+      <div class="form-section-header"><h3><i class="ph ph-plus-circle"></i> ${t('ack_newDistribution')}</h3></div>
 
       <div class="info-box" style="margin-bottom:20px">
-        <i class="ph ph-info"></i> <strong>Aktiver Modus:</strong> ${modeInfo[mode] || mode}
+        <i class="ph ph-info"></i> <strong>${t('ack_activeMode')}:</strong> ${modeInfo[mode] || mode}
       </div>
 
-      <label class="form-label">Richtlinie (nur freigegebene) <span style="color:#f87171">*</span></label>
+      <label class="form-label">${t('ack_policyApprovedOnly')} <span style="color:#f87171">*</span></label>
       <select id="ackTemplateId" class="select" style="margin-bottom:16px">
-        <option value="">Wird geladen…</option>
+        <option value="">${t('loading')}</option>
       </select>
 
-      <label class="form-label">Zielgruppe / Beschreibung</label>
-      <input type="text" id="ackTargetGroup" class="form-input" placeholder="z.B. Alle Mitarbeiter, IT-Abteilung…" style="margin-bottom:16px"/>
+      <label class="form-label">${t('ack_targetGroupDescription')}</label>
+      <input type="text" id="ackTargetGroup" class="form-input" placeholder="${t('ack_targetGroupPlaceholder')}" style="margin-bottom:16px"/>
 
-      <label class="form-label">Frist (optional)</label>
+      <label class="form-label">${t('ack_deadlineOptional')}</label>
       <input type="date" id="ackDueDate" class="form-input" style="margin-bottom:16px"/>
 
       ${mode === 'email_campaign' ? `
-      <label class="form-label">E-Mail-Adressen <span style="color:var(--text-muted);font-weight:400">(eine pro Zeile oder kommagetrennt)</span></label>
+      <label class="form-label">${t('ack_emailAddresses')} <span style="color:var(--text-muted);font-weight:400">(${t('ack_emailHint')})</span></label>
       <textarea id="ackEmailList" class="form-textarea" rows="6" placeholder="alice@firma.de&#10;bob@firma.de&#10;carol@firma.de"></textarea>
       ` : ''}
 
-      <label class="form-label">Notizen</label>
-      <textarea id="ackNotes" class="form-textarea" rows="3" placeholder="Optionale Notizen zu dieser Verteilrunde" style="margin-bottom:20px"></textarea>
+      <label class="form-label">${t('ack_notes')}</label>
+      <textarea id="ackNotes" class="form-textarea" rows="3" placeholder="${t('ack_notesPlaceholder')}" style="margin-bottom:20px"></textarea>
 
       <div style="display:flex;gap:12px">
         <button class="btn btn-primary" onclick="saveNewDistribution()">
-          <i class="ph ph-paper-plane-tilt"></i> ${mode === 'email_campaign' ? 'Anlegen & E-Mails vorbereiten' : 'Verteilrunde anlegen'}
+          <i class="ph ph-paper-plane-tilt"></i> ${mode === 'email_campaign' ? t('ack_createAndPrepareEmails') : t('ack_createDistribution')}
         </button>
-        <button class="btn btn-secondary" onclick="_ackTab='list';renderPolicyAcks()">Abbrechen</button>
+        <button class="btn btn-secondary" onclick="_ackTab='list';renderPolicyAcks()">${t('cancel')}</button>
       </div>
     </div>
   `
@@ -13570,7 +13544,7 @@ function _renderNewDistributionForm(container, mode) {
       const sel = dom('ackTemplateId')
       if (!sel) return
       const approved = Array.isArray(templates) ? templates.filter(t => t.status === 'approved') : []
-      sel.innerHTML = `<option value="">Richtlinie wählen…</option>` +
+      sel.innerHTML = `<option value="">${t('ack_choosePolicy')}</option>` +
         approved.map(t => `<option value="${t.id}">${escHtml(t.title)} (${escHtml(t.type)})</option>`).join('')
     }).catch(() => {})
 }
@@ -13581,7 +13555,7 @@ async function saveNewDistribution() {
   const dueDate     = dom('ackDueDate')?.value || null
   const notes       = dom('ackNotes')?.value?.trim() || ''
 
-  if (!templateId) { alert('Bitte eine Richtlinie wählen.'); return }
+  if (!templateId) { alert(t('ack_choosePolicyAlert')); return }
 
   // E-Mail-Liste parsen (für email_campaign Modus)
   let emailList = []
@@ -13597,7 +13571,7 @@ async function saveNewDistribution() {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    alert(err.error || 'Fehler beim Anlegen')
+    alert(err.error || t('ack_createFailed'))
     return
   }
 
@@ -13613,12 +13587,12 @@ async function saveNewDistribution() {
     })
     if (sendRes.ok) {
       const r = await sendRes.json()
-      alert(`Verteilrunde angelegt. ${r.sent} E-Mail(s) verschickt.`)
+      alert(t('ack_createdEmailsSent', { count: r.sent }))
     } else {
-      alert('Verteilrunde angelegt. E-Mails konnten nicht gesendet werden (SMTP nicht konfiguriert?).')
+      alert(t('ack_createdEmailsFailed'))
     }
   } else {
-    alert('Verteilrunde erfolgreich angelegt.')
+    alert(t('ack_created'))
   }
 
   _ackTab = 'list'
@@ -13636,17 +13610,17 @@ async function openDistributionDetail(id) {
   const container = dom('policyAcksContent')
   if (!container) return
 
-  const modeLabels = { email_campaign: 'E-Mail-Kampagne', manual: 'Manuell / CSV', distribution_only: 'Nur Verteilung' }
+  const modeLabels = { email_campaign: t('ack_modeEmail'), manual: t('ack_modeManualShort'), distribution_only: t('ack_modeDistributionOnlyShort') }
   const pct = dist.stats.total > 0 ? Math.round(dist.stats.confirmed / dist.stats.total * 100) : 0
 
   const acksHtml = acks.length === 0
-    ? `<p style="color:var(--text-muted);padding:20px 0">Noch keine Bestätigungen.</p>`
+    ? `<p style="color:var(--text-muted);padding:20px 0">${t('ack_noAcknowledgements')}</p>`
     : `<table class="data-table" style="width:100%;margin-top:12px">
-        <thead><tr><th>E-Mail</th><th>Name</th><th>Bestätigt am</th><th>Methode</th>${getCurrentRole()==='admin'?'<th></th>':''}</tr></thead>
+        <thead><tr><th>E-Mail</th><th>${t('col_name')}</th><th>${t('ack_confirmedAt')}</th><th>${t('ack_method')}</th>${getCurrentRole()==='admin'?'<th></th>':''}</tr></thead>
         <tbody>${acks.map(a => `<tr>
           <td>${escHtml(a.recipientEmail||'–')}</td>
           <td>${escHtml(a.recipientName||'–')}</td>
-          <td>${a.acknowledgedAt ? new Date(a.acknowledgedAt).toLocaleString('de-DE') : '<span style="color:#fbbf24">Ausstehend</span>'}</td>
+          <td>${a.acknowledgedAt ? new Date(a.acknowledgedAt).toLocaleString() : `<span style="color:#fbbf24">${t('ack_pending')}</span>`}</td>
           <td style="font-size:12px;color:var(--text-muted)">${a.method||'–'}</td>
           ${getCurrentRole()==='admin'?`<td><button class="btn btn-danger btn-sm" onclick="deleteAck('${a.id}','${id}')"><i class="ph ph-trash"></i></button></td>`:''}
         </tr>`).join('')}</tbody>
@@ -13655,17 +13629,17 @@ async function openDistributionDetail(id) {
   // Manuelle Bestätigung hinzufügen (nur für manual/csv mode)
   const addManualHtml = (dist.mode !== 'email_campaign') ? `
     <div style="margin-top:24px;border-top:1px solid var(--border-color);padding-top:20px">
-      <h4 style="margin-bottom:12px"><i class="ph ph-plus"></i> Bestätigung manuell hinzufügen</h4>
+      <h4 style="margin-bottom:12px"><i class="ph ph-plus"></i> ${t('ack_addManual')}</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
         <div>
           <label class="form-label">E-Mail</label>
           <input type="email" id="manAckEmail" class="form-input" placeholder="alice@firma.de"/>
         </div>
         <div>
-          <label class="form-label">Name</label>
+          <label class="form-label">${t('col_name')}</label>
           <input type="text" id="manAckName" class="form-input" placeholder="Alice Müller"/>
         </div>
-        <button class="btn btn-primary" onclick="addManualAck('${id}')"><i class="ph ph-plus"></i> Hinzufügen</button>
+        <button class="btn btn-primary" onclick="addManualAck('${id}')"><i class="ph ph-plus"></i> ${t('add')}</button>
       </div>
     </div>
   ` : ''
@@ -13673,40 +13647,40 @@ async function openDistributionDetail(id) {
   // CSV-Import-Bereich (nur manual mode)
   const csvImportHtml = dist.mode === 'manual' ? `
     <div style="margin-top:16px">
-      <h4 style="margin-bottom:8px"><i class="ph ph-upload-simple"></i> CSV importieren</h4>
-      <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Format: <code>email;name;datum</code> (eine Zeile pro Person, Datum optional)</p>
+      <h4 style="margin-bottom:8px"><i class="ph ph-upload-simple"></i> ${t('ack_importCsv')}</h4>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">${t('ack_csvFormat')}: <code>email;name;date</code> (${t('ack_csvHint')})</p>
       <textarea id="csvImportData" class="form-textarea" rows="4" placeholder="alice@firma.de;Alice Müller;2026-03-13&#10;bob@firma.de;Bob Schmidt;"></textarea>
-      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="importAcksCsv('${id}')"><i class="ph ph-upload-simple"></i> Importieren</button>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="importAcksCsv('${id}')"><i class="ph ph-upload-simple"></i> ${t('import_action')}</button>
     </div>
   ` : ''
 
   container.innerHTML = `
     <div class="training-form-page">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <button class="btn btn-secondary btn-sm" onclick="_ackTab='list';renderPolicyAcks()"><i class="ph ph-arrow-left"></i> Zurück</button>
+        <button class="btn btn-secondary btn-sm" onclick="_ackTab='list';renderPolicyAcks()"><i class="ph ph-arrow-left"></i> ${t('common_back')}</button>
         <h3 style="margin:0">${escHtml(dist.templateTitle)}</h3>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
-        <div class="kpi-card"><div class="kpi-label">Modus</div><div class="kpi-value">${modeLabels[dist.mode]||dist.mode}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Zielgruppe</div><div class="kpi-value" style="font-size:14px">${escHtml(dist.targetGroup||'–')}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Frist</div><div class="kpi-value" style="font-size:14px">${dist.dueDate ? new Date(dist.dueDate).toLocaleDateString('de-DE') : '–'}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_mode')}</div><div class="kpi-value">${modeLabels[dist.mode]||dist.mode}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_targetGroup')}</div><div class="kpi-value" style="font-size:14px">${escHtml(dist.targetGroup||'–')}</div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_deadline')}</div><div class="kpi-value" style="font-size:14px">${dist.dueDate ? new Date(dist.dueDate).toLocaleDateString() : '–'}</div></div>
         ${dist.mode !== 'distribution_only' ? `
-        <div class="kpi-card"><div class="kpi-label">Bestätigt</div><div class="kpi-value">${dist.stats.confirmed}/${dist.stats.total} <span style="font-size:13px;color:var(--text-muted)">(${pct}%)</span></div></div>
+        <div class="kpi-card"><div class="kpi-label">${t('ack_confirmed')}</div><div class="kpi-value">${dist.stats.confirmed}/${dist.stats.total} <span style="font-size:13px;color:var(--text-muted)">(${pct}%)</span></div></div>
         ` : ''}
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
         <a href="/distributions/${id}/export/csv" class="btn btn-secondary btn-sm"><i class="ph ph-download-simple"></i> CSV-Export</a>
-        ${dist.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" onclick="sendAckReminder('${id}')"><i class="ph ph-envelope"></i> Erinnerung senden</button>` : ''}
+        ${dist.mode === 'email_campaign' ? `<button class="btn btn-secondary btn-sm" onclick="sendAckReminder('${id}')"><i class="ph ph-envelope"></i> ${t('ack_sendReminder')}</button>` : ''}
         <select id="distStatusSel" class="select" style="max-width:180px;padding:6px 10px;font-size:13px" onchange="updateDistStatus('${id}',this.value)">
-          <option value="active"${dist.status==='active'?' selected':''}>Aktiv</option>
-          <option value="completed"${dist.status==='completed'?' selected':''}>Abgeschlossen</option>
-          <option value="expired"${dist.status==='expired'?' selected':''}>Abgelaufen</option>
+          <option value="active"${dist.status==='active'?' selected':''}>${t('ack_statusActive')}</option>
+          <option value="completed"${dist.status==='completed'?' selected':''}>${t('ack_statusCompleted')}</option>
+          <option value="expired"${dist.status==='expired'?' selected':''}>${t('ack_statusExpired')}</option>
         </select>
       </div>
 
-      <h4>Bestätigungen (${acks.length})</h4>
+      <h4>${t('ack_acknowledgements')} (${acks.length})</h4>
       ${acksHtml}
       ${addManualHtml}
       ${csvImportHtml}
@@ -13715,10 +13689,10 @@ async function openDistributionDetail(id) {
 }
 
 async function sendAckReminder(distId) {
-  if (!confirm('Erinnerungs-Mail an alle noch nicht bestätigten Empfänger senden?')) return
+  if (!confirm(t('ack_sendReminderConfirm'))) return
   const res = await fetch(`/distributions/${distId}/remind`, { method: 'POST', headers: apiHeaders() })
   const r = await res.json().catch(() => ({}))
-  alert(res.ok ? `${r.sent} Erinnerung(en) gesendet.` : (r.error || 'Fehler'))
+  alert(res.ok ? t('ack_remindersSent', { count: r.sent }) : (r.error || t('error')))
 }
 
 async function updateDistStatus(distId, status) {
@@ -13730,22 +13704,22 @@ async function updateDistStatus(distId, status) {
 }
 
 async function deleteDistribution(id) {
-  if (!confirm('Verteilrunde und alle Bestätigungen löschen?')) return
+  if (!confirm(t('ack_deleteDistributionConfirm'))) return
   const res = await fetch(`/distributions/${id}`, { method: 'DELETE', headers: apiHeaders() })
-  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Fehler'); return }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || t('error')); return }
   renderPolicyAcks()
 }
 
 async function addManualAck(distId) {
   const email = dom('manAckEmail')?.value?.trim()
   const name  = dom('manAckName')?.value?.trim() || ''
-  if (!email) { alert('E-Mail-Adresse eingeben'); return }
+  if (!email) { alert(t('ack_enterEmail')); return }
   const res = await fetch(`/distributions/${distId}/acks`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ recipientEmail: email, recipientName: name }),
   })
-  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || 'Fehler'); return }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); alert(e.error || t('error')); return }
   openDistributionDetail(distId)
 }
 
@@ -13756,19 +13730,19 @@ async function importAcksCsv(distId) {
     const parts = line.split(';')
     return { email: (parts[0]||'').trim(), name: (parts[1]||'').trim(), acknowledgedAt: (parts[2]||'').trim() || null }
   }).filter(r => r.email)
-  if (!rows.length) { alert('Keine gültigen Zeilen gefunden.'); return }
+  if (!rows.length) { alert(t('ack_noValidRows')); return }
   const res = await fetch(`/distributions/${distId}/acks/import`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ rows }),
   })
   const r = await res.json().catch(() => ({}))
-  alert(`${r.imported || 0} importiert, ${r.skipped || 0} übersprungen.`)
+  alert(t('ack_importSummary', { imported: r.imported || 0, skipped: r.skipped || 0 }))
   openDistributionDetail(distId)
 }
 
 async function deleteAck(ackId, distId) {
-  if (!confirm('Bestätigung löschen?')) return
+  if (!confirm(t('ack_deleteConfirm'))) return
   await fetch(`/distributions/${distId}/acks/${ackId}`, { method: 'DELETE', headers: apiHeaders() })
   openDistributionDetail(distId)
 }
@@ -13783,20 +13757,20 @@ async function renderPolicyAckSettings() {
   container.innerHTML = `
     <div class="training-form-page">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-        <button class="btn btn-secondary btn-sm" onclick="renderPolicyAcks()"><i class="ph ph-arrow-left"></i> Zurück</button>
-        <h3 style="margin:0"><i class="ph ph-gear"></i> Bestätigungs-Modus konfigurieren</h3>
+        <button class="btn btn-secondary btn-sm" onclick="renderPolicyAcks()"><i class="ph ph-arrow-left"></i> ${t('common_back')}</button>
+        <h3 style="margin:0"><i class="ph ph-gear"></i> ${t('ack_configureMode')}</h3>
       </div>
 
       <div class="info-box" style="margin-bottom:24px">
-        <i class="ph ph-warning"></i> Diese Einstellung gilt für <strong>alle zukünftigen Verteilrunden</strong>.
-        Bestehende Kampagnen behalten ihren ursprünglichen Modus.
+        <i class="ph ph-warning"></i> ${t('ack_modeWarningPrefix')} <strong>${t('ack_modeWarningEmphasis')}</strong>.
+        ${t('ack_modeWarningSuffix')}
       </div>
 
       <div style="display:flex;flex-direction:column;gap:12px;max-width:600px">
         ${[
-          { val:'email_campaign',    icon:'ph-envelope',   title:'E-Mail-Kampagne',              desc:'Token-Links per E-Mail — Mitarbeiter bestätigen ohne ISMS-Zugang' },
-          { val:'manual',            icon:'ph-pencil',     title:'Manuell / CSV-Import',         desc:'Bestätigungen werden manuell eingetragen oder per CSV importiert' },
-          { val:'distribution_only', icon:'ph-file-text',  title:'Nur Verteilung dokumentieren', desc:'Keine Einzelbestätigungen — nur Nachweis der Verteilung' },
+          { val:'email_campaign',    icon:'ph-envelope',   title:t('ack_modeEmail'),              desc:t('ack_modeEmailDesc') },
+          { val:'manual',            icon:'ph-pencil',     title:t('ack_modeManual'),             desc:t('ack_modeManualDesc') },
+          { val:'distribution_only', icon:'ph-file-text',  title:t('ack_modeDistributionOnly'),    desc:t('ack_modeDistributionOnlyDesc') },
         ].map(opt => `
           <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid ${current===opt.val?'var(--brand-color)':'var(--border-color)'};border-radius:8px;cursor:pointer;background:${current===opt.val?'var(--brand-color)18':'transparent'}">
             <input type="radio" name="ackMode" value="${opt.val}" ${current===opt.val?'checked':''} style="margin-top:3px;accent-color:var(--brand-color)"/>
@@ -13809,8 +13783,8 @@ async function renderPolicyAckSettings() {
       </div>
 
       <div style="margin-top:24px;display:flex;gap:12px">
-        <button class="btn btn-primary" onclick="savePolicyAckMode()"><i class="ph ph-floppy-disk"></i> Modus speichern</button>
-        <button class="btn btn-secondary" onclick="renderPolicyAcks()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="savePolicyAckMode()"><i class="ph ph-floppy-disk"></i> ${t('ack_saveMode')}</button>
+        <button class="btn btn-secondary" onclick="renderPolicyAcks()">${t('cancel')}</button>
       </div>
     </div>
   `
@@ -13824,7 +13798,7 @@ async function savePolicyAckMode() {
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ policyAckMode: sel.value }),
   })
-  if (res.ok) { renderPolicyAcks() } else { alert('Fehler beim Speichern') }
+  if (res.ok) { renderPolicyAcks() } else { alert(t('err_saveFailed')) }
 }
 
 // Init app after DOM load – nur auf der SPA-Hauptseite (index.html)

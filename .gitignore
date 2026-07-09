@@ -12,6 +12,8 @@ last_order_claude.md
 .last_order_claude.md.kate-swp
 .server.pid
 internal_audit_report_rules.md
+gh-token.md
+current_conversation.md
 
 # Dependencies
 node_modules/

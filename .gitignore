@@ -14,6 +14,7 @@ last_order_claude.md
 internal_audit_report_rules.md
 gh-token.md
 current_conversation.md
+resume.sh
 
 # Dependencies
 node_modules/

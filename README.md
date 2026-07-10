@@ -148,6 +148,21 @@ SSL_CERT_FILE=/etc/ssl/certs/your.crt
 SSL_KEY_FILE=/etc/ssl/private/your.key
 ```
 
+**Going live after evaluating with demo data?** Run the interactive production-prep tool instead
+of starting from a fresh install — it clears demo/test content module by module (or all at once),
+so any real data you've already entered (e.g. risks, assets) doesn't have to be re-entered:
+
+```bash
+bash stop.sh
+node scripts/prepare-production.js
+bash start.sh
+```
+
+It always creates a backup (`data.bak.<timestamp>/`, next to your `data/` directory) before
+changing anything, and never touches `STORAGE_BACKEND` — unlike the in-app "Demo Reset" admin
+action, which is meant for the demo instance and still switches to `sqlite` for historical reasons
+(see [Issue #42](https://github.com/coolstartnow/isms-builder/issues/42)).
+
 ---
 
 ## Docker
